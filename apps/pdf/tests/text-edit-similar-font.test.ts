@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest'
 import { fontCoversText } from '../src/main/font-cmap'
 import { findSystemFont } from '../src/main/font-locate'
 import { subsetTtf } from '../src/main/font-subset'
-import { applyTextEdits, loadPdfium, saveDoc } from '../src/main/text-edit'
+import { applyTextEdits, fallbackFontFor, loadPdfium, saveDoc } from '../src/main/text-edit'
 import { LOOKALIKE_FAMILIES, type FontStyleClass } from '../src/shared/font-classes'
 
 /**
@@ -213,6 +213,7 @@ describe('keep-original edit on a partial subset', () => {
     const text = '가을 하늘은 맑고 푸르다'
     // 푸 and 르 are not in the subset; with no Korean look-alike installed the
     // fallback takes them, which still mixes — only the second face's name varies
+    if (!fallbackFontFor('푸르')) return // no installed face draws Hangul (bare CI)
     const result = await applyTextEdits(await subsetFixture(ORIGINAL), [subsetEdit(text)])
     expect(result.skipped).toEqual([])
     expect((await extractText(result.bytes)).replace(/\s/g, '')).toBe(text.replace(/\s/g, ''))
@@ -232,6 +233,7 @@ describe('keep-original edit on a partial subset', () => {
   })
 
   it('never mixes the subset into a whole-edit face choice', async () => {
+    if (!fallbackFontFor('가을하늘은맑고푸르다')) return // no installed face draws Hangul
     const result = await applyTextEdits(await subsetFixture(ORIGINAL), [
       { ...subsetEdit('가을 하늘은 맑고 푸르다'), newFont: 'times' },
     ])

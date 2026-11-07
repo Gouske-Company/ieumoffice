@@ -32,7 +32,7 @@ describe('convert a Hangul document to PDF', () => {
       expect(readFileSync(out).subarray(0, 5).toString()).toBe('%PDF-')
       // never over an existing file unless asked
       const again = await run(['convert', input, '--to', 'pdf', '--json'], { env })
-      expect(again.json().reason).toBe('output_exists')
+      expect(again.json().error).toBe('output_exists')
       expect((await run(['convert', input, '--to', 'pdf', '--force'], { env })).code).toBe(0)
     }
   })

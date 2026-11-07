@@ -34,6 +34,7 @@ function harness(
   options: {
     off?: AiSettings['subscriptionOff']
     detect?: SubscriptionStatusServiceDeps['detect']
+    acceptanceStore?: SubscriptionStatusServiceDeps['acceptanceStore']
     writable?: boolean
   } = {},
 ) {
@@ -56,7 +57,10 @@ function harness(
             settings.subscriptionOff = next
           },
         }),
-    acceptanceStore: { read: async () => ({}), write: async () => undefined },
+    acceptanceStore: options.acceptanceStore ?? {
+      read: async () => ({}),
+      write: async () => undefined,
+    },
     detect:
       options.detect ??
       (async (provider) => {
@@ -140,6 +144,45 @@ describe('the status service and a CLI turned off', () => {
     const statuses = await checking
     expect(statuses['claude-code'].state).toBe('off')
     expect(h.service.getStatuses()['claude-code'].state).toBe('off')
+  })
+
+  it('back on while the service is busy, and a check that read it as off arrives: ends checked, not off', async () => {
+    // the acceptance record read of another provider's check holds the shared queue
+    let releaseRead: () => void = () => undefined
+    let slow = false
+    const h = harness({
+      off: { codex: true },
+      acceptanceStore: {
+        read: () =>
+          slow
+            ? new Promise((resolve) => {
+                releaseRead = () => resolve({})
+              })
+            : Promise.resolve({}),
+        write: async () => undefined,
+      },
+    })
+    await h.service.check()
+    await settle()
+    expect(h.service.getStatuses().codex.state).toBe('off')
+
+    slow = true
+    void h.service.check(['claude-code'], { fresh: true })
+    await settle()
+    // "use again" waits behind the Claude check; a window's check of Codex reads the
+    // setting before the switch is saved
+    const turnedOn = h.service.setOff('codex', false)
+    void h.service.check(['codex'])
+    await settle()
+    slow = false
+    releaseRead()
+    expect((await turnedOn).ok).toBe(true)
+    await settle()
+    await settle()
+
+    expect(h.settings.subscriptionOff).toEqual({})
+    expect(h.asked).toContain('codex')
+    expect(h.service.getStatuses().codex.state).toBe('ready')
   })
 
   it('changes nothing where no writer was given (the headless callers)', async () => {

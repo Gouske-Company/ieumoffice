@@ -345,10 +345,19 @@ export function createSubscriptionStatusService(
       let detection: SubscriptionDetection
       let configuredPath: string | undefined
       try {
-        const settings = await deps.getSettings()
+        let settings = await deps.getSettings()
         if (subscriptionOffIn(settings, provider)) {
-          await queued(async () => markOff(provider))
-          return
+          // decided again in the queue: "use again" may have been saved since the read above
+          const turnedOn = await queued(async () => {
+            const now = await Promise.resolve()
+              .then(() => deps.getSettings())
+              .catch(() => null)
+            if (now && !subscriptionOffIn(now, provider)) return now
+            markOff(provider)
+            return null
+          })
+          if (!turnedOn) return
+          settings = turnedOn
         }
         configuredPath = settings.providers?.[provider]?.cliPath
         detection = await detect(provider, {

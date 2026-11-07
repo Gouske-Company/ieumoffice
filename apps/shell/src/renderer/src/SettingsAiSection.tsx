@@ -315,9 +315,11 @@ export function AiSection({
                 </div>
               </div>
             )}
-            {failed[provider] === 'logout' ? (
+            {failed[provider] === 'logout' || failed[provider] === 'switch' ? (
               <div className="set-sub-failed" role="alert" data-provider={provider}>
-                <span>{t('setSubLogoutFailed')}</span>
+                <span>
+                  {t(failed[provider] === 'logout' ? 'setSubLogoutFailed' : 'setSubSwitchFailed')}
+                </span>
               </div>
             ) : (
               failed[provider] && (

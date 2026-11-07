@@ -52,8 +52,8 @@ export interface SubscriptionApiLike {
   openConnectHelp?(path: SubscriptionConnectHelpPath | null): Promise<void>
 }
 
-/** a login or install that could not be started, or a sign-out that did not go through */
-export type SubscriptionLaunchKind = 'install' | 'login' | 'logout'
+/** a login or install that could not be started, a sign-out that did not go through, or a switch (decision 0114) that could not be stored */
+export type SubscriptionLaunchKind = 'install' | 'login' | 'logout' | 'switch'
 
 export interface SubscriptionConnection {
   readonly statuses: SubscriptionStatusMap
@@ -347,11 +347,17 @@ export function useSubscriptionConnection(
   const setOff = useCallback(
     (provider: AiSubscriptionProviderId, off: boolean) => {
       setBusy(true)
+      setFailed((current) => ({ ...current, [provider]: undefined }))
       void attempt(optionsRef.current.api, (api) => {
         if (!api.setSubscriptionOff) throw new Error('no switch handler')
         return api.setSubscriptionOff(provider, off)
       })
-        .then((result) => apply(result?.statuses ?? null))
+        .then((result) => {
+          if (!alive.current) return
+          // not stored: the program stays as it was, and the card says so
+          if (!result?.ok) setFailed((current) => ({ ...current, [provider]: 'switch' }))
+          apply(result?.statuses ?? null)
+        })
         .finally(() => {
           if (alive.current) setBusy(false)
         })

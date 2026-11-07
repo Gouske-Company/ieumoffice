@@ -242,6 +242,11 @@ export const ko = {
   aiTplFontsNotice:
     '템플릿 글꼴은 이 앱에 들어 있습니다. 파워포인트 같은 다른 프로그램에서 열면 다른 글꼴로 보일 수 있습니다.',
   aiTplOpenFonts: '글꼴 폴더 열기',
+  aiTplFontsAuto: '글꼴: AI가 고름',
+  aiTplFontsOne: '글꼴: {font}',
+  aiTplFontsTwo: '글꼴: 제목 {title}, 본문 {body}',
+  aiTplFontsTemplate: '글꼴: 고른 템플릿의 글꼴',
+  aiTplFontsChange: '바꾸기',
   aiTplDesc_coral: '검정에 가까운 바탕에 크림색과 주황빛 분홍, 크고 굵은 제목 글씨',
   aiTplDesc_blue_professional: '크림색 바탕에 선명한 파란색 포인트. 깔끔하고 단정한 업무용 느낌',
   aiTplDesc_monochrome: '아이보리 바탕에 검은 글씨만. 명조풍 제목에 색을 전혀 쓰지 않은 차분함',

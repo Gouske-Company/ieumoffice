@@ -35,6 +35,8 @@ import { placeholderInstruction } from './redact'
 import { textForModel, redactLabelsOf } from './redact-view'
 import { redactGuardFor } from './redact-guard'
 import { isGenerationStopKind } from './generation-stop'
+import { deckTakesDefaultFonts } from './default-fonts'
+import type { SlidesAiFontRoles } from '@genoffice/ui/slides-ai-fonts'
 
 /**
  * Slides capability as an AgentSkill: deck outline context + three tools (read structure /
@@ -99,6 +101,8 @@ export type DeckProgressEvent =
 /** Panel/skill access point to the currently open deck (refs provided by App, stay fresh across renders). */
 export interface DeckAccess {
   getSlides(): RenderSlide[]
+  /** The fonts of Settings › General as title/body families; null for "auto" or when unavailable */
+  getAiDefaultFonts?(): Promise<SlidesAiFontRoles | null>
   getCurrent(): number
   getSelectedIds(): string[]
   /** Every page's review comments (index = slide index; pages without comments are empty arrays). */
@@ -173,6 +177,8 @@ export interface DeckAccess {
     skeleton?: string
     /** The style is a built-in design template, or a style saved from one: its devices override the ban rules they collide with */
     templateDevices?: boolean
+    /** Settings › General fonts, present only when they apply to this deck (default-fonts.ts) */
+    defaultFonts?: SlidesAiFontRoles
     signal?: AbortSignal
   }): Promise<{
     ok: boolean
@@ -192,6 +198,8 @@ export interface DeckAccess {
     topic: string
     questionnaire?: string
     styleHint?: string
+    /** Settings › General fonts, present only when they apply to this deck (default-fonts.ts) */
+    defaultFonts?: SlidesAiFontRoles
     signal?: AbortSignal
   }): Promise<{ ok: boolean; styleSkill?: string; error?: string; stopKind?: string }>
   /**
@@ -2012,6 +2020,19 @@ async function executeTool(
       // otherwise the last style this window generated with.
       const selected = await selectedTemplateOf(access)
       const regenBasedOn = selected ? selected.basedOn : state?.lastStyleBasedOn
+      // Settings › General fonts as in generate_deck, judged on the pages the redo keeps
+      const regenSettingFonts =
+        !selected && access.getAiDefaultFonts
+          ? await access.getAiDefaultFonts().catch(() => null)
+          : null
+      const regenFonts =
+        regenSettingFonts &&
+        deckTakesDefaultFonts(
+          slides.filter((_, i) => i !== idx),
+          regenSettingFonts,
+        )
+          ? regenSettingFonts
+          : undefined
       const regenArgs = {
         pageIndex: idx + 1,
         totalPages: slides.length,
@@ -2026,6 +2047,7 @@ async function executeTool(
         canvasW: 1280,
         canvasH: 720,
         ...(regenBasedOn ? { templateDevices: true } : {}),
+        ...(regenFonts ? { defaultFonts: regenFonts } : {}),
         // the run's signal: Stop ends the redo, and its two attempts share one context check
         ...(signal ? { signal } : {}),
       }
@@ -2197,6 +2219,17 @@ async function executeTool(
         styleSkill = styleWithRequests(template.styleText, template.requests)
         templateSkeleton = template.layout
       }
+      // Settings › General fonts: never over a design template, and on append only to a
+      // deck that takes them (blank, or made in these fonts); a font the request names wins
+      const settingFonts =
+        !template && access.getAiDefaultFonts
+          ? await access.getAiDefaultFonts().catch(() => null)
+          : null
+      const defaultFonts =
+        settingFonts &&
+        (insertMode === 'replace' || deckTakesDefaultFonts(access.getSlides(), settingFonts))
+          ? settingFonts
+          : undefined
       // User clicked stop → checked inside each stage loop, abort as soon as possible (pages already landed are kept)
       const cancelled = () => signal?.aborted === true
       const cancelResult = (landed: number, totalPages: number) => ({
@@ -2221,6 +2254,7 @@ async function executeTool(
           topic: styleTopic,
           ...(style ? { styleHint: style } : {}),
           ...(context ? { questionnaire: context } : {}),
+          ...(defaultFonts ? { defaultFonts } : {}),
           ...(signal ? { signal } : {}),
         })
         if (sr.ok && sr.styleSkill) styleSkill = sr.styleSkill
@@ -2568,6 +2602,7 @@ async function executeTool(
           canvasH,
           ...(skeleton ? { skeleton } : {}),
           ...(template?.basedOn ? { templateDevices: true } : {}),
+          ...(defaultFonts ? { defaultFonts } : {}),
           ...(signal ? { signal } : {}),
         }
         const local = await tryGenerate(access.generatePageLocal!, pageArgs, pageIndex)

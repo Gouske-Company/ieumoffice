@@ -242,6 +242,11 @@ export const ms = {
   aiTplFontsNotice:
     'Fon templat disertakan dalam aplikasi ini. Program lain seperti PowerPoint mungkin memaparkan fon yang berbeza.',
   aiTplOpenFonts: 'Buka folder fon',
+  aiTplFontsAuto: 'Fon: dipilih AI',
+  aiTplFontsOne: 'Fon: {font}',
+  aiTplFontsTwo: 'Fon: tajuk {title}, teks {body}',
+  aiTplFontsTemplate: 'Fon: milik templat yang dipilih',
+  aiTplFontsChange: 'Tukar',
   aiTplDesc_coral:
     'Krim dan merah jambu jingga pada latar hampir hitam, dengan tajuk besar dan tirus.',
   aiTplDesc_blue_professional:

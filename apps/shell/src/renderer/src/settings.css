@@ -1367,3 +1367,96 @@
 .set-home-kind .set-switch {
   margin-left: 6px;
 }
+
+/* Settings › General "AI slide fonts": four mode cards, each drawn in its own fonts */
+.set-slides-fonts-body {
+  flex: 1;
+  gap: 12px;
+}
+
+.set-slides-fonts-modes {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.set-slides-font-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: var(--surface);
+  font: inherit;
+  color: var(--text-primary);
+  text-align: start;
+  cursor: pointer;
+}
+
+.set-slides-font-card:hover {
+  background: var(--bg-hover);
+}
+
+.set-slides-font-card:focus-visible {
+  outline: 2px solid var(--accent, var(--text-primary));
+  outline-offset: 1px;
+}
+
+.set-slides-font-card.selected {
+  border-color: var(--accent, var(--text-primary));
+  background: var(--surface-subtle);
+}
+
+.set-slides-font-card-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.set-slides-font-card.selected .set-slides-font-card-name {
+  color: var(--text-primary);
+}
+
+.set-slides-font-sample-title,
+.set-slides-font-sample-body,
+.set-slides-font-card-desc {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.set-slides-font-sample-title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.set-slides-font-sample-body {
+  font-size: 13px;
+}
+
+.set-slides-font-card-desc {
+  font-size: 13px;
+  line-height: 2.6;
+  color: var(--text-secondary);
+}
+
+.set-slides-fonts-pickers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+}
+
+.set-slides-fonts-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.set-slides-fonts-picker-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}

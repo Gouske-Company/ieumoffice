@@ -240,7 +240,7 @@ const api: SlidesApi = {
       atIndex,
       deckName,
     ),
-  localGeneratePage: (op: { specJson: string }) =>
+  localGeneratePage: (op: { specJson: string; defaultFonts?: { title: string; body: string } }) =>
     ipcRenderer.invoke('slides:local-page-generate', op),
   editText: (op: EditTextOp) => ipcRenderer.invoke('slides:edit-text', op),
   setElementFont: (op: SetElementFontOp) => ipcRenderer.invoke('slides:set-element-font', op),
@@ -518,6 +518,8 @@ const api: SlidesApi = {
   listStyleTemplates: () => ipcRenderer.invoke('ai:list-style-templates'),
   loadStyleTemplate: (name: string) => ipcRenderer.invoke('ai:load-style-template', name),
   getTemplateSelection: () => ipcRenderer.invoke('slides:ai-template-selection-get'),
+  getAiDefaultFonts: (lang: string) => ipcRenderer.invoke('slides:ai-default-fonts', lang),
+  openFontSettings: () => ipcRenderer.invoke('slides:open-font-settings'),
   setTemplateSelection: (selection: TemplateSelectionInput | null) =>
     ipcRenderer.invoke('slides:ai-template-selection-set', selection),
   presenterStart: () => ipcRenderer.invoke('slides:presenter-start'),

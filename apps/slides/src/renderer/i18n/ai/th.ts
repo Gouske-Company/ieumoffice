@@ -239,6 +239,11 @@ export const th = {
   aiTplFontsNotice:
     'ฟอนต์ของเทมเพลตมีอยู่ในแอปนี้แล้ว หากเปิดในโปรแกรมอื่น เช่น PowerPoint อาจแสดงเป็นฟอนต์อื่น',
   aiTplOpenFonts: 'เปิดโฟลเดอร์ฟอนต์',
+  aiTplFontsAuto: 'ฟอนต์: AI เลือก',
+  aiTplFontsOne: 'ฟอนต์: {font}',
+  aiTplFontsTwo: 'ฟอนต์: หัวเรื่อง {title} เนื้อความ {body}',
+  aiTplFontsTemplate: 'ฟอนต์: ของเทมเพลตที่เลือก',
+  aiTplFontsChange: 'เปลี่ยน',
   aiTplDesc_coral: 'สีครีมและชมพูอมส้มบนพื้นเกือบดำ หัวเรื่องตัวใหญ่ หนา และแคบ',
   aiTplDesc_blue_professional: 'พื้นสีครีมกับจุดเน้นสีน้ำเงินโคบอลต์สด เรียบ ทันสมัย และเป็นทางการ',
   aiTplDesc_monochrome: 'พื้นสีงาช้างกับตัวอักษรสีดำล้วน หัวเรื่องแบบมีเชิง ไม่ใช้สีเลย',

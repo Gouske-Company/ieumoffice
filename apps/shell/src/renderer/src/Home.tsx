@@ -1161,7 +1161,10 @@ export function Home({
   useEffect(
     () =>
       window.aiOffice.onOpenSettings?.((target) =>
-        setSettingsRequest({ section: target.section as SettingsTarget['section'] }),
+        setSettingsRequest({
+          section: target.section as SettingsTarget['section'],
+          ...(target.field === 'slidesAiFonts' ? { field: 'slidesAiFonts' as const } : {}),
+        }),
       ),
     [],
   )

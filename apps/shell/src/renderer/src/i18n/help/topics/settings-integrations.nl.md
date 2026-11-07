@@ -22,6 +22,7 @@ Licht / Donker / Systeem volgen. Systeem volgen volgt het uiterlijk van het best
 - **Alle documenten automatisch opslaan** zet AutoSave standaard aan in elke editor; u kunt het voor één venster nog steeds uitschakelen.
 - **Opslaglocatie** met de knop **Wijzigen** en **Standaardapp voor Office-documenten** om .docx / .xlsx / .pptx aan GenOffice toe te kennen.
 - **Opslagformaat voor nieuwe HWP-documenten** kiest of bij de eerste opslag van een nieuw document eerst HWP of HWPX wordt aangeboden. Geopende documenten behouden hun eigen formaat.
+- **Lettertypen voor AI-dia’s** bepaalt welke lettertypen de AI gebruikt voor een nieuwe presentatie als uw verzoek er geen noemt. Kies Automatisch, Schreefloos, Schreef of Titels met schreef, en wijzig het schreefloze en het schreeflettertype apart. Een gekozen ontwerpsjabloon gebruikt zijn eigen lettertypen, en pagina’s die u toevoegt aan een presentatie in andere lettertypen volgen die presentatie.
 
 GenOffice verzamelt of verstuurt geen gebruiksstatistieken, dus er is ook geen schakelaar voor.
 

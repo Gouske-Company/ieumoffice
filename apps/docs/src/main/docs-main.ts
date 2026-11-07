@@ -129,10 +129,12 @@ import {
   setCodexImageGenerationAvailable,
   setRescueFetch,
   streamForProvider,
+  subscriptionOffIn,
   type AiChatRequest,
   type AiSettings,
   type AiStreamChunk,
   type AiStreamRequest,
+  type AiSubscriptionCliId,
   type AiSubscriptionProviderId,
   sealAiSecrets,
   withMigratedSubscriptionNoticeVersion,
@@ -191,6 +193,8 @@ import {
   resolveAiRun,
   subscriptionStreamCallbacks,
   withMeteredAccepted,
+  withStoredSubscriptionOff,
+  withSubscriptionOff,
   type AiRunTexts,
 } from './ai-run'
 import { createChunkCoalescer } from './stream-coalesce'
@@ -4113,7 +4117,8 @@ function writeRendererAiSettings(settings: unknown): boolean {
   // so the renderer's copy is sanitized before it touches disk.
   const sanitized = sanitizeAiSettings(settings)
   if (!sanitized) return false
-  writeAiSettingsFile(withStoredKeyModels(sanitized, storedAiSettings()))
+  const stored = storedAiSettings()
+  writeAiSettingsFile(withStoredSubscriptionOff(withStoredKeyModels(sanitized, stored), stored))
   broadcastAiSettingsChanged()
   keyModelRefresher.refreshChanged()
   return true
@@ -4151,6 +4156,10 @@ export function registerAiIpc(): void {
       writeAiSettingsFile(
         withMeteredAccepted(readJson<unknown>(SETTINGS_PATH(), {}), provider, accepted),
       )
+      broadcastAiSettingsChanged()
+    },
+    setSubscriptionOff: (provider: AiSubscriptionCliId, off: boolean) => {
+      writeAiSettingsFile(withSubscriptionOff(readJson<unknown>(SETTINGS_PATH(), {}), provider, off))
       broadcastAiSettingsChanged()
     },
     dataDir: app.getPath('userData'),
@@ -4199,6 +4208,10 @@ export function registerAiIpc(): void {
   })
 
   ipcMain.handle('ai:codex-models', async (_event, cliPath: unknown) => {
+    // turned off in this app (decision 0114): Codex is not started for its list either
+    if (subscriptionOffIn(storedAiSettings(), 'codex')) {
+      throw new Error('Codex is turned off in this app')
+    }
     // the probe spawns the path directly, so it gets the same metacharacter and
     // existence check as the stored setting (anything else: auto-detect)
     return listCodexModels(sanitizeCliPath(cliPath))

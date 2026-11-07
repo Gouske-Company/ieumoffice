@@ -58,10 +58,10 @@ const MAX_TABLE_CELLS = 400
 const MAX_REPORTED_CHARS = 200
 /** Tables one listTables call lists. */
 const MAX_LISTED_TABLES = 200
-/** Cells one checkLayout call measures; beyond this the answer says it saw part. */
-const MAX_LAYOUT_CELLS = 4000
-/** Cells that do not fit one checkLayout call lists. */
+/** Cells that do not fit one checkLayout call lists before it stops at the end of a row. */
 const MAX_LISTED_OVERFLOWS = 100
+/** How long one checkLayout call measures for; it is called again from where it stopped. */
+const LAYOUT_BATCH_MS = 2000
 /**
  * How much of its height a line may pass the cell's bottom edge and still read whole: the
  * line box is the font's em box, and the glyphs stop short of its bottom, so text that only
@@ -3021,79 +3021,149 @@ function tablesOf(doc) {
 }
 
 /**
+ * The text lines of each table cell on page `page`, from one layout read of the page
+ * (getPageTextLayout): for every cell, keyed as `tableKey` + `/` + cell index, its runs of
+ * visible text as boxes in CSS px.
+ */
+function cellLinesOn(doc, page) {
+  const lines = new Map()
+  let layout
+  try {
+    layout = parse(doc.getPageTextLayout(page))
+  } catch {
+    return lines
+  }
+  for (const run of Array.isArray(layout?.runs) ? layout.runs : []) {
+    const path = run.cellPath
+    if (!Array.isArray(path) || path.length === 0 || !(run.w > 0)) continue
+    // an empty paragraph is laid out as a blank run as wide as the cell: nothing to cut off
+    if (!/\S/.test(run.displayText ?? run.text ?? '')) continue
+    const last = path[path.length - 1]
+    const key = [
+      run.secIdx,
+      run.parentParaIdx,
+      ...path.slice(0, -1).map((e) => `${e.controlIndex}.${e.cellIndex}.${e.cellParaIndex}`),
+      last.controlIndex,
+      last.cellIndex,
+    ].join('/')
+    const box = { x: run.x, y: run.y, h: run.h }
+    const seen = lines.get(key)
+    if (seen) seen.push(box)
+    else lines.set(key, [box])
+  }
+  return lines
+}
+
+/**
+ * The run of `runs` that ends lowest among those drawn in the cell's column from its top
+ * down. The text layout of a page also holds the master page's and the header's text, whose
+ * cells are addressed like the body's: those runs stand elsewhere on the page.
+ */
+function lowestRunIn(runs, box) {
+  let lowest = null
+  for (const run of runs) {
+    if (run.x < box.x - 1 || run.x >= box.x + box.w || run.y + run.h <= box.y) continue
+    if (!lowest || run.y + run.h > lowest.y + lowest.h) lowest = run
+  }
+  return lowest
+}
+
+/**
  * The table cells whose text does not fit, as the pages are laid out: a row keeps the height
  * the file gives it, so a line drawn past the cell's bottom edge is cut off on the page and
- * in print. Each cell's lines (getSelectionRectsInCellByPath, as the change marks use) are
- * held against the cell's box on the same page (getTableCellBboxesByPath); a cell that runs
- * on to the next page is measured page by page. `over` is how far the text goes past the
- * edge, in mm. Reads only.
+ * in print. The cells' boxes come from one read per table (getTableCellBboxesByPath) and
+ * their lines from one read per page (cellLinesOn); a cell that runs on to the next page is
+ * measured page by page. `over` is how far the text goes past the edge, in mm.
+ *
+ * Starts at table `fromTable`, row `fromRow` (1-based, as listTables and readTable number
+ * them) and goes on for about two seconds or until MAX_LISTED_OVERFLOWS cells are listed,
+ * always ending on a whole row; `next` names where the next call starts. Reads only.
  */
-function overflowsOf(doc) {
+function overflowsOf(doc, fromTable, fromRow) {
   const { tables, partial } = tablesOf(doc)
-  const found = new Map()
-  let measured = 0
-  let truncated = partial
+  const start = Number.isInteger(fromTable) && fromTable >= 1 ? fromTable - 1 : 0
+  const firstRow = Number.isInteger(fromRow) && fromRow >= 1 ? fromRow - 1 : 0
+  const began = Date.now()
+  const pages = new Map()
+  const linesOn = (page) => {
+    if (!pages.has(page)) pages.set(page, cellLinesOn(doc, page))
+    return pages.get(page)
+  }
   const toMm = (px) => Math.round(((px * 25.4) / 96) * 10) / 10
-  tables.forEach((table, index) => {
+  const cells = []
+  let measured = 0
+  let next = null
+  for (let index = start; index < tables.length && !next; index++) {
+    const table = tables[index]
     let boxes
     try {
       boxes = parse(doc.getTableCellBboxesByPath(table.sec, table.para, JSON.stringify(table.path)))
     } catch {
-      return
+      continue
     }
-    for (const box of Array.isArray(boxes) ? boxes : []) {
-      if (measured >= MAX_LAYOUT_CELLS) {
-        truncated = true
-        return
-      }
-      measured += 1
-      let rects
-      try {
-        const first = JSON.stringify(cellAt(table.path, box.cellIdx, 0))
-        const last = doc.getCellParagraphCountByPath(table.sec, table.para, first) - 1
-        if (last < 0) continue
-        const end = doc.getCellParagraphLengthByPath(
-          table.sec,
-          table.para,
-          JSON.stringify(cellAt(table.path, box.cellIdx, last)),
-        )
-        if (last === 0 && end === 0) continue
-        rects = parse(
-          doc.getSelectionRectsInCellByPath(table.sec, table.para, first, 0, 0, last, end),
-        )
-      } catch {
-        continue
-      }
-      const lines = (Array.isArray(rects) ? rects : []).filter(
-        (r) => r.pageIndex === box.pageIndex && r.width > 0,
-      )
-      if (lines.length === 0) continue
-      const lowest = lines.reduce((a, b) => (b.y + b.height > a.y + a.height ? b : a))
-      const below = lowest.y + lowest.height - (box.y + box.h)
-      if (below <= lowest.height * LAYOUT_SLACK_LINE) continue
-      const key = `${index}:${box.cellIdx}`
-      if (found.has(key)) continue
-      found.set(key, {
-        table: index + 1,
-        row: box.row + 1,
-        col: box.col + 1,
-        page: box.pageIndex + 1,
-        over: toMm(below),
-        text: clip(
-          paragraphsOf(cellBox(doc, table, box.cellIdx))
-            .join(' ')
-            .trim(),
-          PREVIEW_CHARS,
-        ),
-      })
+    if (!Array.isArray(boxes)) continue
+    // the boxes number cells as the layout does, which can differ from the document's own
+    // cell numbers (a table with a caption): the box's row and column name the cell
+    let grid
+    try {
+      grid = gridOf(doc, table)
+    } catch {
+      continue
     }
-  })
-  const cells = [...found.values()]
+    const cellAtPlace = new Map(grid.map((g) => [`${g.row}/${g.col}`, g.cell]))
+    const key = tableKey(table.sec, table.para, table.path)
+    const rows = new Map()
+    for (const box of boxes) {
+      if (index === start && box.row < firstRow) continue
+      if (!rows.has(box.row)) rows.set(box.row, [])
+      rows.get(box.row).push(box)
+    }
+    for (const row of [...rows.keys()].sort((a, b) => a - b)) {
+      if (
+        measured > 0 &&
+        (cells.length >= MAX_LISTED_OVERFLOWS || Date.now() - began > LAYOUT_BATCH_MS)
+      ) {
+        next = { table: index + 1, row: row + 1 }
+        break
+      }
+      const listed = new Set()
+      const counted = new Set()
+      for (const box of rows.get(row)) {
+        const cell = cellAtPlace.get(`${box.row}/${box.col}`)
+        if (cell === undefined) continue
+        if (!counted.has(cell)) {
+          counted.add(cell)
+          measured += 1
+        }
+        if (listed.has(cell)) continue
+        const lowest = lowestRunIn(linesOn(box.pageIndex).get(`${key}/${cell}`) ?? [], box)
+        if (!lowest) continue
+        const below = lowest.y + lowest.h - (box.y + box.h)
+        if (below <= lowest.h * LAYOUT_SLACK_LINE) continue
+        listed.add(cell)
+        cells.push({
+          table: index + 1,
+          row: box.row + 1,
+          col: box.col + 1,
+          page: box.pageIndex + 1,
+          over: toMm(below),
+          text: clip(
+            paragraphsOf(cellBox(doc, table, cell))
+              .join(' ')
+              .trim(),
+            PREVIEW_CHARS,
+          ),
+        })
+      }
+    }
+  }
   return {
-    count: cells.length,
-    cells: cells.slice(0, MAX_LISTED_OVERFLOWS),
+    tables: tables.length,
+    from: { table: start + 1, row: firstRow + 1 },
+    cells,
     measured,
-    ...(truncated ? { partial: true } : {}),
+    ...(next ? { next } : {}),
+    ...(partial ? { partial: true } : {}),
   }
 }
 
@@ -6038,9 +6108,13 @@ export const agentPlugin = {
       /**
        * The table cells whose text does not fit where it is drawn (cut off on the page and
        * in print), with the table number listTables gives, the 1-based row and column, the
-       * page, the edge and how far past it in mm. Reads only.
+       * page and how far past the edge in mm. Starts at table `fromTable`, row `fromRow`
+       * (1-based, default the first) and measures for about two seconds; `next` is where
+       * the next call goes on. Reads only.
        */
-      checkLayout: guarded(() => host.read(overflowsOf)),
+      checkLayout: guarded((fromTable, fromRow) =>
+        host.read((doc) => overflowsOf(doc, fromTable, fromRow)),
+      ),
 
       /**
        * The tables of the document in reading order, numbered from 1; a table inside a cell

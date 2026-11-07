@@ -282,13 +282,24 @@ export interface AgentLayoutOverflow {
   text: string
 }
 
+/** A place in the tables to measure from: 1-based table (as listTables) and row. */
+export interface AgentLayoutPlace {
+  table: number
+  row: number
+}
+
 export interface AgentLayoutCheck {
-  /** all cells that do not fit; `cells` holds the first ones only */
-  count: number
+  /** tables in the document, as listTables numbers them */
+  tables: number
+  /** where this call started */
+  from: AgentLayoutPlace
+  /** the cells from `from` up to `next` (or the end) whose text does not fit */
   cells: AgentLayoutOverflow[]
-  /** cells measured */
+  /** cells this call measured */
   measured: number
-  /** the document is large: some cells were not measured */
+  /** where the next call goes on; absent when the last table was measured */
+  next?: AgentLayoutPlace
+  /** the document is large: tables inside cells may be missing from the end of the list */
   partial?: boolean
 }
 
@@ -1093,7 +1104,7 @@ export interface AgentPluginSurface {
   ): AgentFormatParagraphResult
   listTables(): AgentTableList
   /** the table cells whose text is cut off on the page; reads only */
-  checkLayout(): AgentLayoutCheck
+  checkLayout(fromTable?: number | null, fromRow?: number | null): AgentLayoutCheck
   readTable(table: number, fromRow?: number | null): AgentReadTableResult
   fillCells(
     table: number,

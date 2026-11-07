@@ -801,8 +801,22 @@ const TOOLS: AgentToolDef[] = [
   {
     name: 'check_layout',
     description:
-      'List the table cells whose text does not fit where it is drawn: a row keeps the height the file gives it, so a line that runs past the bottom of its cell is cut off on the page and in print. Each with the table number, row and column, page, and how far past the edge in mm. Call it after writing into table cells; shorten the text or change the table when a cell is listed.',
-    inputSchema: { type: 'object', properties: {} },
+      'List the table cells whose text does not fit where it is drawn: a row keeps the height the file gives it, so a line that runs past the bottom of its cell is cut off on the page and in print. Each with the table number, row and column, page, and how far past the edge in mm. Call it after writing into table cells; shorten the text or change the table when a cell is listed. A long document is checked in parts; call again with from_table and from_row to go on.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        from_table: {
+          type: 'integer',
+          minimum: 1,
+          description: 'table number from list_tables to start from (default 1)',
+        },
+        from_row: {
+          type: 'integer',
+          minimum: 1,
+          description: 'row of from_table to start from (default 1)',
+        },
+      },
+    },
   },
   {
     name: 'read_table',
@@ -2470,23 +2484,45 @@ export function createHwpSkill(deps: HwpSkillDeps): HwpSkill {
         }
       }
       case 'check_layout': {
-        const checked = await bridge.checkLayout()
+        const place = ['from_table', 'from_row'].map((key) => call.input[key])
+        if (
+          !place.every(
+            (value) =>
+              value === undefined ||
+              (typeof value === 'number' && Number.isInteger(value) && value >= 1),
+          )
+        ) {
+          return bad(call, 'from_table and from_row must be whole numbers from 1')
+        }
+        const [fromTable, fromRow] = place as (number | undefined)[]
+        const checked = await bridge.checkLayout(fromTable ?? null, fromRow ?? null)
         const lines = checked.cells.map(
           (cell) =>
             `table ${cell.table}, row ${cell.row}, col ${cell.col} (page ${cell.page}): the text runs ${cell.over} mm past the bottom of the cell and is cut off: ${quote(cell.text)}`,
         )
-        if (checked.count > checked.cells.length) {
-          lines.push(`(only the first ${checked.cells.length} of ${checked.count} are listed)`)
-        }
-        if (checked.partial) {
-          lines.push('(the document is large: some cells were not measured)')
-        }
+        const from = checked.from
+        const scope =
+          from.table === 1 && from.row === 1 ? '' : ` from table ${from.table}, row ${from.row}`
+        const until = checked.next
+          ? ` up to table ${checked.next.table}, row ${checked.next.row}`
+          : ''
+        const head =
+          lines.length === 0
+            ? `Every table cell's text fits${scope}${until} (${checked.measured} cell(s) of ${checked.tables} table(s) measured).`
+            : `${lines.length} cell(s) do not fit${scope}${until}:`
+        const tail = [
+          ...(checked.next
+            ? [
+                `[more tables: call check_layout with from_table ${checked.next.table} and from_row ${checked.next.row}]`,
+              ]
+            : []),
+          ...(checked.partial
+            ? ['(the document is large: tables inside cells near the end were not found)']
+            : []),
+        ]
         return {
-          output:
-            checked.count === 0
-              ? `Every table cell's text fits (${checked.measured} cell(s) measured).${checked.partial ? ' The document is large: some cells were not measured.' : ''}`
-              : lines.join('\n'),
-          summary: label('aiToolLayout', { count: checked.count }),
+          output: [head, ...lines, ...tail].join('\n'),
+          summary: label('aiToolLayout', { count: lines.length }),
         }
       }
       case 'read_table': {

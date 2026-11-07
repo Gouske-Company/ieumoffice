@@ -145,6 +145,12 @@ function setup(
     replaceFont: vi.fn(async () => ({ ok: true as const, ranges: 3, paragraphs: 2 })),
     formatParagraph: vi.fn(async () => ({ ok: true as const, inTable: false })),
     listTables: vi.fn(async () => ({ count: 0, partial: false, tables: [] })),
+    checkLayout: vi.fn(async () => ({
+      tables: 2,
+      from: { table: 1, row: 1 },
+      cells: [],
+      measured: 12,
+    })),
     readTable: vi.fn(async () => ({
       ok: true as const,
       table: 1,
@@ -1451,6 +1457,42 @@ describe('tables that are already in the document', () => {
     expect(result.isError).toBe(true)
     expect(result.output).toContain('the document has 2')
     expect(result.summary).toBe('aiToolNotDone:{"what":"aiTableName:{\\"table\\":5}"}')
+  })
+
+  it('says every cell fits when check_layout lists none', async () => {
+    const { call, bridge } = setup()
+    const result = await call('check_layout')
+    expect(bridge.checkLayout).toHaveBeenCalledWith(null, null)
+    expect(result.output).toBe("Every table cell's text fits (12 cell(s) of 2 table(s) measured).")
+    expect(result.summary).toBe('aiToolLayout:{"count":0}')
+  })
+
+  it('lists the cells that are cut off and where to go on', async () => {
+    const { call, bridge } = setup({
+      checkLayout: vi.fn(async () => ({
+        tables: 4,
+        from: { table: 2, row: 30 },
+        cells: [{ table: 2, row: 31, col: 2, page: 3, over: 2.5, text: '서울시 종로구' }],
+        measured: 400,
+        next: { table: 3, row: 1 },
+      })),
+    })
+    const result = await call('check_layout', { from_table: 2, from_row: 30 })
+    expect(bridge.checkLayout).toHaveBeenCalledWith(2, 30)
+    expect(result.output.split('\n')).toEqual([
+      '1 cell(s) do not fit from table 2, row 30 up to table 3, row 1:',
+      'table 2, row 31, col 2 (page 3): the text runs 2.5 mm past the bottom of the cell and is cut off: 서울시 종로구',
+      '[more tables: call check_layout with from_table 3 and from_row 1]',
+    ])
+    expect(result.summary).toBe('aiToolLayout:{"count":1}')
+  })
+
+  it('refuses a place to start from that is not a whole number from 1', async () => {
+    const { call, bridge } = setup()
+    const result = await call('check_layout', { from_table: 0 })
+    expect(result.isError).toBe(true)
+    expect(result.output).toContain('from_table and from_row must be whole numbers from 1')
+    expect(bridge.checkLayout).not.toHaveBeenCalled()
   })
 
   it('fills cells in one call and reports one change', async () => {

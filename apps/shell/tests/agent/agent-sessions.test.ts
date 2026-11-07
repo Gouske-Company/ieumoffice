@@ -500,6 +500,34 @@ describe('a program turned off in this app (decision 0114)', () => {
     expect(claude).not.toHaveBeenCalled()
   })
 
+  it('starts no program when it is turned off while the session is being prepared', async () => {
+    const settings: Partial<AiSettings> = {}
+    const { m, project, claude, mcpStop, startAppMcp } = manager({ settings })
+    startAppMcp.mockImplementationOnce(async () => {
+      settings.subscriptionOff = { 'claude-code': true }
+      return { url: 'http://127.0.0.1:5/mcp', token: 't', stop: mcpStop }
+    })
+    expect(
+      await m.start(1, { provider: 'claude-code', projectRoot: project, mode: 'ask-commands' }),
+    ).toEqual(expect.objectContaining({ ok: false, reason: 'start-failed', kind: 'off-in-app' }))
+    expect(claude).not.toHaveBeenCalled()
+    expect(mcpStop).toHaveBeenCalledTimes(1)
+  })
+
+  it('ends a program turned off while its runner was starting it', async () => {
+    const settings: Partial<AiSettings> = {}
+    const { m, project, claude, session, mcpStop } = manager({ settings })
+    claude.mockImplementationOnce(async () => {
+      settings.subscriptionOff = { 'claude-code': true }
+      return session
+    })
+    expect(
+      await m.start(1, { provider: 'claude-code', projectRoot: project, mode: 'ask-commands' }),
+    ).toEqual(expect.objectContaining({ ok: false, reason: 'start-failed', kind: 'off-in-app' }))
+    expect(session.stopped).toBe(1)
+    expect(mcpStop).toHaveBeenCalledTimes(1)
+  })
+
   it('sends nothing more once it is turned off, and ends the session', async () => {
     const settings: Partial<AiSettings> = {}
     const { m, project, session, emitted } = manager({ settings })

@@ -81,6 +81,7 @@ import {
 } from '@genoffice/pptx-ops'
 import { matchesElementRef } from '@genoffice/pptx-engine/identity'
 import { buildPagePptx, parsePageSpec } from '@genoffice/pipelines/slides'
+import { fillMissingRunFonts, parseFontRoles } from './ai-default-fonts'
 import { sniffImageMime } from './media-mime'
 import {
   newPasteCascade,
@@ -2167,13 +2168,16 @@ export function registerSlidesIpc(): void {
     'slides:local-page-generate',
     async (
       _e,
-      op: { specJson: string },
+      op: { specJson: string; defaultFonts?: unknown },
     ): Promise<{ ok: boolean; marker?: string; error?: string; imageFailures?: string[] }> => {
       const parsed = parsePageSpec(String(op?.specJson ?? ''))
       if (!parsed.ok) return { ok: false, error: parsed.error }
+      // the fonts of Settings › General, sent only when they apply to this deck
+      const roles = parseFontRoles(op?.defaultFonts)
+      const spec = roles ? fillMissingRunFonts(parsed.spec, roles) : parsed.spec
       try {
         const started = Date.now()
-        const { bytes, imageFailures } = await buildPagePptx(parsed.spec, {
+        const { bytes, imageFailures } = await buildPagePptx(spec, {
           fontMetrics: getFontMetrics(),
           fetchImage: async (url) => {
             const resp = await fetchRemoteImage(url)

@@ -15,6 +15,7 @@ import {
   writeFileSync,
 } from 'node:fs'
 import { join } from 'node:path'
+import { readSlidesAiFonts } from './ai-default-fonts'
 import {
   sanitizeAiSettings,
   setAiUserAgent,
@@ -295,6 +296,12 @@ export function styleSkillSidecarPath(draftPath: string | null | undefined): str
 export function registerSlidesOnlyAiIpc(): void {
   // The design template remembered per document (slides:ai-template-selection-get / -set)
   registerTemplateSelectionIpc()
+
+  // The fonts generation uses when the request names none (Settings › General); the
+  // renderer passes its UI language, which picks the default before a choice is stored
+  ipcMain.handle('slides:ai-default-fonts', (_event, lang: unknown) =>
+    readSlidesAiFonts(app, typeof lang === 'string' ? lang : ''),
+  )
 
   // What the search/image/media tools can do right now (settings + subscription connections):
   // the renderer offers the model only the tools that have a route.

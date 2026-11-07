@@ -240,6 +240,11 @@ export const ar = {
   aiTplFontsNotice:
     'خطوط القالب مضمّنة في هذا التطبيق. قد تعرض برامج أخرى مثل PowerPoint خطًا مختلفًا.',
   aiTplOpenFonts: 'فتح مجلد الخطوط',
+  aiTplFontsAuto: 'الخطوط: يختارها الذكاء الاصطناعي',
+  aiTplFontsOne: 'الخطوط: {font}',
+  aiTplFontsTwo: 'الخطوط: العناوين {title}، النص {body}',
+  aiTplFontsTemplate: 'الخطوط: خطوط القالب المختار',
+  aiTplFontsChange: 'تغيير',
   aiTplDesc_coral: 'كريمي ووردي مائل إلى البرتقالي على خلفية شبه سوداء، مع عناوين ضخمة وضيقة.',
   aiTplDesc_blue_professional:
     'خلفية كريمية مع لمسات من الأزرق الكوبالتي الزاهي. نظيف وعصري ورسمي.',

@@ -244,6 +244,11 @@ export const nl = {
   aiTplFontsNotice:
     "De lettertypen van het sjabloon zitten in deze app. Andere programma's, zoals PowerPoint, tonen mogelijk een ander lettertype.",
   aiTplOpenFonts: 'Lettertypemap openen',
+  aiTplFontsAuto: 'Lettertypen: AI kiest',
+  aiTplFontsOne: 'Lettertypen: {font}',
+  aiTplFontsTwo: 'Lettertypen: titels {title}, tekst {body}',
+  aiTplFontsTemplate: 'Lettertypen: die van de gekozen sjabloon',
+  aiTplFontsChange: 'Wijzigen',
   aiTplDesc_coral: 'Crème en oranjeroze op bijna zwart, met extra grote, smalle koppen.',
   aiTplDesc_blue_professional:
     'Crèmekleurige achtergrond met felle kobaltblauwe accenten. Strak, modern en zakelijk.',

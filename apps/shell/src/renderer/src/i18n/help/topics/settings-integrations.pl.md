@@ -22,6 +22,7 @@ Jasny / Ciemny / Zgodnie z systemem. Opcja Zgodnie z systemem podąża za wyglą
 - **Automatycznie zapisuj wszystkie dokumenty** włącza AutoSave domyślnie w każdym edytorze; nadal można je wyłączyć dla jednego okna.
 - **Lokalizacja zapisu** z przyciskiem **Zmień** oraz **Domyślna aplikacja dla dokumentów Office**, aby przejąć .docx / .xlsx / .pptx dla GenOffice.
 - **Format zapisu nowych dokumentów HWP** decyduje, czy przy pierwszym zapisie nowego dokumentu zaproponować najpierw HWP, czy HWPX. Otwarte dokumenty zachowują swój format.
+- **Czcionki slajdów AI** ustala czcionki, których AI używa w nowej prezentacji, gdy prośba nie wskazuje żadnej. Wybierz Automatycznie, Bezszeryfowa, Szeryfowa lub Tytuły szeryfowe i osobno zmień czcionkę bezszeryfową i szeryfową. Wybrany szablon projektu używa własnych czcionek, a strony dodane do prezentacji w innych czcionkach dostosowują się do niej.
 
 GenOffice nie zbiera ani nie wysyła statystyk użytkowania, więc nie ma do tego przełącznika.
 

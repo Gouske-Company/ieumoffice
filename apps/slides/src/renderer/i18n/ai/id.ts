@@ -243,6 +243,11 @@ export const id = {
   aiTplFontsNotice:
     'Font templat sudah disertakan dalam aplikasi ini. Program lain seperti PowerPoint mungkin menampilkan font yang berbeda.',
   aiTplOpenFonts: 'Buka folder font',
+  aiTplFontsAuto: 'Font: dipilih AI',
+  aiTplFontsOne: 'Font: {font}',
+  aiTplFontsTwo: 'Font: judul {title}, teks {body}',
+  aiTplFontsTemplate: 'Font: milik templat yang dipilih',
+  aiTplFontsChange: 'Ubah',
   aiTplDesc_coral:
     'Krem dan merah muda jingga di atas latar hampir hitam, dengan judul besar dan ramping.',
   aiTplDesc_blue_professional:

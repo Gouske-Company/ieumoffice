@@ -319,6 +319,7 @@ import {
   normalizeHwpDefaultFormat,
   readHwpDefaultFormat,
 } from '../../../hwp/src/main/default-format'
+import { SLIDES_AI_FONTS_KEY, normalizeSlidesAiFonts } from '@genoffice/ui/slides-ai-fonts'
 import {
   configureHtmlRuntime,
   exportHtmlHeadless,
@@ -6994,6 +6995,19 @@ function registerHomeIpc(): void {
     return next
   })
 
+  // the slides editor reads the same key for each generation (apps/slides/src/main/ai-default-fonts.ts)
+  ipcMain.handle(HOME_CHANNELS.getSlidesAiFonts, () =>
+    normalizeSlidesAiFonts(
+      readAppSettings(APP_SETTINGS_PATH())[SLIDES_AI_FONTS_KEY],
+      currentLang(),
+    ),
+  )
+  ipcMain.handle(HOME_CHANNELS.setSlidesAiFonts, (_event, fonts: unknown) => {
+    const next = normalizeSlidesAiFonts(fonts, currentLang())
+    writeAppSetting(APP_SETTINGS_PATH(), SLIDES_AI_FONTS_KEY, next)
+    return next
+  })
+
   ipcMain.handle(HOME_CHANNELS.openGitHubRepo, () => {
     shell.openExternal(GITHUB_REPO_URL).catch(() => {
       // no browser handler available; nothing actionable for the user here
@@ -9357,6 +9371,16 @@ ipcMain.handle('ai:open-model-settings', () => {
   win.focus()
   tabManager?.openHomeTab()
   win.webContents.send(HOME_CHANNELS.openSettings, { section: 'aiModel' })
+})
+// the slides template gallery's "Change" beside the default fonts (decision 0115)
+ipcMain.handle('slides:open-font-settings', () => {
+  const win = shellWindow
+  if (!win || win.isDestroyed()) return
+  if (win.isMinimized()) win.restore()
+  win.show()
+  win.focus()
+  tabManager?.openHomeTab()
+  win.webContents.send(HOME_CHANNELS.openSettings, { section: 'general', field: 'slidesAiFonts' })
 })
 registerProjectIpc()
 registerDocsIpc()

@@ -20,6 +20,8 @@ import type {
 import type { UpdateChannel, UpdateUiState } from './update-api'
 import type { KbFileInfo, KbReadPage, KbSearchHit } from '@genoffice/agent-core'
 import type { AiPanelPrefs } from '@genoffice/ui/ai-panel-prefs'
+import type { SlidesAiFonts } from '@genoffice/ui/slides-ai-fonts'
+import type { FontFamilyInfo } from '@genoffice/ui'
 
 /** UI language; kept self-contained here (mirrors Lang in @genoffice/i18n) */
 
@@ -327,7 +329,7 @@ export interface HomeApi {
   getAutoUpdateCheck(): Promise<boolean>
   setAutoUpdateCheck(on: boolean): Promise<void>
   /** a tab asked for the settings modal (composer model chip → AI Model section) */
-  onOpenSettings(handler: (target: { section: string }) => void): () => void
+  onOpenSettings(handler: (target: { section: string; field?: string }) => void): () => void
   /** app version (from package.json / electron app.getVersion) */
   getAppVersion(): Promise<string>
   /** live updater state (null until an update was first seen); Settings → About */
@@ -382,6 +384,14 @@ export interface HomeApi {
   getHwpDefaultFormat(): Promise<HwpDefaultFormat>
   /** persist the choice; an unknown value is stored as HWP */
   setHwpDefaultFormat(format: HwpDefaultFormat): Promise<HwpDefaultFormat>
+  /** fonts AI slide generation uses when the request names none (userData/app-settings.json) */
+  getSlidesAiFonts?(): Promise<SlidesAiFonts>
+  /** persist the choice; resolves to the value as stored (unknown parts fall back to the defaults) */
+  setSlidesAiFonts?(fonts: SlidesAiFonts): Promise<SlidesAiFonts>
+  /** Korean names and similar details of installed families, read from the font files */
+  fontFamilyInfo?(
+    families: readonly string[],
+  ): Promise<ReadonlyArray<readonly [string, FontFamilyInfo]>>
   /** who opens .docx/.xlsx/.pptx today (Settings → General "default app" row) */
   getDefaultAppStatus(): Promise<DefaultAppStatus>
   /** claim the Office types (mac/linux) or open the system Default Apps page (win); resolves to the refreshed status */
@@ -614,6 +624,8 @@ export const HOME_CHANNELS = {
   pickDefaultSaveDir: 'home:pick-default-save-dir',
   getHwpDefaultFormat: 'home:get-hwp-default-format',
   setHwpDefaultFormat: 'home:set-hwp-default-format',
+  getSlidesAiFonts: 'home:get-slides-ai-fonts',
+  setSlidesAiFonts: 'home:set-slides-ai-fonts',
   openGitHubRepo: 'home:open-github-repo',
   openFeedbackSurvey: 'home:open-feedback-survey',
   openLicenseNotices: 'home:open-license-notices',

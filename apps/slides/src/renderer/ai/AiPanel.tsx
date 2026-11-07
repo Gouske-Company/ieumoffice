@@ -75,6 +75,8 @@ import {
 import { extractJsonObject, parseOutlineJson } from './outline-json'
 import { createDeckContextGate } from './deck-context-gate'
 import { buildPageSystemPrompt } from './page-system-prompt'
+import { defaultFontsPageNote, defaultFontsStyleNote } from './default-fonts'
+import { slidesAiFontRoles } from '@genoffice/ui/slides-ai-fonts'
 import { templateSelectionState } from './template-selection-state'
 import { TemplateStartGallery } from './TemplateGallery'
 import { TemplatePicker } from './TemplatePicker'
@@ -1403,6 +1405,11 @@ export function AiPanel({
       // Single-page generation: one LLM request through the app's own AI transport writes a
       // structured JSON slide spec, and the main process builds it directly into a one-slide
       // pptx with pptx-engine primitives — no HTML intermediate.
+      // Settings › General fonts as title/body families (null for "auto"); read per generation
+      getAiDefaultFonts: async () => {
+        const fonts = await window.slidesApi.getAiDefaultFonts?.(langRef.current)
+        return fonts ? slidesAiFontRoles(fonts) : null
+      },
       generatePageLocal: async (args) => {
         const sys = buildPageSystemPrompt({
           canvasW: args.canvasW,
@@ -1416,12 +1423,13 @@ export function AiPanel({
           ? `\n\nReference material (all real names/figures/facts come from here; do not invent):\n${args.context.slice(0, 4000)}`
           : ''
         const skeletonBlock = args.skeleton ? `\n\n${args.skeleton}` : ''
+        const fontsBlock = args.defaultFonts ? defaultFontsPageNote(args.defaultFonts) : ''
         const userMsg =
           `This is the deck's unified style (this page must follow it strictly to stay consistent across pages):\n${args.style}\n\n` +
           (args.topic ? `Deck topic: ${args.topic}\n` : '') +
           `Deck-wide narrative Core Hook: ${args.coreHook}\n\n` +
           `Now design page ${args.pageIndex}/${args.totalPages}.\n` +
-          `Title: ${args.title}\nLayout: ${args.layout}\nContent brief (use real data/facts): ${args.brief}${imgBlock}${ctxBlock}${skeletonBlock}\n\n` +
+          `Title: ${args.title}\nLayout: ${args.layout}\nContent brief (use real data/facts): ${args.brief}${imgBlock}${ctxBlock}${skeletonBlock}${fontsBlock}\n\n` +
           "Return only this page's spec JSON."
         // One repair round: feed the exact validation error back so the model can fix its JSON
         let lastErr = ''
@@ -1439,7 +1447,10 @@ export function AiPanel({
             continue
           }
           try {
-            const res = await window.slidesApi.localGeneratePage({ specJson: r.text })
+            const res = await window.slidesApi.localGeneratePage({
+              specJson: r.text,
+              ...(args.defaultFonts ? { defaultFonts: args.defaultFonts } : {}),
+            })
             if (res?.ok && res.marker) return res
             lastErr = res?.error ?? tGlobal('aiErrUnknown')
           } catch (e) {
@@ -1474,7 +1485,8 @@ export function AiPanel({
           'Overall style: [one sentence describing the overall design language]'
         const q = a.questionnaire ? `\nUser questionnaire answers: ${a.questionnaire}` : ''
         const hint = a.styleHint ? `\nStyle preference: ${a.styleHint}` : ''
-        const userMsg = `Topic and style preferences: ${a.topic}${hint}${q}\nOutput the Style Skill.`
+        const fonts = a.defaultFonts ? defaultFontsStyleNote(a.defaultFonts) : ''
+        const userMsg = `Topic and style preferences: ${a.topic}${hint}${q}${fonts}\nOutput the Style Skill.`
         const r = await runLlmOnce(sys, userMsg, undefined, true, a.signal)
         return r.ok && r.text
           ? { ok: true, styleSkill: r.text.trim() }

@@ -241,6 +241,11 @@ export const ja = {
   aiTplFontsNotice:
     'テンプレートのフォントはこのアプリに含まれています。PowerPoint などほかのアプリで開くと、別のフォントで表示されることがあります。',
   aiTplOpenFonts: 'フォント フォルダーを開く',
+  aiTplFontsAuto: 'フォント：AI が選択',
+  aiTplFontsOne: 'フォント：{font}',
+  aiTplFontsTwo: 'フォント：見出し {title}、本文 {body}',
+  aiTplFontsTemplate: 'フォント：選んだテンプレートのフォント',
+  aiTplFontsChange: '変更',
   aiTplDesc_coral: '黒に近い背景にクリームとオレンジがかったピンク。大きく太い見出し',
   aiTplDesc_blue_professional: 'クリーム色の背景に鮮やかな青のアクセント。すっきりしたビジネス向け',
   aiTplDesc_monochrome: 'アイボリーの背景に黒い文字だけ。明朝風の見出しで、色を使わない落ち着き',

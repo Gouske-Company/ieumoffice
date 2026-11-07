@@ -101,6 +101,7 @@ function setup(): {
         log.push(`off:${provider}:${off}`)
         return { ok: true, statuses: READY }
       },
+      isOff: async () => false,
       onChange: (listener) => {
         listeners.add(listener)
         return () => listeners.delete(listener)

@@ -19,6 +19,7 @@ import {
   launchSubscriptionUpdate,
   subscriptionUpdateCommandLine,
   subscriptionUpdatePlan,
+  type SubscriptionIpcSetup,
   type SubscriptionProgram,
   type SubscriptionProgramSource,
 } from '../src/subscription'
@@ -291,7 +292,7 @@ describe('ending a login the app started', () => {
     await rm(dir, { recursive: true, force: true })
   })
 
-  function app() {
+  function app(locate?: SubscriptionIpcSetup['locate']) {
     const children: FakeChild[] = []
     const ended: FakeChild[] = []
     let checks = 0
@@ -304,7 +305,7 @@ describe('ending a login the app started', () => {
         return { provider, state: 'signed-out' }
       },
       listModels: async () => undefined,
-      locate: async (provider) => program(provider, `C:\\npm\\${provider}.exe`, 'npm'),
+      locate: locate ?? (async (provider) => program(provider, `C:\\npm\\${provider}.exe`, 'npm')),
       spawn: (() => {
         const child = new FakeChild(1000 + children.length)
         children.push(child)
@@ -339,6 +340,24 @@ describe('ending a login the app started', () => {
     await running.deps.cancelLogin('codex')
     expect(running.ended).toEqual([running.children[0], running.children[1]])
     expect(running.deps.service.getStatuses().codex.signingIn).toBeUndefined()
+  })
+
+  it('ended while the program was being looked for, ends the login as soon as it starts', async () => {
+    let found: () => void = () => undefined
+    const running = app(
+      (provider) =>
+        new Promise((resolve) => {
+          found = () => resolve(program(provider, `C:\\npm\\${provider}.exe`, 'npm'))
+        }),
+    )
+    const launching = running.deps.launchLogin('claude-code')
+    expect(running.deps.service.getStatuses()['claude-code'].signingIn).toBe('browser')
+    expect(await running.deps.cancelLogin('claude-code')).toEqual({ ok: true })
+    found()
+    await launching
+    expect(running.children).toHaveLength(1)
+    expect(running.ended).toEqual([running.children[0]])
+    expect(running.deps.service.getStatuses()['claude-code'].signingIn).toBeUndefined()
   })
 
   it('with no login under way, ends nothing', async () => {

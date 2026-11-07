@@ -116,6 +116,12 @@ export interface SubscriptionStatusService {
    * when the setting could not be written (or no writer was given).
    */
   setOff(provider: AiSubscriptionCliId, off: boolean): Promise<SubscriptionOffResult>
+  /**
+   * Whether the provider is off in this app: its status says so, or the stored
+   * setting does (before the first check, the status still reads `checking`).
+   * The status alone when the settings cannot be read.
+   */
+  isOff(provider: AiSubscriptionProviderId): Promise<boolean>
   onChange(listener: (statuses: SubscriptionStatusMap) => void): () => void
   /**
    * Mark a login the app started as under way (`browser`, `window`), or as over
@@ -457,6 +463,13 @@ export function createSubscriptionStatusService(
       // back on: the program is asked again, and its answer arrives as a change
       if (result.ok && !off) void checkOne(provider)
       return result
+    },
+    async isOff(provider) {
+      if (statuses[provider].state === 'off') return true
+      const settings = await Promise.resolve()
+        .then(() => deps.getSettings())
+        .catch(() => null)
+      return settings !== null && subscriptionOffIn(settings, provider)
     },
     onChange(listener) {
       listeners.add(listener)

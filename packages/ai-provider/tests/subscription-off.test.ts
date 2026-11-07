@@ -241,32 +241,39 @@ describe('the subscription channels and a CLI turned off', () => {
     expect(w.settings.subscriptionOff).toEqual({ 'claude-code': true })
   })
 
-  it('starts nothing for a CLI that is off: no login, logout, install, update or "use anyway"', async () => {
-    const w = wired({ codex: true })
-    await w.service.check()
-    for (const channel of [
-      SUBSCRIPTION_IPC_CHANNELS.login,
-      SUBSCRIPTION_IPC_CHANNELS.logout,
-      SUBSCRIPTION_IPC_CHANNELS.install,
-      SUBSCRIPTION_IPC_CHANNELS.update,
-    ]) {
-      expect(await w.call(channel, { provider: 'codex' }), channel).toEqual({
-        ok: false,
-        reason: 'invalid',
+  it.each([
+    ['after its first check', true],
+    ['before any check, while its status still reads checking', false],
+  ])(
+    'starts nothing for a CLI that is off: no login, logout, install, update or "use anyway" (%s)',
+    async (_when, checked) => {
+      const w = wired({ codex: true })
+      if (checked) await w.service.check()
+      else expect(w.service.getStatuses().codex.state).toBe('checking')
+      for (const channel of [
+        SUBSCRIPTION_IPC_CHANNELS.login,
+        SUBSCRIPTION_IPC_CHANNELS.logout,
+        SUBSCRIPTION_IPC_CHANNELS.install,
+        SUBSCRIPTION_IPC_CHANNELS.update,
+      ]) {
+        expect(await w.call(channel, { provider: 'codex' }), channel).toEqual({
+          ok: false,
+          reason: 'invalid',
+        })
+      }
+      expect(
+        await w.call(SUBSCRIPTION_IPC_CHANNELS.metered, { provider: 'codex', accepted: true }),
+      ).toMatchObject({ ok: false })
+      expect(w.launched).toEqual([])
+      expect(w.meteredCalls()).toBe(0)
+      expect(w.asked).not.toContain('codex')
+      // the other CLI is untouched
+      expect(await w.call(SUBSCRIPTION_IPC_CHANNELS.login, { provider: 'claude-code' })).toEqual({
+        ok: true,
       })
-    }
-    expect(
-      await w.call(SUBSCRIPTION_IPC_CHANNELS.metered, { provider: 'codex', accepted: true }),
-    ).toMatchObject({ ok: false })
-    expect(w.launched).toEqual([])
-    expect(w.meteredCalls()).toBe(0)
-    expect(w.asked).not.toContain('codex')
-    // the other CLI is untouched
-    expect(await w.call(SUBSCRIPTION_IPC_CHANNELS.login, { provider: 'claude-code' })).toEqual({
-      ok: true,
-    })
-    expect(w.launched).toEqual(['login:claude-code'])
-  })
+      expect(w.launched).toEqual(['login:claude-code'])
+    },
+  )
 
   it('takes a CLI id and a real boolean only; ChatGPT has no switch', async () => {
     const w = wired()

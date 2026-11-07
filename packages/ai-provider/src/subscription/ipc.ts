@@ -127,9 +127,7 @@ export function registerSubscriptionIpc(
     (start: (provider: AiSubscriptionProviderId) => Promise<SubscriptionLaunchResult>) =>
     (event: unknown, payload: unknown): Promise<SubscriptionLaunchResult> =>
       launch(async (provider) =>
-        service.getStatuses()[provider].state === 'off'
-          ? { ok: false, reason: 'invalid' }
-          : start(provider),
+        (await service.isOff(provider)) ? { ok: false, reason: 'invalid' } : start(provider),
       )(event, payload)
 
   const handlers: Record<string, (event: unknown, payload?: unknown) => unknown> = {
@@ -182,7 +180,7 @@ export function registerSubscriptionIpc(
       if (!provider || typeof accepted !== 'boolean') {
         return { ok: false, statuses: service.getStatuses() }
       }
-      if (service.getStatuses()[provider].state === 'off') {
+      if (await service.isOff(provider)) {
         return { ok: false, statuses: service.getStatuses() }
       }
       return service.setMeteredAccepted(provider, accepted)
@@ -287,7 +285,9 @@ export const HIDDEN_LOGIN_TIMEOUT_MS = 10 * 60_000
 
 interface PendingLogin {
   mode: AiSubscriptionSigningIn
+  /** ends the login; asked before the program was found, it ends the login once it starts */
   stop: () => void
+  stopped?: boolean | undefined
   timer?: ReturnType<typeof setTimeout> | undefined
 }
 
@@ -368,7 +368,12 @@ export function createSubscriptionIpcDeps(setup: SubscriptionIpcSetup): Subscrip
     const mode: AiSubscriptionSigningIn =
       current || (requested === 'window' && platform === 'win32') ? 'window' : 'browser'
     current?.stop()
-    const login: PendingLogin = { mode, stop: () => undefined }
+    const login: PendingLogin = {
+      mode,
+      stop: () => {
+        login.stopped = true
+      },
+    }
     logins.set(provider, login)
     // a login is starting: whatever the last one left behind no longer applies
     service.setLoginUnfinished(provider, false)
@@ -395,6 +400,11 @@ export function createSubscriptionIpcDeps(setup: SubscriptionIpcSetup): Subscrip
       window: mode === 'browser' ? 'hidden' : 'visible',
       windowText: mode === 'window' ? windowTextOf(setup, provider) : undefined,
       onStarted: (stop) => {
+        // cancelled, turned off or replaced while the program was being looked for
+        if (login.stopped) {
+          stop()
+          return
+        }
         login.stop = stop
         // a sign-in nobody finishes does not wait unseen for ever
         if (mode === 'browser') {

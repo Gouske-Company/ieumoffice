@@ -92,32 +92,44 @@ export function withGanttWidth(source: string, width?: number): string {
 const TICK_LABEL_GAP_PX = 8
 
 /**
- * Mermaid picks a gantt's date ticks from the time range alone, so a chart drawn
- * as narrow as the column can stack its axis labels on top of each other. The
- * width at which the widest label plus a gap fits between the closest two ticks,
- * measured off-screen; 0 when the labels already fit or nothing can be measured.
+ * The narrowest width at which a drawn gantt's widest date label plus a gap fits
+ * between its closest two ticks, or the width to draw it at to find that out
  */
-export function ganttReadableWidth(svgMarkup: string): number {
+type GanttFit = { readable: number } | { measureAt: number }
+
+/**
+ * Mermaid picks a gantt's date ticks from the time range alone, so a chart drawn
+ * as narrow as the column can stack its axis labels on top of each other. Tick
+ * spacing grows with the axis while the ticks stay, but the axis is the width
+ * less mermaid's side paddings, and in a box little wider than those it is a few
+ * pixels or none: ticks rounded to whole pixels pile up and their spacing says
+ * nothing. Such a drawing asks for one wide enough to set the labels side by side.
+ * Null when there are no two ticks to keep apart.
+ */
+function ganttFit(svgMarkup: string): GanttFit | null {
   const host = scratchHost()
   host.innerHTML = svgMarkup
   try {
     const svg = host.querySelector('svg')
     const grid = svg?.querySelector<SVGGElement>(':scope > g.grid')
     const width = svg?.viewBox?.baseVal?.width ?? 0
-    if (!svg || !grid || !(width > 0) || typeof grid.getBBox !== 'function') return 0
+    if (!svg || !grid || !(width > 0) || typeof grid.getBBox !== 'function') return null
     const ticks = Array.from(grid.querySelectorAll<SVGGElement>(':scope > g.tick'))
     const xs = ticks.map((t) => t.transform.baseVal.consolidate()?.matrix.e ?? NaN)
     xs.sort((a, b) => a - b)
     let spacing = Infinity
     for (let i = 1; i < xs.length; i++) spacing = Math.min(spacing, xs[i]! - xs[i - 1]!)
+    if (Number.isNaN(spacing) || spacing === Infinity) return null
     const label = Math.max(0, ...ticks.map((t) => t.querySelector('text')?.getBBox().width ?? 0))
     const need = label + TICK_LABEL_GAP_PX
-    if (!(spacing > 0) || !Number.isFinite(spacing) || need <= spacing) return 0
     // the axis spans the width less mermaid's side paddings (left = grid offset, right alike)
     const pad = grid.transform.baseVal.consolidate()?.matrix.e ?? 0
     const axis = width - 2 * pad
-    if (!(axis > 0)) return 0
-    return Math.ceil(width - axis + (axis * need) / spacing)
+    // trust the spacing while a whole-pixel error in it costs at most half the gap at the result
+    if (!(axis > 0) || need > (spacing * TICK_LABEL_GAP_PX) / 2) {
+      return { measureAt: Math.ceil(2 * pad + ticks.length * need) }
+    }
+    return { readable: Math.ceil(2 * pad + (axis * need) / spacing) }
   } finally {
     host.remove()
   }
@@ -153,9 +165,12 @@ export async function renderMermaid(source: string, width?: number): Promise<Dia
     const sized = withGanttWidth(source, width)
     let svg = await draw(sized)
     if (sized !== source) {
-      // tick spacing grows with the width while the tick count stays, so one redraw settles it
-      const readable = ganttReadableWidth(svg)
-      if (readable > width!) svg = await draw(withGanttWidth(source, readable))
+      let fit = ganttFit(svg)
+      if (fit && 'measureAt' in fit)
+        fit = ganttFit(await draw(withGanttWidth(source, fit.measureAt)))
+      if (fit && 'readable' in fit && fit.readable > width!) {
+        svg = await draw(withGanttWidth(source, fit.readable))
+      }
     }
     return { ok: true, svg: pinMermaidNaturalSize(svg) }
   } catch (err) {

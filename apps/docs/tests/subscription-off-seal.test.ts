@@ -2,9 +2,10 @@
 /**
  * The in-app switch that turns a subscription CLI off (decision 0114) lives in
  * ai-settings.json beside the key providers' sealed keys (decision 0063). Every
- * write the docs main makes must keep both: a window saving a copy it read
- * before the switch moved, the switch itself, and the metered "use anyway"
- * answer. The subscription service, the CLIs and the network are mocked.
+ * write the docs main makes must keep both, and the key providers' live model
+ * lists (decision 0087): a window saving a copy it read before the switch
+ * moved, the switch itself, and the metered "use anyway" answer. The
+ * subscription service, the CLIs and the network are mocked.
  */
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -187,4 +188,27 @@ it('keeps the fields a newer build wrote, and the key sealed, on every write', a
     apiKey: codec.seal(KEY),
     futureField: 'kept',
   })
+})
+
+it("keeps each key provider's live model list when a window saves without it", async () => {
+  setAiSecretCodec(codec)
+  const models = ['gpt-live-a', 'gpt-live-b']
+  const modelEfforts = { 'gpt-live-a': { efforts: ['low', 'high'] } }
+  seed({
+    subscriptionOff: { codex: true },
+    providers: { openai: { apiKey: codec.seal(KEY), model: 'gpt-live-a', models, modelEfforts } },
+  })
+  const copy = await read()
+  const { models: _models, modelEfforts: _efforts, ...openai } = copy.providers.openai!
+
+  await state.handlers.get('ai:set-settings')!(
+    {},
+    { ...copy, internetTools: false, providers: { ...copy.providers, openai } },
+  )
+
+  const { text, written } = onDisk()
+  expect(text).not.toContain(KEY)
+  expect(written.internetTools).toBe(false)
+  expect(written.subscriptionOff).toEqual({ codex: true })
+  expect(written.providers.openai).toMatchObject({ apiKey: codec.seal(KEY), models, modelEfforts })
 })

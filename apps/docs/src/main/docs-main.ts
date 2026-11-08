@@ -130,7 +130,6 @@ import {
   setRescueFetch,
   streamForProvider,
   subscriptionOffIn,
-  withStoredSubscriptionOff,
   withStoredUnknownFields,
   type AiChatRequest,
   type AiSettings,
@@ -143,7 +142,7 @@ import {
 } from '@genoffice/ai-provider'
 import { listCodexModels, shutdownCodexAppServers } from '@genoffice/ai-provider/codex-app-server'
 import { listCustomModelsForIpc } from '@genoffice/ai-provider/custom-models'
-import { createKeyModelRefresher, withStoredKeyModels } from '@genoffice/ai-provider/key-models'
+import { createKeyModelRefresher, withStoredMainFields } from '@genoffice/ai-provider/key-models'
 import {
   ensureSubscriptionIpc,
   initSubscriptionChildTracking,
@@ -4122,8 +4121,7 @@ function writeRendererAiSettings(settings: unknown): boolean {
   // so the renderer's copy is sanitized before it touches disk.
   const sanitized = sanitizeAiSettings(settings)
   if (!sanitized) return false
-  const stored = storedAiSettings()
-  writeAiSettingsFile(withStoredSubscriptionOff(withStoredKeyModels(sanitized, stored), stored))
+  writeAiSettingsFile(withStoredMainFields(sanitized, storedAiSettings()))
   broadcastAiSettingsChanged()
   keyModelRefresher.refreshChanged()
   return true

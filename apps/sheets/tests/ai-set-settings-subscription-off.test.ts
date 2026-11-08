@@ -1,9 +1,10 @@
 /**
  * The standalone sheets main saves the renderer's AI settings on
  * ai:set-settings, but only the Settings card turns a vendor CLI off or on
- * (decision 0114): the file's switch survives a save from a renderer that read
- * the settings before the switch changed. The subscription service and the
- * spreadsheet engine are mocked.
+ * (decision 0114) and only the main process lists a key provider's models
+ * (decision 0087): the file's switch and lists survive a save from a renderer
+ * that read the settings before they changed. The subscription service and
+ * the spreadsheet engine are mocked.
  */
 import { EventEmitter } from 'node:events'
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
@@ -119,4 +120,21 @@ it('does not turn a CLI off because a renderer says so', async () => {
   const written = await savedFrom({ ...stale, internetTools: false }, {})
   expect(written.internetTools).toBe(false)
   expect(written.subscriptionOff).toBeUndefined()
+})
+
+it("keeps each key provider's live model list when a renderer saves without it", async () => {
+  const models = ['gpt-live-a', 'gpt-live-b']
+  const modelEfforts = { 'gpt-live-a': { efforts: ['low', 'high'] } }
+  const file = {
+    providers: { openai: { apiKey: 'sk-test', model: 'gpt-live-a', models, modelEfforts } },
+  }
+  const copy = await rendererCopy(file)
+  const { models: _models, modelEfforts: _efforts, ...openai } = copy.providers.openai!
+
+  const written = await savedFrom(
+    { ...copy, internetTools: false, providers: { ...copy.providers, openai } },
+    file,
+  )
+  expect(written.internetTools).toBe(false)
+  expect(written.providers.openai).toMatchObject({ models, modelEfforts })
 })

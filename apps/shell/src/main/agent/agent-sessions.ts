@@ -20,7 +20,7 @@ import type {
   AiSubscriptionProviderId,
   AiSubscriptionStatus,
 } from '@genoffice/ai-provider'
-import { subscriptionConnection } from '@genoffice/ai-provider'
+import { subscriptionConnection, subscriptionOffIn } from '@genoffice/ai-provider'
 import type { AgentSessionSkill } from '../../shared/agent-api'
 import { cutAt } from '../projects/context'
 import { agentSessionSkillsOf } from './agent-skills'
@@ -345,6 +345,7 @@ export async function agentInstructionsAndCuts(
 interface LiveSession {
   id: string
   ownerId: number
+  provider: AgentStartRequest['provider']
   session: AgentSession | undefined
   sessionDir: string
   appMcp?: { stop(): Promise<void> } | undefined
@@ -441,6 +442,17 @@ export function createAgentManager(deps: AgentManagerDeps): AgentManager {
         })
       })
 
+  /** turned off in this app (decision 0114), by the setting or by the status the window saw */
+  const offInApp = (provider: AiSubscriptionProviderId): boolean =>
+    subscriptionOffIn(deps.aiSettings(), provider) || deps.statuses()[provider]?.state === 'off'
+  const OFF_IN_APP_MESSAGE = 'The program is turned off in this app'
+  const offInAppFailure = (): AgentStartResult => ({
+    ok: false,
+    reason: 'start-failed',
+    kind: 'off-in-app',
+    message: OFF_IN_APP_MESSAGE,
+  })
+
   return {
     async start(ownerId, request) {
       const projectRoot = resolve(request.projectRoot)
@@ -457,6 +469,7 @@ export function createAgentManager(deps: AgentManagerDeps): AgentManager {
       const entry: LiveSession = {
         id,
         ownerId,
+        provider: request.provider,
         session: undefined,
         sessionDir,
         projectRoot,
@@ -511,6 +524,12 @@ export function createAgentManager(deps: AgentManagerDeps): AgentManager {
           deps.emit(ownerId, id, event)
           if (event.type === 'ended') cleanup(entry)
         }
+        // the servers, relays and skills above can take seconds: turned off meanwhile, the
+        // program is not started
+        if (offInApp(request.provider)) {
+          cleanup(entry)
+          return offInAppFailure()
+        }
         entry.session =
           request.provider === 'claude-code'
             ? await deps.runners.claude(options, onEvent)
@@ -523,6 +542,12 @@ export function createAgentManager(deps: AgentManagerDeps): AgentManager {
                 },
                 onEvent,
               )
+        // turned off while the runner prepared its files and found the program: it ends now
+        if (offInApp(request.provider)) {
+          entry.session.stop()
+          cleanup(entry)
+          return offInAppFailure()
+        }
         return {
           ok: true,
           sessionId: id,
@@ -549,6 +574,17 @@ export function createAgentManager(deps: AgentManagerDeps): AgentManager {
     async send(ownerId, sessionId, text) {
       const entry = own(ownerId, sessionId)
       if (!entry?.session) throw new Error('No such agent session')
+      // turned off in this app since the session started: the program is sent nothing more
+      if (offInApp(entry.provider)) {
+        deps.emit(ownerId, sessionId, {
+          type: 'error',
+          kind: 'off-in-app',
+          message: OFF_IN_APP_MESSAGE,
+        })
+        entry.session.stop()
+        cleanup(entry)
+        return
+      }
       // documents opened since the session started were not in its program-level rules
       const current = deps.openDocuments()
       const added: string[] = []

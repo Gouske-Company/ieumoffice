@@ -209,4 +209,27 @@ describe('shared subscription connection', () => {
     })
     expect(connection.statuses.codex.meteredAccepted).toBe(true)
   })
+
+  it('says so when the switch could not be stored, and clears it on a switch that was', async () => {
+    let stored = false
+    const api = {
+      statuses: async () => statusMap('ready', 'ready'),
+      recheck: async () => statusMap('ready', 'ready'),
+      setSubscriptionOff: async () =>
+        stored
+          ? { ok: true, statuses: statusMap('off', 'ready') }
+          : { ok: false, statuses: statusMap('ready', 'ready') },
+      onChanged: () => () => undefined,
+    } as unknown as SubscriptionApiLike
+    await mount({ api: () => api })
+    act(() => connection.setOff('claude-code', true))
+    await settle()
+    expect(connection.failed['claude-code']).toBe('switch')
+    expect(connection.statuses['claude-code'].state).toBe('ready')
+    stored = true
+    act(() => connection.setOff('claude-code', true))
+    await settle()
+    expect(connection.failed['claude-code']).toBeUndefined()
+    expect(connection.statuses['claude-code'].state).toBe('off')
+  })
 })

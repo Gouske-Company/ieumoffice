@@ -543,6 +543,8 @@ class CodexAppServerClient {
 }
 
 const clients = new Map<string, CodexAppServerClient>()
+/** counts the retirements: a process asked for before the last one is not pooled */
+let retirements = 0
 
 /** Stop every child process during Electron shutdown or integration-test cleanup. */
 export function shutdownCodexAppServers(): void {
@@ -557,6 +559,7 @@ export function shutdownCodexAppServers(): void {
  * serving otherwise. The next request starts a process of its own.
  */
 function retireCodexAppServers(): void {
+  retirements++
   for (const [key, client] of [...clients]) {
     clients.delete(key)
     client.endOnceUnused()
@@ -571,6 +574,7 @@ onSubscriptionTurnedOff((provider) => {
 })
 
 async function clientFor(cliPathValue: string | undefined): Promise<CodexAppServerClient> {
+  const asked = retirements
   const program = await runtime.resolve('codex', { configuredPath: cliPathValue })
   const key = process.platform === 'win32' ? program.entry.toLowerCase() : program.entry
   const existing = clients.get(key)
@@ -578,7 +582,9 @@ async function clientFor(cliPathValue: string | undefined): Promise<CodexAppServ
   const client = new CodexAppServerClient(program, () => {
     if (clients.get(key) === client) clients.delete(key)
   })
-  clients.set(key, client)
+  // retired while the program was being found: this request is served, then the process ends
+  if (asked !== retirements) client.stopWhenUnused()
+  else clients.set(key, client)
   return client
 }
 

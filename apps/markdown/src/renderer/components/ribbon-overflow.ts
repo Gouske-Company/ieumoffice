@@ -33,7 +33,8 @@ const MORE_WIDTH_GUESS = 32
  * How many trailing items of `rowRef` sit behind the More button, as a pure
  * function of the current width (the slides ribbon's responsive collapse,
  * folding items instead of whole groups). `rowRef` holds the inline items in
- * order, then the More button (`.rb-more-wrap`) while anything is folded.
+ * order, then the More button (`.rb-more-wrap`) while anything is folded, then
+ * any controls that never fold.
  */
 export function useRibbonFold(
   bodyRef: RefObject<HTMLElement | null>,

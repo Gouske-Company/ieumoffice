@@ -37,6 +37,9 @@ test('markdown theme picker applies, persists and restarts', async () => {
     await awaitDocsEditor(page)
 
     const themeButton = page.locator('.md-theme-wrap > .rb-btn').first()
+    // a narrow window folds the theme picker behind the ribbon's More button
+    const more = page.locator('.rb-more-wrap > .rb-btn')
+    if (!(await themeButton.isVisible()) && (await more.isVisible())) await more.click()
     await themeButton.click()
     const menu = page.locator('.md-theme-menu')
     await expect(menu).toBeVisible()

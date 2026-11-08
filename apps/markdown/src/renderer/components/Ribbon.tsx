@@ -457,6 +457,7 @@ export function Ribbon({
 
   // the right-hand view tools, in row order; when the band runs out of room
   // the trailing ones move behind the More button instead of off-screen
+  // (AI withholding is pinned after them, see below)
   const viewTools: { key: string; node: ReactNode }[] = []
   if (!sourceMode) {
     viewTools.push(
@@ -568,21 +569,6 @@ export function Ribbon({
       </IconBtn>
     ),
   })
-  if (!sourceMode) {
-    viewTools.push({
-      key: 'redact',
-      node: (
-        <IconBtn
-          title={t('redactEnable')}
-          active={redactEnabled}
-          disabled={disabled}
-          onClick={() => onToggleRedact(!redactEnabled)}
-        >
-          <IconEyeOff size={ICON} />
-        </IconBtn>
-      ),
-    })
-  }
   const foldedCount = useRibbonFold(
     bodyRef,
     viewRowRef,
@@ -902,6 +888,18 @@ export function Ribbon({
                   </div>
                 )}
               </span>
+            )}
+            {/* never folds: whether withholding is on decides what the model is
+                sent, so its state stays in sight at every width */}
+            {!sourceMode && (
+              <IconBtn
+                title={t('redactEnable')}
+                active={redactEnabled}
+                disabled={disabled}
+                onClick={() => onToggleRedact(!redactEnabled)}
+              >
+                <IconEyeOff size={ICON} />
+              </IconBtn>
             )}
           </div>
         </div>

@@ -980,7 +980,7 @@ export default function App() {
           return data ? toDocxImage(data, DOCX_MAX_IMAGE_PX) : null
         }
         const rasterizeDiagram = async (source: string, language: DiagramLanguage) => {
-          const result = await renderDiagram(language, source)
+          const result = await renderDiagram(language, source, DOCX_MAX_IMAGE_PX)
           return result.ok ? diagramSvgToPng(result.svg, DOCX_MAX_IMAGE_PX) : null
         }
         const bytes = await exportDocxBytes(current.getJSON(), loadImage, rasterizeDiagram)

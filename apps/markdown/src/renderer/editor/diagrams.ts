@@ -14,8 +14,13 @@ export function diagramLanguage(language: unknown): DiagramLanguage | null {
     : null
 }
 
-export function renderDiagram(language: DiagramLanguage, source: string): Promise<DiagramResult> {
-  return language === WAVEDROM_LANGUAGE ? renderWavedrom(source) : renderMermaid(source)
+/** `width`: the px the picture is shown at, for diagrams that size to their container (gantt) */
+export function renderDiagram(
+  language: DiagramLanguage,
+  source: string,
+  width?: number,
+): Promise<DiagramResult> {
+  return language === WAVEDROM_LANGUAGE ? renderWavedrom(source) : renderMermaid(source, width)
 }
 
 const VIEWBOX_RE =

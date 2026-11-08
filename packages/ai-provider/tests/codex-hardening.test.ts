@@ -5,7 +5,13 @@ import type { SpawnOptions } from 'node:child_process'
 import { PRODUCT_NAME, UPSTREAM_PRODUCT_NAME } from '@genoffice/i18n'
 import { AiRunError } from '../src/run-error'
 import type { StreamCallbacks } from '../src/protocols/shared'
-import type { AiSubscriptionUsage } from '../src/types'
+import type { AiSettings, AiSubscriptionCliId, AiSubscriptionUsage } from '../src/types'
+import { defaultAiSettings } from '../src/providers'
+import {
+  SUBSCRIPTION_IPC_CHANNELS,
+  createSubscriptionStatusService,
+  registerSubscriptionIpc,
+} from '../src/subscription'
 import type { SubscriptionProgram } from '../src/subscription/locate'
 import type { SubscriptionChildLike } from '../src/subscription/process'
 import { SUBSCRIPTION_STRIPPED_ENV_VARS } from '../src/subscription/env'
@@ -1276,6 +1282,109 @@ describe('Codex after a login or logout the app ran', () => {
     const h = harness()
     await readCodexAccount(undefined)
     notifySubscriptionLoginChange('claude-code')
+    expect(h.treeKills).toEqual([])
+  })
+})
+
+describe('Codex turned off in this app (decision 0114)', () => {
+  /** The real `ai:subscription-off` channel over a status service on settings held in memory */
+  function offSwitch(options: { writable?: boolean } = {}) {
+    const settings: AiSettings = defaultAiSettings()
+    const service = createSubscriptionStatusService({
+      getSettings: () => settings,
+      setMeteredAccepted: () => undefined,
+      setSubscriptionOff: (provider, off) => {
+        if (options.writable === false) throw new Error('read-only settings')
+        const next = { ...settings.subscriptionOff }
+        if (off) next[provider] = true
+        else delete next[provider]
+        settings.subscriptionOff = next
+      },
+      acceptanceStore: { read: async () => ({}), write: async () => undefined },
+      detect: async (provider) => ({ provider, state: 'signed-out' }),
+    })
+    const handlers = new Map<string, (event: unknown, payload?: unknown) => unknown>()
+    const launched = async () => ({ ok: true as const })
+    unregisterIpc = registerSubscriptionIpc(
+      { handle: (channel, handler) => void handlers.set(channel, handler) },
+      {
+        service,
+        launchLogin: launched,
+        launchLogout: launched,
+        launchInstall: launched,
+        launchUpdate: launched,
+        cancelLogin: launched,
+      },
+    )
+    return (provider: AiSubscriptionCliId, off: boolean) =>
+      handlers.get(SUBSCRIPTION_IPC_CHANNELS.off)!(null, { provider, off }) as Promise<{
+        ok: boolean
+      }>
+  }
+
+  let unregisterIpc: (() => void) | undefined
+  afterEach(() => {
+    unregisterIpc?.()
+    unregisterIpc = undefined
+  })
+
+  it('ends an idle app-server, children too, as soon as Codex is turned off', async () => {
+    const h = harness()
+    const setOff = offSwitch()
+    await readCodexAccount(undefined)
+    expect(h.children).toHaveLength(1)
+    expect(h.treeKills).toEqual([])
+    expect((await setOff('codex', true)).ok).toBe(true)
+    expect(h.treeKills).toEqual([h.children[0]])
+  })
+
+  it('lets a request in flight finish, then ends its app-server', async () => {
+    let finishTurn: (() => void) | undefined
+    const h = harness({
+      'turn/start': (_params, child) => {
+        finishTurn = () => completedTurn(ANSWER).forEach((message) => child.send(message))
+        return { turn: { id: 't1' } }
+      },
+    })
+    const setOff = offSwitch()
+    const { cb, deltas } = callbacks()
+    const running = run(cb)
+    await vi.waitFor(() => expect(finishTurn).toBeDefined())
+    expect((await setOff('codex', true)).ok).toBe(true)
+    expect(h.treeKills).toEqual([])
+    finishTurn!()
+    await running
+    expect(deltas).toEqual(['hello'])
+    expect(h.treeKills).toEqual([h.children[0]])
+  })
+
+  it('starts a fresh app-server on the next use once Codex is back on', async () => {
+    const h = harness()
+    const setOff = offSwitch()
+    await readCodexAccount(undefined)
+    await setOff('codex', true)
+    expect((await setOff('codex', false)).ok).toBe(true)
+    expect(h.children).toHaveLength(1)
+    await readCodexAccount(undefined)
+    expect(h.children).toHaveLength(2)
+    expect(h.treeKills).toEqual([h.children[0]])
+  })
+
+  it('leaves the app-server running when it was Claude that was turned off', async () => {
+    const h = harness()
+    const setOff = offSwitch()
+    await readCodexAccount(undefined)
+    expect((await setOff('claude-code', true)).ok).toBe(true)
+    expect(h.treeKills).toEqual([])
+    await readCodexAccount(undefined)
+    expect(h.children).toHaveLength(1)
+  })
+
+  it('leaves the app-server running when the switch could not be saved', async () => {
+    const h = harness()
+    const setOff = offSwitch({ writable: false })
+    await readCodexAccount(undefined)
+    expect((await setOff('codex', true)).ok).toBe(false)
     expect(h.treeKills).toEqual([])
   })
 })

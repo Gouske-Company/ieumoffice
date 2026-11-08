@@ -32,5 +32,6 @@
 ## 결과
 
 - 설정 파일에 `subscriptionOff`가 생겼다(`docs/contracts.md`의 "설정 파일"). 터미널 명령어와 MCP도 같은 값을 읽어, 끈 프로그램의 상태를 묻지 않고 쓰지도 않는다.
+- Codex를 이 앱에서 끄면 이미지 생성은 Codex를 쓸 수 없을 때와 똑같이 움직인다(`resolveImageBackend`). 사람이 직접 채워 둔 이미지 키 제공자가 있으면 그쪽으로 만들고, 없으면 도구가 "쓸 수 없음"으로 답하며 슬라이드는 검색한 이미지를 쓴다. 이미지 생성의 기존 규칙(`docs/business-rules.md`의 "이미지 생성")과 결정 0076을 따른 것이고, 저장소 주인이 검토해 이대로 두기로 했다. 키 제공자는 그 사람이 키를 넣어 직접 마련한 요금 경로다. 대화는 여전히 다른 제공자로 넘어가지 않는다.
 - 구독 상태에 일곱째 값 `off`, 연결 안 됨 까닭에 `off-in-app`, 실행 오류 종류에 `off-in-app`이 생겼다.
 - 시험: `packages/ai-provider/tests/provider-selection.test.ts`와 `subscription-off.test.ts`(선택, 상태 서비스, 창구), `legacy-settings.test.ts`(읽기·검사), `packages/ui/tests/ai-subscription.test.ts`·`connect-guide.test.ts`(카드와 안내), `packages/ai-search/tests/image-routing.test.ts`(Codex 이미지 생성), `apps/docs/tests/ai-run.test.ts`(뒷단의 거절과 저장), `apps/shell/tests/agent/agent-sessions.test.ts`(에이전트, 준비 중에 끈 세션), `packages/ai-provider/tests/subscription-update.test.ts`(프로그램을 찾는 중에 끝낸 로그인), `packages/ui/tests/use-subscription-connection.test.ts`(저장하지 못한 스위치). `subscription-off.test.ts`는 "다시 쓰기"와 겹친 확인, 첫 확인 전의 창구 거절도 지킨다.

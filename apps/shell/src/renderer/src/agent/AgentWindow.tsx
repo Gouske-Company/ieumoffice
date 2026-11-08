@@ -273,6 +273,12 @@ export function AgentWindow() {
     textareaRef: inputRef,
   })
 
+  // a program turned off or on in Settings while the window is open shows as such at once
+  useEffect(
+    () => api.onStatusesChanged(() => void api.getInit().then((value) => setInit(value))),
+    [api],
+  )
+
   // the connection check may still be running when the window opens; ask again until it settles
   const checking = init ? Object.values(init.connections).includes('checking') : false
   useEffect(() => {
@@ -349,6 +355,13 @@ export function AgentWindow() {
     setStarting(false)
     if (!result.ok) {
       setStartError(START_ERROR[result.reason] ?? runErrorKey(result.kind))
+      // the main process refuses a program turned off since the window last looked as not
+      // connected: look again, so the choice and the message say it is off in this app
+      if (result.reason === 'not-connected') {
+        const fresh = await api.getInit()
+        setInit(fresh)
+        if (fresh.connections[prefs.provider] === 'off') setStartError('errOffInApp')
+      }
       return
     }
     sessionRef.current = result.sessionId

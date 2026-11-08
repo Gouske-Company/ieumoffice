@@ -255,6 +255,53 @@ describe('pictures', () => {
     if (opened.status !== 'ok') throw new Error(opened.status)
     expect(JSON.stringify(opened.session.document.sheets)).not.toContain('iVBORw0KGgo')
   })
+
+  it('give a topic the first name any of its pictures has', async () => {
+    const richPicture = (html: string, after = ''): string =>
+      `<node><richcontent TYPE="NODE"><html><head/><body><p>${html}</p></body></html></richcontent>${after}</node>`
+    const file = bytes(
+      `<map version="1.0.1"><node TEXT="Root">` +
+        richPicture(
+          '<img src="data:image/png;base64,AAAA" />',
+          '<hook URI="Images/scan.png" NAME="ExternalObject"/>',
+        ) +
+        richPicture('<img src="data:image/png;base64,AAAA" /><img src="second.png" />') +
+        `<node TEXT=""><hook URI="data:image/png;base64,AAAA" NAME="ExternalObject"/></node>` +
+        `</node></map>`,
+    )
+    const [sheet] = await importAndReopen(file, 'Pictures')
+    expect(sheet!.root.children.map((child) => child.title)).toEqual([
+      'scan.png',
+      'second.png',
+      PICTURE,
+    ])
+  })
+
+  it('never put control characters in a title; a line break or tab in a name becomes a space', async () => {
+    const richPicture = (src: string): string =>
+      `<node><richcontent TYPE="NODE"><html><head/><body><p><img src="${src}" /></p></body></html></richcontent></node>`
+    const htmlText = (html: string): string =>
+      `<node TEXT="${`<html><body>${html}</body></html>`.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;')}"/>`
+    const file = bytes(
+      `<map version="1.0.1"><node TEXT="Root">` +
+        richPicture('Images/a%00b%1B.png') +
+        richPicture('Images/line%0A%0Abreak%09tab.png') +
+        richPicture('Images/%C2%85next%C2%9F.png') +
+        `<node TEXT=""><hook URI="Images/hook%0D%0Aname%7F.png" NAME="ExternalObject"/></node>` +
+        htmlText('<img alt="Bell&#7; ring">') +
+        htmlText('<p>Escape&#27;d text</p>') +
+        `</node></map>`,
+    )
+    const [sheet] = await importAndReopen(file, 'Pictures')
+    expect(sheet!.root.children.map((child) => child.title)).toEqual([
+      'ab.png',
+      'line break tab.png',
+      'next.png',
+      'hook name.png',
+      'Bell ring',
+      'Escaped text',
+    ])
+  })
 })
 
 describe('rich text layout', () => {

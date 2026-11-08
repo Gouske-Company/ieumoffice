@@ -104,7 +104,8 @@ export const vi = {
   noticeTheme:
     'Sơ đồ này được hiển thị ở đây với giao diện mặc định. Chủ đề giao diện của tệp không bị thay đổi.',
   noticeImported:
-    'Đây là sơ đồ mới được nhập từ tệp FreeMind hoặc Freeplane (.mm). Khi lưu sẽ tạo tệp mới, còn tệp .mm vẫn giữ nguyên. Biểu tượng, màu sắc và phông chữ không được nhập.',
+    'Đây là sơ đồ mới được nhập từ tệp FreeMind hoặc Freeplane (.mm). Khi lưu sẽ tạo tệp mới, còn tệp .mm vẫn giữ nguyên. Hình ảnh, biểu tượng, màu sắc và phông chữ không được nhập.',
+  importedPicture: '(hình ảnh)',
   openLegacy: 'Tệp này ở định dạng cũ nên không thể mở',
   openEncrypted: 'Tệp này được bảo vệ bằng mật khẩu nên không thể mở',
   openUnreadable: 'Không thể đọc tệp này',

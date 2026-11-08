@@ -20,6 +20,7 @@ import { importedMap } from '../src/renderer/document/open'
 const fixture = (name: string): Uint8Array =>
   new Uint8Array(readFileSync(join(__dirname, 'fixtures', name)))
 const bytes = (text: string): Uint8Array => new TextEncoder().encode(text)
+const PICTURE = '(그림)'
 
 /** A topic as the editor shows it: title, note, link, folded, and the same of its children. */
 interface Shown {
@@ -41,7 +42,7 @@ function shown(topic: ViewTopic): Shown {
 
 /** Imports the bytes, saves the map, and opens the saved `.xmind` with the engine. */
 async function importAndReopen(file: Uint8Array, title: string): Promise<ViewSheet[]> {
-  const opened = await importedMap(file, title)
+  const opened = await importedMap(file, title, PICTURE)
   if (opened.status !== 'ok') throw new Error(`not imported: ${opened.status}`)
   expect(opened.notices.imported).toBe(true)
   expect(opened.session.dirty).toBe(true)
@@ -81,7 +82,7 @@ describe('a FreeMind 1.0 map', () => {
   })
 
   it('leaves icons, fonts, colours, edges, clouds, arrow links and attributes behind', async () => {
-    const opened = await importedMap(fixture('freemind-1.0.mm'), 'Project plan')
+    const opened = await importedMap(fixture('freemind-1.0.mm'), 'Project plan', PICTURE)
     if (opened.status !== 'ok') throw new Error(opened.status)
     const content = JSON.stringify(opened.session.document.sheets)
     for (const dropped of [
@@ -157,7 +158,7 @@ describe('a file that is not a readable map', () => {
     ],
     ['bytes that are not text', new Uint8Array([0xff, 0xfe, 0x00, 0xd8, 0x00, 0xdc, 0x41])],
   ])('%s opens as unreadable', async (_name, file) => {
-    expect(await importedMap(file, 'x')).toEqual({ status: 'unreadable' })
+    expect(await importedMap(file, 'x', PICTURE)).toEqual({ status: 'unreadable' })
   })
 
   it('nested deeper than the engine accepts opens as unreadable; at the limit it opens', async () => {
@@ -166,7 +167,9 @@ describe('a file that is not a readable map', () => {
         `<map><node TEXT="Root">${'<node TEXT="n">'.repeat(levels)}${'</node>'.repeat(levels)}</node></map>`,
       )
     expect(parseFreeMind(nested(MAX_TOPIC_DEPTH + 1))).toEqual({ ok: false, problem: 'too-deep' })
-    expect(await importedMap(nested(MAX_TOPIC_DEPTH + 1), 'deep')).toEqual({ status: 'unreadable' })
+    expect(await importedMap(nested(MAX_TOPIC_DEPTH + 1), 'deep', PICTURE)).toEqual({
+      status: 'unreadable',
+    })
     const [sheet] = await importAndReopen(nested(MAX_TOPIC_DEPTH), 'deep')
     let depth = 0
     for (let topic = sheet!.root; topic.children[0]; topic = topic.children[0]) depth++
@@ -204,5 +207,76 @@ describe('a FreeMind 0.8 map', () => {
         },
       ],
     })
+  })
+})
+
+/** A map whose central topic has one child per text, each kept as FreeMind 0.8 does: HTML in `TEXT`. */
+const htmlMap = (texts: string[]): Uint8Array =>
+  bytes(
+    `<map version="0.8.0"><node TEXT="Root">${texts
+      .map(
+        (text) =>
+          `<node TEXT="${text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;')}"/>`,
+      )
+      .join('')}</node></map>`,
+  )
+
+describe('pictures', () => {
+  it('are not brought; a topic that is only a picture is titled with its alt text, its title or its file name', async () => {
+    const richPicture = (img: string): string =>
+      `<node><richcontent TYPE="NODE"><html><head/><body><p>${img}</p></body></html></richcontent></node>`
+    const file = bytes(
+      `<map version="1.0.1"><node TEXT="Root">` +
+        `<node TEXT="${'<html><body><img src="file:/C:/Program Files/Office/Styles/BLENDS.GIF"></body></html>'.replace(/</g, '&lt;').replace(/"/g, '&quot;')}"/>` +
+        richPicture('<img src="Images/doc/two%20words.png?size=2" />') +
+        richPicture('<img src="sketch.png" alt=" Sketch of the plan " />') +
+        richPicture('<img src="sketch.png" title="Plan, drawn" />') +
+        richPicture('<img src="data:image/png;base64,iVBORw0KGgo=" />') +
+        richPicture('<img />') +
+        richPicture('Caption beside <img src="beside.png" />') +
+        // Freeplane's picture on a node: a hook, with the text left empty
+        `<node TEXT=""><hook URI="Images/doc/Menus.png" SIZE="0.5" NAME="ExternalObject"/><node TEXT="Below"/></node>` +
+        `</node></map>`,
+    )
+    const [sheet] = await importAndReopen(file, 'Pictures')
+    expect(sheet!.root.children.map((child) => child.title)).toEqual([
+      'BLENDS.GIF',
+      'two words.png',
+      'Sketch of the plan',
+      'Plan, drawn',
+      // nothing names these pictures: the placeholder the editor hands in
+      PICTURE,
+      PICTURE,
+      // a picture beside text is left out of the title
+      'Caption beside',
+      'Menus.png',
+    ])
+    const opened = await importedMap(file, 'Pictures', PICTURE)
+    if (opened.status !== 'ok') throw new Error(opened.status)
+    expect(JSON.stringify(opened.session.document.sheets)).not.toContain('iVBORw0KGgo')
+  })
+})
+
+describe('rich text layout', () => {
+  it('puts each table row on one line with its cells set apart, even with no space between them', () => {
+    const read = parseFreeMind(
+      htmlMap([
+        '<html><body><table><tr><th>Name</th><th>Age</th></tr><tr><td>a1</td><td>a2</td></tr></table></body></html>',
+        '<html><body>Before<table>\n<tr>\n<td><p>b1</p></td>\n<td><p>b2</p><p>more</p></td>\n<td></td>\n</tr>\n</table>After</body></html>',
+      ]),
+    )
+    expect(read.ok && read.root.children.map((child) => child.text)).toEqual([
+      'Name | Age\na1 | a2',
+      'Before\nb1 | b2 more\nAfter',
+    ])
+  })
+
+  it('keeps one line per list item, paragraph and line break', () => {
+    const read = parseFreeMind(
+      htmlMap([
+        '<html><body><p>Intro</p><ul><li>one</li><li>two <b>bold</b></li></ul>line<br>break</body></html>',
+      ]),
+    )
+    expect(read.ok && read.root.children[0]!.text).toBe('Intro\none\ntwo bold\nline\nbreak')
   })
 })

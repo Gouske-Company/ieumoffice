@@ -220,7 +220,7 @@ export default function App() {
           // untitled, and so is a map imported from a .mm, which is never written
           const result =
             file.status === 'import'
-              ? await importedMap(file.bytes, file.title)
+              ? await importedMap(file.bytes, file.title, translate('importedPicture'))
               : file.status !== 'ok'
                 ? file
                 : file.restored

@@ -163,6 +163,28 @@ describe('homeAiEntry', () => {
     ).toEqual({ state: 'needs-connection', providers: ['codex'] })
   })
 
+  it('names a selected CLI turned off in this app as off, never as needing a connection', () => {
+    const off = settings({ provider: 'claude-code', subscriptionOff: { 'claude-code': true } })
+    expect(homeAiEntry(off, statusMap('off', 'ready'))).toEqual({
+      state: 'off',
+      providers: ['claude-code'],
+    })
+    // a status read before the switch still says ready: the setting wins
+    expect(homeAiEntry(off, statusMap('ready', 'ready'))).toEqual({
+      state: 'off',
+      providers: ['claude-code'],
+    })
+  })
+
+  it('leaves a CLI turned off in this app out of the auto list', () => {
+    const off = settings({ subscriptionOff: { 'claude-code': true } })
+    expect(homeAiEntry(off, statusMap('ready', 'ready'))).toEqual({
+      state: 'connected',
+      providers: ['codex'],
+    })
+    expect(homeAiEntry(off, statusMap('ready', 'signed-out')).state).toBe('disconnected')
+  })
+
   it('is checking or disconnected when nothing can be named', () => {
     expect(homeAiEntry(settings(), statusMap('not-installed', 'signed-out'))).toEqual({
       state: 'disconnected',

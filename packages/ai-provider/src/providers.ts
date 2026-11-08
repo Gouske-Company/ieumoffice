@@ -1,5 +1,6 @@
 import { openAiSecrets } from './settings-secrets'
 import { resolveCustomEndpoints } from './custom-endpoints'
+import { aiModelEffortsOf } from './effort'
 import { defaultAiMediaSettings, resolveAiMediaSettings } from './media'
 import { defaultAiSearchSettings, resolveAiSearchSettings } from './search-settings'
 import type {
@@ -734,8 +735,10 @@ function trimConfigs(providers: Record<string, unknown>): AiSettings['providers'
   const trimmed: Record<string, unknown> = {}
   for (const [id, config] of Object.entries(providers)) {
     if (!isRecord(config)) continue
-    const { models: rawModels, ...rest } = config
+    const { models: rawModels, modelEfforts: rawEfforts, ...rest } = config
     const models = listedModelsOf(rawModels)
+    // a level this build does not know, from a newer build or a hand edit, is never listed
+    const modelEfforts = aiModelEffortsOf(rawEfforts)
     trimmed[id] = {
       ...rest,
       apiKey: str(config.apiKey),
@@ -743,6 +746,7 @@ function trimConfigs(providers: Record<string, unknown>): AiSettings['providers'
       ...(config.baseUrl !== undefined ? { baseUrl: str(config.baseUrl) } : {}),
       ...(config.cliPath !== undefined ? { cliPath: str(config.cliPath) } : {}),
       ...(models ? { models } : {}),
+      ...(modelEfforts ? { modelEfforts } : {}),
     }
   }
   return trimmed as AiSettings['providers']

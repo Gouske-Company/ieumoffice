@@ -391,8 +391,14 @@ export function createAgentManager(deps: AgentManagerDeps): AgentManager {
   const protectedPaths = agentProtectedPaths(homeDir, deps.userData)
   const live = new Map<string, LiveSession>()
 
+  /** session folders being removed; one still here when the app quits is removed before it exits */
+  const removing = new Set<string>()
+  // the folder is the program's working directory: Windows refuses to remove it until the ended
+  // process is gone, which can take a moment
+  const removeOptions = { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }
+
   /** let go of what the session holds now; a part let go of once is not stopped again */
-  const release = (entry: LiveSession, quitting: boolean): void => {
+  const release = (entry: LiveSession): void => {
     const { appMcp, relays, sessionDir } = entry
     entry.appMcp = undefined
     entry.relays = undefined
@@ -402,24 +408,16 @@ export function createAgentManager(deps: AgentManagerDeps): AgentManager {
     for (const settle of [...entry.relayAsks.values()]) settle({ allow: false })
     void relays?.stop().catch(() => undefined)
     if (sessionDir === undefined) return
-    // the folder is the program's working directory: Windows refuses to remove it until the
-    // ended process is gone, which can take a moment
-    const options = { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }
-    if (!quitting) {
-      void rm(sessionDir, options).catch(() => undefined)
-      return
-    }
-    // the app is going away and would not wait for an asynchronous removal
-    try {
-      rmSync(sessionDir, options)
-    } catch {
-      // left for the system's temporary-file cleanup
-    }
+    removing.add(sessionDir)
+    void rm(sessionDir, removeOptions).then(
+      () => removing.delete(sessionDir),
+      () => undefined,
+    )
   }
 
-  const cleanup = (entry: LiveSession, { quitting = false } = {}): void => {
+  const cleanup = (entry: LiveSession): void => {
     if (!live.delete(entry.id)) return
-    release(entry, quitting)
+    release(entry)
   }
 
   const own = (ownerId: number, sessionId: string): LiveSession | undefined => {
@@ -501,7 +499,7 @@ export function createAgentManager(deps: AgentManagerDeps): AgentManager {
       const stopped = (): boolean => {
         if (live.has(id)) return false
         entry.session?.stop()
-        release(entry, false)
+        release(entry)
         return true
       }
       try {
@@ -670,7 +668,17 @@ export function createAgentManager(deps: AgentManagerDeps): AgentManager {
     stopAll() {
       for (const entry of [...live.values()]) {
         entry.session?.stop()
-        cleanup(entry, { quitting: true })
+        cleanup(entry)
+      }
+      // the app exits without waiting for an asynchronous removal, such as that of a session
+      // whose window the quit has just closed
+      for (const dir of removing) {
+        try {
+          rmSync(dir, removeOptions)
+        } catch {
+          // left for the system's temporary-file cleanup
+        }
+        removing.delete(dir)
       }
     },
 

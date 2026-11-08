@@ -654,6 +654,25 @@ describe('driving a session', () => {
     m.stopAll()
     expect(existsSync(sessionDir)).toBe(false)
   })
+
+  it('removes the session folder when its window closes', async () => {
+    const { m, project, claude } = manager()
+    await m.start(3, { provider: 'claude-code', projectRoot: project, mode: 'ask-commands' })
+    const { sessionDir } = claude.mock.calls[0]![0]
+    m.stopOwner(3)
+    await vi.waitFor(() => expect(existsSync(sessionDir)).toBe(false))
+  })
+
+  it('removes the folder of a session whose window closed as the app quits', async () => {
+    const { m, project, claude, session } = manager()
+    await m.start(3, { provider: 'claude-code', projectRoot: project, mode: 'ask-commands' })
+    const { sessionDir } = claude.mock.calls[0]![0]
+    // quitting closes the agent window first, then the app's quit hook runs, with no wait between
+    m.stopOwner(3)
+    m.stopAll()
+    expect(existsSync(sessionDir), 'gone when the quit hook returns').toBe(false)
+    expect(session.stopped, 'the program is stopped once').toBe(1)
+  })
 })
 
 describe('a window that closes, or an app that quits, while the session is being prepared', () => {

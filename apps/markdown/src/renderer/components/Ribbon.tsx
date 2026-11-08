@@ -609,19 +609,47 @@ export function Ribbon({
       </IconBtn>
     ),
   })
-  // with every view tool folded, the AI entries drop their labels, the trailing ones first
+  // with every view tool folded, the AI entries drop their labels; past that the
+  // band closes up, the style box narrows and the AI presets join the view tools
   const aiEntryKeys = ['assistant', ...aiPresets.map((p) => p.kind)]
   const fold = useRibbonFold(
     bodyRef,
     viewRowRef,
-    viewTools.map((v) => v.key),
-    aiEntryKeys,
+    {
+      fold: viewTools.map((v) => v.key),
+      label: aiEntryKeys,
+      style: sourceMode ? [] : ['style'],
+      aiFold: aiPresets.map((p) => p.kind),
+    },
     lang,
   )
-  const foldedCount = fold.folded
-  const isCompact = (key: string) => aiEntryKeys.indexOf(key) >= aiEntryKeys.length - fold.compacted
-  const inlineTools = viewTools.slice(0, viewTools.length - foldedCount)
-  const foldedTools = viewTools.slice(viewTools.length - foldedCount)
+  const isCompact = (key: string) => aiEntryKeys.indexOf(key) >= aiEntryKeys.length - fold.label
+  const inlineTools = viewTools.slice(0, viewTools.length - fold.fold)
+  const foldedTools = viewTools.slice(viewTools.length - fold.fold)
+  const inlinePresets = aiPresets.slice(0, aiPresets.length - fold.aiFold)
+  const foldedPresets = aiPresets.slice(aiPresets.length - fold.aiFold)
+  const foldedCount = foldedTools.length + foldedPresets.length
+  const styleLabel = t(STYLE_LABEL[state?.style ?? 'paragraph'])
+
+  const presetButton = ({ kind, btn, prompt }: (typeof aiPresets)[number]) => (
+    <button
+      key={kind}
+      type="button"
+      className={`rb-big ai-entry${isCompact(kind) ? ' compact' : ''}`}
+      data-fold-key={kind}
+      data-tip={t(btn)}
+      disabled={off || state?.empty}
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={() => onAiPreset(prompt())}
+    >
+      <span className="rb-big-icon">
+        <span className="ai-feature-icon" aria-hidden="true">
+          <AiFeatureIcon kind={kind} />
+        </span>
+      </span>
+      <span>{t(btn)}</span>
+    </button>
+  )
 
   useEffect(() => {
     if (!foldedCount) setMoreOpen(false)
@@ -702,7 +730,7 @@ export function Ribbon({
         <RibbonExpandButton state={collapse} label={t('ribbonExpand')} />
       </div>
 
-      <div className="ribbon-body" data-ribbon-body="" ref={bodyRef}>
+      <div className={`ribbon-body${fold.tight ? ' tight' : ''}`} data-ribbon-body="" ref={bodyRef}>
         <div className="ribbon-group">
           <div className="ribbon-group-items">
             <button
@@ -719,25 +747,7 @@ export function Ribbon({
               </span>
               <span>{aiSubscriptionText(lang, 'aiAssistant')}</span>
             </button>
-            {aiPresets.map(({ kind, btn, prompt }) => (
-              <button
-                key={kind}
-                type="button"
-                className={`rb-big ai-entry${isCompact(kind) ? ' compact' : ''}`}
-                data-fold-key={kind}
-                data-tip={t(btn)}
-                disabled={off || state?.empty}
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => onAiPreset(prompt())}
-              >
-                <span className="rb-big-icon">
-                  <span className="ai-feature-icon" aria-hidden="true">
-                    <AiFeatureIcon kind={kind} />
-                  </span>
-                </span>
-                <span>{t(btn)}</span>
-              </button>
-            ))}
+            {inlinePresets.map(presetButton)}
           </div>
         </div>
 
@@ -745,10 +755,11 @@ export function Ribbon({
 
         {!sourceMode && (
           <div className="ribbon-group">
-            <div className="ribbon-group-items">
+            <div className="ribbon-group-items" data-fold-key="style">
               <Dropdown
-                className="rb-style"
+                className={`rb-style${fold.style ? ' narrow' : ''}`}
                 value={state?.style ?? 'paragraph'}
+                tip={fold.style ? styleLabel : undefined}
                 disabled={off}
                 options={(Object.keys(STYLE_LABEL) as BlockStyle[]).map((s) => ({
                   value: s,
@@ -909,7 +920,7 @@ export function Ribbon({
             {inlineTools.map(({ key, node }) => (
               <Fragment key={key}>{node}</Fragment>
             ))}
-            {foldedTools.length > 0 && (
+            {foldedCount > 0 && (
               <span className="rb-more-wrap" ref={moreRef}>
                 <IconBtn
                   title={t('ribbonMore')}
@@ -930,6 +941,8 @@ export function Ribbon({
                       if (btn && !btn.hasAttribute('aria-haspopup')) setMoreOpen(false)
                     }}
                   >
+                    {foldedPresets.map(presetButton)}
+                    {foldedPresets.length > 0 && <div className="rb-sep" />}
                     {foldedTools.map(({ key, node }) => (
                       <Fragment key={key}>{node}</Fragment>
                     ))}

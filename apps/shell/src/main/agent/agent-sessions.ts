@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { existsSync, rmSync, statSync } from 'node:fs'
-import { mkdtemp, readFile, realpath, rm } from 'node:fs/promises'
-import { homedir, tmpdir } from 'node:os'
+import { readFile, realpath, rm } from 'node:fs/promises'
+import { homedir } from 'node:os'
 import { dirname, isAbsolute, join, parse, relative, resolve, sep } from 'node:path'
 import type {
   AgentCodexWebSearch,
@@ -24,6 +24,7 @@ import { subscriptionConnection, subscriptionOffIn } from '@genoffice/ai-provide
 import type { AgentSessionSkill } from '../../shared/agent-api'
 import { cutAt } from '../projects/context'
 import { agentSessionSkillsOf } from './agent-skills'
+import { makeAgentSessionFolder } from './agent-session-folders'
 import type { AgentMcpRelays, AgentRelayAnswer, AgentRelayAsk } from './agent-mcp-relay'
 
 /**
@@ -503,7 +504,7 @@ export function createAgentManager(deps: AgentManagerDeps): AgentManager {
         return true
       }
       try {
-        const sessionDir = await mkdtemp(join(tmpdir(), 'ieum-agent-'))
+        const sessionDir = await makeAgentSessionFolder()
         entry.sessionDir = sessionDir
         if (stopped()) return STOPPED_WHILE_STARTING
         const appMcp = deps.startAppMcp
@@ -676,7 +677,7 @@ export function createAgentManager(deps: AgentManagerDeps): AgentManager {
         try {
           rmSync(dir, removeOptions)
         } catch {
-          // left for the system's temporary-file cleanup
+          // left for the next start's sweep (`sweepAgentSessionFolders`)
         }
         removing.delete(dir)
       }

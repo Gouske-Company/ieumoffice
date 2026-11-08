@@ -30,6 +30,7 @@ import {
   openableProjectFile,
   projectFolderProblem,
 } from '../../src/main/agent/agent-sessions'
+import { sweepAgentSessionFolders } from '../../src/main/agent/agent-session-folders'
 import {
   AGENT_RECENT_LIMIT,
   normalizeAgentPrefs,
@@ -672,6 +673,23 @@ describe('driving a session', () => {
     m.stopAll()
     expect(existsSync(sessionDir), 'gone when the quit hook returns').toBe(false)
     expect(session.stopped, 'the program is stopped once').toBe(1)
+  })
+
+  it('leaves a session folder another start keeps while this app runs, and removes once it is gone', async () => {
+    const tmp = temp()
+    for (const name of ['TMP', 'TEMP', 'TMPDIR']) vi.stubEnv(name, tmp)
+    try {
+      const { m, project, claude } = manager()
+      await m.start(3, { provider: 'claude-code', projectRoot: project, mode: 'ask-commands' })
+      const { sessionDir } = claude.mock.calls[0]![0]
+      await sweepAgentSessionFolders({ parent: tmp })
+      expect(existsSync(sessionDir), 'kept while its app runs').toBe(true)
+      // the app ended without quitting: its process is gone and its folder is still there
+      await sweepAgentSessionFolders({ parent: tmp, alive: () => false })
+      expect(existsSync(sessionDir), 'removed once its app is gone').toBe(false)
+    } finally {
+      vi.unstubAllEnvs()
+    }
   })
 })
 

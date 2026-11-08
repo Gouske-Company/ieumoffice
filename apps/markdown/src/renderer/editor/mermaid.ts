@@ -59,23 +59,32 @@ export function pinMermaidNaturalSize(svg: string): string {
   })
 }
 
-const GANTT_RE = /^\s*gantt\b/m
+// mermaid's own type detection (`detectType`): strip front matter, directives
+// and comments, then the diagram's keyword must open what is left
+const FRONT_MATTER_RE = /^([^\S\n\r]*)-{3}\s*[\n\r](.*?)[\n\r]\1-{3}\s*[\n\r]+/s
+const DIRECTIVE_RE =
+  /%{2}{\s*(?:(\w+)\s*:|(\w+))\s*(?:(\w+)|((?:(?!}%{2}).|\r?\n)*))?\s*(?:}%{2})?/gi
+const COMMENT_RE = /\s*%%.*\n/gm
 
-/** Whether the source draws a gantt chart (its keyword opens a line; front matter and directives may precede it) */
+/** Whether mermaid draws the source as a gantt chart (a mindmap node named "gantt" is not one) */
 export function isGanttSource(source: string): boolean {
-  return GANTT_RE.test(source)
+  const body = source
+    .replace(FRONT_MATTER_RE, '')
+    .replace(DIRECTIVE_RE, '')
+    .replace(COMMENT_RE, '\n')
+  return /^\s*gantt/.test(body)
 }
 
 /**
  * A gantt chart takes its width from mermaid's temporary render container,
  * which hangs off <body> and so spans the window: in a narrower text column the
  * chart came out wider than the column, its title off to the right. Give it the
- * width it is shown at (other diagram kinds ignore `gantt.useWidth`); a width
- * the source sets itself wins. The directive goes last because front matter
+ * width it is shown at; other diagram kinds, and a gantt that sets its own
+ * width, are left as written. The directive goes last because front matter
  * must open the source.
  */
 export function withGanttWidth(source: string, width?: number): string {
-  if (!width || !(width > 0) || /useWidth/.test(source)) return source
+  if (!width || !(width > 0) || !isGanttSource(source) || /useWidth/.test(source)) return source
   return `${source}\n%%{init: {"gantt": {"useWidth": ${Math.round(width)}}}}%%`
 }
 
@@ -89,10 +98,8 @@ const TICK_LABEL_GAP_PX = 8
  * measured off-screen; 0 when the labels already fit or nothing can be measured.
  */
 export function ganttReadableWidth(svgMarkup: string): number {
-  const host = document.createElement('div')
-  host.style.cssText = 'position: fixed; left: -100000px; top: 0; visibility: hidden;'
+  const host = scratchHost()
   host.innerHTML = svgMarkup
-  document.body.appendChild(host)
   try {
     const svg = host.querySelector('svg')
     const grid = svg?.querySelector<SVGGElement>(':scope > g.grid')
@@ -116,11 +123,32 @@ export function ganttReadableWidth(svgMarkup: string): number {
   }
 }
 
+/**
+ * Mermaid draws in a scratch element that it would otherwise append to <body>,
+ * in flow below the app: while it drew, the page grew a window scrollbar and the
+ * text column narrowed, so a gantt sized to that column redrew without end.
+ * A fixed host spans the window like <body> but takes no room in the page.
+ */
+function scratchHost(): HTMLElement {
+  const host = document.createElement('div')
+  host.style.cssText =
+    'position: fixed; left: 0; top: 0; width: 100%; visibility: hidden; pointer-events: none;'
+  document.body.appendChild(host)
+  return host
+}
+
 let renderSeq = 0
 
 export async function renderMermaid(source: string, width?: number): Promise<DiagramResult> {
   const mermaid = await loadMermaid()
-  const draw = async (code: string) => (await mermaid.render(`md-mermaid-${++renderSeq}`, code)).svg
+  const draw = async (code: string) => {
+    const host = scratchHost()
+    try {
+      return (await mermaid.render(`md-mermaid-${++renderSeq}`, code, host)).svg
+    } finally {
+      host.remove()
+    }
+  }
   try {
     const sized = withGanttWidth(source, width)
     let svg = await draw(sized)

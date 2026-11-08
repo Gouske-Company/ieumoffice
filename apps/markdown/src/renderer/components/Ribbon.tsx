@@ -708,9 +708,8 @@ export function Ribbon({
             <button
               type="button"
               className={`rb-big ai-entry${aiOpen ? ' active' : ''}${isCompact('assistant') ? ' compact' : ''}`}
-              data-fold-key="assistant"
               data-tip={t('aiOpenAssistant')}
-              aria-label={aiSubscriptionText(lang, 'aiAssistant')}
+              data-fold-key="assistant"
               disabled={disabled}
               onMouseDown={(e) => e.preventDefault()}
               onClick={onToggleAi}
@@ -727,7 +726,6 @@ export function Ribbon({
                 className={`rb-big ai-entry${isCompact(kind) ? ' compact' : ''}`}
                 data-fold-key={kind}
                 data-tip={t(btn)}
-                aria-label={t(btn)}
                 disabled={off || state?.empty}
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => onAiPreset(prompt())}

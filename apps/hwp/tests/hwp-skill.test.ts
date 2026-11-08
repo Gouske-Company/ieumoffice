@@ -2019,7 +2019,7 @@ describe('footnotes and endnotes', () => {
       {
         kind: 'note',
         from: 'aiNoteFootnote:{"number":2}',
-        to: '「국가인권위원회법」 제1조 둘째 줄',
+        to: '「국가인권위원회법」 제1조 ⏎ 둘째 줄',
         count: 1,
         place: PLACE,
       },
@@ -2593,5 +2593,91 @@ describe('document-wide settings', () => {
     expect(bridge.formatting).toHaveBeenCalledWith('AAAA')
     const missing = await call({ attachment: '없는.hwpx' })
     expect(missing.isError).toBe(true)
+  })
+})
+
+// gemini-3.5-flash-lite was seen sending a line break escaped twice: the text arrived
+// holding a backslash and an "n", and a table cell showed `\n` as two characters
+describe('a line break the model escaped twice', () => {
+  it('becomes paragraphs of the cell, and the panel shows it as ⏎', async () => {
+    const { call, changes, bridge } = setup()
+    await call('fill_cells', {
+      table: 2,
+      cells: [
+        { row: 4, col: 1, text: '사이버 도박·딥페이크 예방' },
+        {
+          row: 4,
+          col: 2,
+          text: String.raw`1. 도박은 하지 않습니다.\n2. 딥페이크는 범죄입니다.\n3. 117에 알립니다.`,
+        },
+      ],
+    })
+    expect(bridge.fillCells).toHaveBeenCalledWith(
+      2,
+      [
+        { row: 4, col: 1, text: '사이버 도박·딥페이크 예방' },
+        {
+          row: 4,
+          col: 2,
+          text: '1. 도박은 하지 않습니다.\n2. 딥페이크는 범죄입니다.\n3. 117에 알립니다.',
+        },
+      ],
+      false,
+    )
+    expect(changes[0]?.to).toBe(
+      '사이버 도박·딥페이크 예방 | 1. 도박은 하지 않습니다. ⏎ 2. 딥페이크는 범죄입니다. ⏎ 3. 117에 알립니다.',
+    )
+  })
+
+  it('leaves a real line break as it is', async () => {
+    const { call, bridge } = setup()
+    const cells = [{ row: 1, col: 1, text: '첫 줄\n둘째 줄' }]
+    await call('fill_cells', { table: 1, cells })
+    expect(bridge.fillCells).toHaveBeenCalledWith(1, cells, false)
+  })
+
+  it('leaves text that also holds a real line break as it is', async () => {
+    const { call, bridge } = setup()
+    const cells = [{ row: 1, col: 1, text: '첫 줄\n' + String.raw`둘째 줄\n셋째 줄` }]
+    await call('fill_cells', { table: 1, cells })
+    expect(bridge.fillCells).toHaveBeenCalledWith(1, cells, false)
+  })
+
+  it('leaves a path with a backslash as it is', async () => {
+    const { call, bridge } = setup()
+    const cells = [
+      { row: 1, col: 1, text: String.raw`자료는 C:\new 폴더에 있습니다` },
+      { row: 1, col: 2, text: String.raw`\\server\new 에 올립니다` },
+    ]
+    await call('fill_cells', { table: 1, cells })
+    expect(bridge.fillCells).toHaveBeenCalledWith(1, cells, false)
+  })
+
+  it('becomes paragraphs of a note', async () => {
+    const { call, bridge } = setup()
+    await call('insert_note', { kind: 'footnote', after: '본문', text: String.raw`첫 줄\n둘째 줄` })
+    expect(bridge.insertNote).toHaveBeenCalledWith('footnote', '본문', null, '첫 줄\n둘째 줄')
+  })
+
+  it('in new text that must stay one line is refused like a real one', async () => {
+    const { call, bridge } = setup()
+    const result = await call('replace_text', { find: '본문', replace: String.raw`첫 줄\n둘째 줄` })
+    expect(result.isError).toBe(true)
+    expect(result.output).toContain('a replacement stays inside one paragraph')
+    expect(bridge.replaceText).not.toHaveBeenCalled()
+    const item = await call('insert_paragraphs', {
+      where: 'after',
+      anchor: '본문',
+      paragraphs: [String.raw`한 줄\n두 줄`],
+    })
+    expect(item.output).toContain('Pass every line as its own string in paragraphs')
+    expect(bridge.insertParagraphs).not.toHaveBeenCalled()
+  })
+
+  it('in the text a call looks for is searched as written, so a broken cell can be cleaned up', async () => {
+    const { call, bridge } = setup()
+    const result = await call('replace_all', { find: String.raw`\n`, replace: ' ' })
+    expect(result.isError).toBeFalsy()
+    expect(bridge.replaceAllText).toHaveBeenCalledWith(String.raw`\n`, ' ')
   })
 })

@@ -23,7 +23,7 @@ import {
 import { aiEffortOf, aiEffortsOf, type AiEffort } from './effort'
 import { AiRunError } from './run-error'
 import { subscriptionModelsOf } from './subscription/contract'
-import { onSubscriptionLoginChange, onSubscriptionTurnedOff } from './subscription/launch'
+import { onSubscriptionLoginChange, onSubscriptionOffChange } from './subscription/launch'
 import { createTrackedTempDir, removeTrackedTempDir } from './subscription/temp-dirs'
 import { resolveSubscriptionProgram, type SubscriptionProgram } from './subscription/locate'
 import { setSubscriptionModelSource } from './subscription/models'
@@ -543,8 +543,11 @@ class CodexAppServerClient {
 }
 
 const clients = new Map<string, CodexAppServerClient>()
-/** counts the retirements: a process asked for before the last one is not pooled */
-let retirements = 0
+/**
+ * Codex is turned off in this app (decision 0114). A process started meanwhile, for a request
+ * that chose Codex before the switch, serves that request and ends; none joins the pool.
+ */
+let codexOff = false
 
 /** Stop every child process during Electron shutdown or integration-test cleanup. */
 export function shutdownCodexAppServers(): void {
@@ -559,7 +562,6 @@ export function shutdownCodexAppServers(): void {
  * serving otherwise. The next request starts a process of its own.
  */
 function retireCodexAppServers(): void {
-  retirements++
   for (const [key, client] of [...clients]) {
     clients.delete(key)
     client.endOnceUnused()
@@ -569,12 +571,13 @@ function retireCodexAppServers(): void {
 onSubscriptionLoginChange((provider) => {
   if (provider === 'codex') retireCodexAppServers()
 })
-onSubscriptionTurnedOff((provider) => {
-  if (provider === 'codex') retireCodexAppServers()
+onSubscriptionOffChange(({ provider, off }) => {
+  if (provider !== 'codex') return
+  codexOff = off
+  if (off) retireCodexAppServers()
 })
 
 async function clientFor(cliPathValue: string | undefined): Promise<CodexAppServerClient> {
-  const asked = retirements
   const program = await runtime.resolve('codex', { configuredPath: cliPathValue })
   const key = process.platform === 'win32' ? program.entry.toLowerCase() : program.entry
   const existing = clients.get(key)
@@ -582,8 +585,7 @@ async function clientFor(cliPathValue: string | undefined): Promise<CodexAppServ
   const client = new CodexAppServerClient(program, () => {
     if (clients.get(key) === client) clients.delete(key)
   })
-  // retired while the program was being found: this request is served, then the process ends
-  if (asked !== retirements) client.stopWhenUnused()
+  if (codexOff) client.stopWhenUnused()
   else clients.set(key, client)
   return client
 }

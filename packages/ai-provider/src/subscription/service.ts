@@ -33,6 +33,7 @@ import {
   type SubscriptionOffResult,
   type SubscriptionStatusMap,
 } from './contract'
+import { notifySubscriptionOffChange } from './launch'
 import {
   meteredLoginFingerprint,
   reconcileMeteredAcceptance,
@@ -458,6 +459,8 @@ export function createSubscriptionStatusService(
           statuses[provider] = checkingSubscriptionStatus(provider)
           announce()
         }
+        // before the program is asked again: what a bridge starts from now on follows the switch
+        notifySubscriptionOffChange({ provider, off })
         return { ok: true, statuses: snapshot() }
       })
       // back on: the program is asked again, and its answer arrives as a change

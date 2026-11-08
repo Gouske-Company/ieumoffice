@@ -74,28 +74,34 @@ export function notifySubscriptionLoginChange(provider: AiSubscriptionProviderId
   tell(loginChangeListeners, provider)
 }
 
-const turnedOffListeners = new Set<(provider: AiSubscriptionCliId) => void>()
+interface SubscriptionOffChange {
+  provider: AiSubscriptionCliId
+  off: boolean
+}
+
+const offChangeListeners = new Set<(change: SubscriptionOffChange) => void>()
 
 /**
- * Be told when a CLI was turned off in this app (decision 0114). A bridge that
- * keeps one of its processes running ends it. Returns a function that stops the listening.
+ * Be told when a CLI was turned off in this app, or back on (decision 0114). A
+ * bridge that keeps one of its processes running ends it, and keeps none while
+ * the CLI is off. Returns a function that stops the listening.
  */
-export function onSubscriptionTurnedOff(
-  listener: (provider: AiSubscriptionCliId) => void,
+export function onSubscriptionOffChange(
+  listener: (change: SubscriptionOffChange) => void,
 ): () => void {
-  turnedOffListeners.add(listener)
-  return () => turnedOffListeners.delete(listener)
+  offChangeListeners.add(listener)
+  return () => offChangeListeners.delete(listener)
 }
 
-/** Tell the listeners of `onSubscriptionTurnedOff`; one that throws does not stop the others */
-export function notifySubscriptionTurnedOff(provider: AiSubscriptionCliId): void {
-  tell(turnedOffListeners, provider)
+/** Tell the listeners of `onSubscriptionOffChange`; one that throws does not stop the others */
+export function notifySubscriptionOffChange(change: SubscriptionOffChange): void {
+  tell(offChangeListeners, change)
 }
 
-function tell<P>(listeners: Set<(provider: P) => void>, provider: P): void {
+function tell<P>(listeners: Set<(value: P) => void>, value: P): void {
   for (const listener of [...listeners]) {
     try {
-      listener(provider)
+      listener(value)
     } catch {
       /* keep telling the others */
     }

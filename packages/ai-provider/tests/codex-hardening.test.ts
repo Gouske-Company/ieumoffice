@@ -18,7 +18,10 @@ import type { SubscriptionChildLike } from '../src/subscription/process'
 import { SUBSCRIPTION_STRIPPED_ENV_VARS } from '../src/subscription/env'
 import { codexAccountInfo, detectSubscriptionLogin } from '../src/subscription/status'
 import { subscriptionModelsOf } from '../src/subscription/contract'
-import { notifySubscriptionLoginChange } from '../src/subscription/launch'
+import {
+  notifySubscriptionLoginChange,
+  notifySubscriptionOffChange,
+} from '../src/subscription/launch'
 import { listSubscriptionModels } from '../src/subscription/models'
 import {
   chatCodexAppServer,
@@ -1336,6 +1339,7 @@ describe('Codex turned off in this app (decision 0114)', () => {
   afterEach(() => {
     unregisterIpc?.()
     unregisterIpc = undefined
+    notifySubscriptionOffChange({ provider: 'codex', off: false })
   })
 
   it('ends an idle app-server, children too, as soon as Codex is turned off', async () => {

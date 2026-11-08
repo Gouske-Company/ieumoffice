@@ -13,7 +13,8 @@
     "./user-mcp/names": "./src/user-mcp/names.ts",
     "./user-mcp/result": "./src/user-mcp/result.ts",
     "./skill-mcp-refs": "./src/skill-mcp-refs.ts",
-    "./mind-map": "./src/mind-map.ts"
+    "./mind-map": "./src/mind-map.ts",
+    "./doubled-escapes": "./src/doubled-escapes.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

@@ -1,5 +1,7 @@
 import {
   attachedImageNote,
+  undoDoubledEscapes,
+  undoDoubledEscapesInList,
   type AgentSkill,
   type AgentToolCall,
   type AgentToolDef,
@@ -28,7 +30,6 @@ import type {
   AgentTocEntry,
   AgentWhere,
 } from '../../../studio-plugin/agent-plugin.mjs'
-import { undoDoubledEscapes, undoDoubledEscapesInList } from './doubled-escapes'
 import type { AgentBridge } from './agent-bridge'
 import type { StringKey } from '../i18n/locale'
 

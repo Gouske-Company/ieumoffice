@@ -559,6 +559,7 @@ import {
   stopAgentSessions,
 } from './agent/agent-window'
 import { startAgentMcpServer } from './agent/agent-mcp'
+import { sweepAgentSessionFolders } from './agent/agent-session-folders'
 import { userSkillsManageGate } from './agent/agent-skills'
 import {
   buildAgentSkillBundle,
@@ -10054,6 +10055,8 @@ app.whenReady().then(async () => {
         setProjectSkills(APP_SETTINGS_PATH(), folder, await userSkills.enabledForAgent(folder), on),
     },
   })
+  // session folders a run that did not quit normally left; after the start, so it never slows it
+  setTimeout(() => void sweepAgentSessionFolders(), 10_000).unref()
   void startMcpFromSettings(currentMcpSettings()).catch((error) => {
     console.error('[mcp] failed to start on boot:', error)
   })

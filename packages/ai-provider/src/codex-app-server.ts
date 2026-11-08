@@ -23,7 +23,7 @@ import {
 import { aiEffortOf, aiEffortsOf, type AiEffort } from './effort'
 import { AiRunError } from './run-error'
 import { subscriptionModelsOf } from './subscription/contract'
-import { onSubscriptionLoginChange } from './subscription/launch'
+import { onSubscriptionLoginChange, onSubscriptionTurnedOff } from './subscription/launch'
 import { createTrackedTempDir, removeTrackedTempDir } from './subscription/temp-dirs'
 import { resolveSubscriptionProgram, type SubscriptionProgram } from './subscription/locate'
 import { setSubscriptionModelSource } from './subscription/models'
@@ -551,9 +551,10 @@ export function shutdownCodexAppServers(): void {
 }
 
 /**
- * The app ran Codex's own login or logout. A running app-server may go on with the login it
- * started with, so none of them serves another request: each is ended at once when idle, and
- * after the runs it is serving otherwise. The next request starts a process on the new login.
+ * The app ran Codex's own login or logout, or Codex was turned off in this app. A running
+ * app-server may go on with the login it started with, and one turned off must not stay: none
+ * of them serves another request. Each is ended at once when idle, and after the runs it is
+ * serving otherwise. The next request starts a process of its own.
  */
 function retireCodexAppServers(): void {
   for (const [key, client] of [...clients]) {
@@ -563,6 +564,9 @@ function retireCodexAppServers(): void {
 }
 
 onSubscriptionLoginChange((provider) => {
+  if (provider === 'codex') retireCodexAppServers()
+})
+onSubscriptionTurnedOff((provider) => {
   if (provider === 'codex') retireCodexAppServers()
 })
 

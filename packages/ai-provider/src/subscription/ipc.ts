@@ -35,6 +35,7 @@ import {
   launchSubscriptionUpdate,
   launchSubscriptionLogin,
   launchSubscriptionLogout,
+  notifySubscriptionTurnedOff,
   onSubscriptionLoginChange,
   type SubscriptionLoginWindowText,
 } from './launch'
@@ -194,7 +195,8 @@ export function registerSubscriptionIpc(
       }
       const result = await service.setOff(provider, off)
       if (!result.ok || !off) return result
-      // a sign-in the app started for it ends with it: nothing is left running for a program off
+      // what the app started for it ends with it: nothing is left running for a program off
+      notifySubscriptionTurnedOff(provider)
       await deps.cancelLogin(provider).catch(() => undefined)
       return { ok: true, statuses: service.getStatuses() }
     },

@@ -117,6 +117,7 @@ import {
   type AiSettings,
   type AiStreamChunk,
   sealAiSecrets,
+  withStoredSubscriptionOff,
 } from '@genoffice/ai-provider'
 import { shutdownCodexAppServers } from '@genoffice/ai-provider/codex-app-server'
 import { withStoredKeyModels } from '@genoffice/ai-provider/key-models'
@@ -4539,9 +4540,12 @@ export function registerSheetsAiIpc(): void {
   ipcMain.handle(IPC_CHANNELS.aiSetSettings, async (event, input: unknown) => {
     sessionFor(event)
     const settings = aiSettingsInputSchema.parse(input)
-    // the live model lists are the main process's (decision 0087): the file's copy is kept
+    // the live model lists (decision 0087) and the CLIs turned off (decision 0114) are the
+    // main process's: the file's copy is kept
     const stored = aiSettingsFromStored(readJson<unknown>(SETTINGS_PATH(), {}))
-    writeAiSettingsFile(withStoredKeyModels(settings as AiSettings, stored))
+    writeAiSettingsFile(
+      withStoredSubscriptionOff(withStoredKeyModels(settings as AiSettings, stored), stored),
+    )
     broadcastAiSettingsChanged()
   })
 

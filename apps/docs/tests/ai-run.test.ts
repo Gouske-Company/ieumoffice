@@ -8,6 +8,7 @@ import {
   defaultAiSettings,
   normalizeAiSettings,
   sanitizeAiSettings,
+  withStoredSubscriptionOff,
   type AiSettings,
   type AiStreamChunk,
   type AiSubscriptionState,
@@ -21,7 +22,6 @@ import {
   resolveAiRun,
   subscriptionStreamCallbacks,
   withMeteredAccepted,
-  withStoredSubscriptionOff,
   withSubscriptionOff,
   type AiRunTexts,
 } from '../src/main/ai-run'

@@ -609,6 +609,18 @@ export function sanitizeSubscriptionOff(
 }
 
 /**
+ * `next` with the CLIs turned off as `stored` has them. Only the switch on the
+ * Settings card changes them: a window that saves a copy it read earlier
+ * neither turns a CLI back on nor off.
+ */
+export function withStoredSubscriptionOff(next: AiSettings, stored: AiSettings): AiSettings {
+  const { subscriptionOff: _sent, ...settings } = next
+  return stored.subscriptionOff
+    ? { ...settings, subscriptionOff: stored.subscriptionOff }
+    : settings
+}
+
+/**
  * The read_url slot when it carries a usable token; anything else (absent,
  * not an object, a non-string or blank token) means public pages only.
  */

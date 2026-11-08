@@ -11,6 +11,7 @@ import {
   SUBSCRIPTION_IPC_CHANNELS,
   createSubscriptionStatusService,
   registerSubscriptionIpc,
+  type SubscriptionStatusServiceDeps,
 } from '../src/subscription'
 import type { SubscriptionProgram } from '../src/subscription/locate'
 import type { SubscriptionChildLike } from '../src/subscription/process'
@@ -1288,8 +1289,17 @@ describe('Codex after a login or logout the app ran', () => {
 
 describe('Codex turned off in this app (decision 0114)', () => {
   /** The real `ai:subscription-off` channel over a status service on settings held in memory */
-  function offSwitch(options: { writable?: boolean } = {}) {
-    const settings: AiSettings = defaultAiSettings()
+  function offSwitch(
+    options: {
+      writable?: boolean
+      off?: AiSettings['subscriptionOff']
+      detect?: SubscriptionStatusServiceDeps['detect']
+    } = {},
+  ) {
+    const settings: AiSettings = {
+      ...defaultAiSettings(),
+      ...(options.off ? { subscriptionOff: options.off } : {}),
+    }
     const service = createSubscriptionStatusService({
       getSettings: () => settings,
       setMeteredAccepted: () => undefined,
@@ -1301,7 +1311,7 @@ describe('Codex turned off in this app (decision 0114)', () => {
         settings.subscriptionOff = next
       },
       acceptanceStore: { read: async () => ({}), write: async () => undefined },
-      detect: async (provider) => ({ provider, state: 'signed-out' }),
+      detect: options.detect ?? (async (provider) => ({ provider, state: 'signed-out' })),
     })
     const handlers = new Map<string, (event: unknown, payload?: unknown) => unknown>()
     const launched = async () => ({ ok: true as const })
@@ -1358,7 +1368,7 @@ describe('Codex turned off in this app (decision 0114)', () => {
     expect(h.treeKills).toEqual([h.children[0]])
   })
 
-  it('starts a fresh app-server on the next use once Codex is back on', async () => {
+  it('starts a fresh app-server on the next use once Codex is back on, and keeps it for the uses after', async () => {
     const h = harness()
     const setOff = offSwitch()
     await readCodexAccount(undefined)
@@ -1366,7 +1376,36 @@ describe('Codex turned off in this app (decision 0114)', () => {
     expect((await setOff('codex', false)).ok).toBe(true)
     expect(h.children).toHaveLength(1)
     await readCodexAccount(undefined)
+    await readCodexAccount(undefined)
     expect(h.children).toHaveLength(2)
+    expect(h.treeKills).toEqual([h.children[0]])
+  })
+
+  it('ends the app-server of a status check that was finding the program when Codex was turned off', async () => {
+    const h = harness()
+    let releaseLocate: (() => void) | undefined
+    const locating = new Promise<void>((resolve) => {
+      releaseLocate = resolve
+    })
+    let accountRead: Promise<unknown> | undefined
+    const setOff = offSwitch({
+      off: { codex: true },
+      // as `detectSubscriptionLogin` does: the program is found first, then its account is read
+      detect: async (provider) => {
+        if (provider !== 'codex') return { provider, state: 'signed-out' }
+        await locating
+        accountRead = readCodexAccount(undefined).catch(() => null)
+        await accountRead
+        return { provider, state: 'signed-out' }
+      },
+    })
+    expect((await setOff('codex', false)).ok).toBe(true)
+    await settle()
+    expect((await setOff('codex', true)).ok).toBe(true)
+    releaseLocate!()
+    await vi.waitFor(() => expect(accountRead).toBeDefined())
+    await accountRead
+    expect(h.children).toHaveLength(1)
     expect(h.treeKills).toEqual([h.children[0]])
   })
 

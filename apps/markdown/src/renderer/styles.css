@@ -844,6 +844,16 @@ html.markdown-graph-open .ribbon-tabs {
   background: var(--hover);
 }
 
+/* a band too narrow even with the view tools folded shows the entry's icon
+   alone; its name stays in aria-label and the ScreenTip. The label keeps its
+   line so the icon sits at the same height as its labelled neighbours. */
+.rb-big.ai-entry.compact > :not(.rb-big-icon) {
+  width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  visibility: hidden;
+}
+
 /* neutral gray open state, same control across docs/sheets/slides ribbons */
 .rb-big.ai-entry.active {
   background: var(--active-bg);

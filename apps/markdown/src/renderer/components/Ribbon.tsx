@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
-import type { ReactNode } from 'react'
+import type { ReactNode, RefObject } from 'react'
 import type { Editor } from '@tiptap/core'
 import { useEditorState } from '@tiptap/react'
 import {
@@ -205,6 +205,7 @@ function ThemePicker({
   useDismissablePopover(open, () => setOpen(false), {
     inside: () => [wrapRef.current],
   })
+  useCloseOnEscape(open, () => setOpen(false), wrapRef)
   return (
     <div className="md-theme-wrap" ref={wrapRef}>
       <IconBtn
@@ -240,6 +241,42 @@ function ThemePicker({
       )}
     </div>
   )
+}
+
+/** open ribbon menus, innermost last: Esc closes only the one opened last */
+const escapeClosers: (() => void)[] = []
+
+function closeTopOnEscape(e: KeyboardEvent) {
+  // a list that handles its own Esc (the font dropdown) stops it before the window
+  if (e.key !== 'Escape' || !escapeClosers.length) return
+  e.preventDefault()
+  escapeClosers[escapeClosers.length - 1]!()
+}
+
+/** Esc closes an open ribbon menu; focus inside it goes back to the button that opened it. */
+function useCloseOnEscape(
+  open: boolean,
+  close: () => void,
+  wrapRef: RefObject<HTMLElement | null>,
+) {
+  const closeRef = useRef(close)
+  closeRef.current = close
+  useEffect(() => {
+    if (!open) return
+    const closer = () => {
+      const wrap = wrapRef.current
+      if (wrap?.contains(document.activeElement)) {
+        wrap.querySelector<HTMLElement>(':scope > button')?.focus()
+      }
+      closeRef.current()
+    }
+    escapeClosers.push(closer)
+    if (escapeClosers.length === 1) window.addEventListener('keydown', closeTopOnEscape)
+    return () => {
+      escapeClosers.splice(escapeClosers.indexOf(closer), 1)
+      if (!escapeClosers.length) window.removeEventListener('keydown', closeTopOnEscape)
+    }
+  }, [open, wrapRef])
 }
 
 const DEFAULT_FONT = ''
@@ -302,7 +339,8 @@ function IconBtn({
   disabled?: boolean
   /** shown after the label in the ScreenTip; the accessible name stays `title` */
   shortcut?: string
-  /** opens a menu rather than acting, so the More flyout stays open around it */
+  /** opens a menu rather than acting, so the More flyout stays open around it;
+   *  `active` then reads as the menu being open */
   hasPopup?: boolean
   onClick: () => void
   children: ReactNode
@@ -314,6 +352,7 @@ function IconBtn({
       data-tip={shortcut ? `${title} (${shortcut})` : title}
       aria-label={title}
       aria-haspopup={hasPopup ? 'menu' : undefined}
+      aria-expanded={hasPopup ? Boolean(active) : undefined}
       disabled={disabled}
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
@@ -415,6 +454,7 @@ export function Ribbon({
   useDismissablePopover(moreOpen, () => setMoreOpen(false), {
     inside: () => [moreRef.current],
   })
+  useCloseOnEscape(moreOpen, () => setMoreOpen(false), moreRef)
 
   // editor-shaped commands stand down while the pane hides the selection;
   // Save As never does, and Find only while the source view hides its target
@@ -569,11 +609,17 @@ export function Ribbon({
       </IconBtn>
     ),
   })
-  const foldedCount = useRibbonFold(
+  // with every view tool folded, the AI entries drop their labels, the trailing ones first
+  const aiEntryKeys = ['assistant', ...aiPresets.map((p) => p.kind)]
+  const fold = useRibbonFold(
     bodyRef,
     viewRowRef,
     viewTools.map((v) => v.key),
+    aiEntryKeys,
+    lang,
   )
+  const foldedCount = fold.folded
+  const isCompact = (key: string) => aiEntryKeys.indexOf(key) >= aiEntryKeys.length - fold.compacted
   const inlineTools = viewTools.slice(0, viewTools.length - foldedCount)
   const foldedTools = viewTools.slice(viewTools.length - foldedCount)
 
@@ -661,8 +707,10 @@ export function Ribbon({
           <div className="ribbon-group-items">
             <button
               type="button"
-              className={`rb-big ai-entry${aiOpen ? ' active' : ''}`}
+              className={`rb-big ai-entry${aiOpen ? ' active' : ''}${isCompact('assistant') ? ' compact' : ''}`}
+              data-fold-key="assistant"
               data-tip={t('aiOpenAssistant')}
+              aria-label={aiSubscriptionText(lang, 'aiAssistant')}
               disabled={disabled}
               onMouseDown={(e) => e.preventDefault()}
               onClick={onToggleAi}
@@ -676,8 +724,10 @@ export function Ribbon({
               <button
                 key={kind}
                 type="button"
-                className="rb-big ai-entry"
+                className={`rb-big ai-entry${isCompact(kind) ? ' compact' : ''}`}
+                data-fold-key={kind}
                 data-tip={t(btn)}
+                aria-label={t(btn)}
                 disabled={off || state?.empty}
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => onAiPreset(prompt())}

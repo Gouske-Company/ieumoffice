@@ -2,7 +2,15 @@
  * Agent sessions in the shell (decision 0032): which folders may be a project,
  * what a session starts with, who may drive it, and what the window is shown.
  */
-import { existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -646,6 +654,121 @@ describe('driving a session', () => {
     m.stopAll()
     expect(existsSync(sessionDir)).toBe(false)
   })
+})
+
+describe('a window that closes, or an app that quits, while the session is being prepared', () => {
+  const STEPS = ['folder', 'app-mcp', 'relays', 'skills', 'runner'] as const
+  type Step = (typeof STEPS)[number]
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  /** a manager whose start waits at `pauseAt` until the test lets it go on */
+  function preparing(pauseAt: Step) {
+    const home = temp()
+    const project = join(home, 'Project')
+    mkdirSync(project)
+    // the session folders of this manager, and only its, land here
+    const tmp = join(home, 'tmp')
+    mkdirSync(tmp)
+    for (const name of ['TMP', 'TEMP', 'TMPDIR']) vi.stubEnv(name, tmp)
+    let goOn!: () => void
+    const paused = new Promise<void>((resolve) => {
+      goOn = resolve
+    })
+    let reached!: () => void
+    const atPause = new Promise<void>((resolve) => {
+      reached = resolve
+    })
+    const step = async (name: Step): Promise<void> => {
+      if (name !== pauseAt) return
+      reached()
+      await paused
+    }
+    const session = fakeSession()
+    const claude = vi.fn(async () => {
+      await step('runner')
+      return session
+    })
+    const mcpStop = vi.fn(async () => undefined)
+    const startAppMcp = vi.fn(async () => {
+      await step('app-mcp')
+      return { url: 'http://127.0.0.1:5/mcp', token: 't', stop: mcpStop }
+    })
+    const relaysStop = vi.fn(async () => undefined)
+    const startRelays = vi.fn(async () => {
+      await step('relays')
+      return { relays: [], keepResultsInside: [], stop: relaysStop }
+    })
+    const m = createAgentManager({
+      runners: { claude, codex: vi.fn() },
+      statuses: () => ({ 'claude-code': ready('claude-code') }),
+      aiSettings: () => normalizeAiSettings({ providers: {} }),
+      openDocuments: () => [],
+      userData: join(home, 'AppData', 'IeumOffice'),
+      homeDir: home,
+      language: () => 'ko',
+      startAppMcp,
+      startRelays,
+      buildSkills: async () => {
+        await step('skills')
+        return undefined
+      },
+      emit: () => undefined,
+    })
+    managers.push(m)
+    const start = () =>
+      m.start(1, { provider: 'claude-code', projectRoot: project, mode: 'ask-commands' })
+    return {
+      m,
+      tmp,
+      session,
+      claude,
+      startAppMcp,
+      mcpStop,
+      startRelays,
+      relaysStop,
+      start,
+      atPause,
+      goOn,
+    }
+  }
+
+  for (const pauseAt of STEPS) {
+    for (const how of ['the window closes', 'the app quits'] as const) {
+      it(`leaves nothing running when ${how} at step "${pauseAt}"`, async () => {
+        const p = preparing(pauseAt)
+        const started = p.start()
+        // the session folder is made before the first step the test can hold
+        if (pauseAt !== 'folder') await p.atPause
+        if (how === 'the window closes') p.m.stopOwner(1)
+        else p.m.stopAll()
+        p.goOn()
+
+        const result = await started
+        const reached = (step: Step): boolean => STEPS.indexOf(pauseAt) >= STEPS.indexOf(step)
+        if (pauseAt === 'runner') expect(p.session.stopped, 'the program it got ends').toBe(1)
+        else expect(p.claude, 'no program is started').not.toHaveBeenCalled()
+        expect(result).toMatchObject({ ok: false })
+        expect(p.startAppMcp).toHaveBeenCalledTimes(reached('app-mcp') ? 1 : 0)
+        expect(p.mcpStop, 'the app MCP server is closed once').toHaveBeenCalledTimes(
+          reached('app-mcp') ? 1 : 0,
+        )
+        expect(p.startRelays).toHaveBeenCalledTimes(reached('relays') ? 1 : 0)
+        expect(p.relaysStop, 'the relays are closed once').toHaveBeenCalledTimes(
+          reached('relays') ? 1 : 0,
+        )
+        await vi.waitFor(() =>
+          expect(readdirSync(p.tmp), 'the session folder is removed').toEqual([]),
+        )
+
+        // nothing of it is left for the app's quit to end
+        p.m.stopAll()
+        expect(p.session.stopped).toBe(pauseAt === 'runner' ? 1 : 0)
+        expect(p.mcpStop).toHaveBeenCalledTimes(reached('app-mcp') ? 1 : 0)
+      })
+    }
+  }
 })
 
 describe('what the window is shown', () => {

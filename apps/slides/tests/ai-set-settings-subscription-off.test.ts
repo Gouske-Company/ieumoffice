@@ -8,8 +8,8 @@
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { afterAll, beforeAll, expect, it, vi } from 'vitest'
-import type { AiSettings } from '@genoffice/ai-provider'
+import { afterAll, afterEach, beforeAll, expect, it, vi } from 'vitest'
+import { setAiSecretCodec, type AiSettings } from '@genoffice/ai-provider'
 
 type Handler = (event: { sender: unknown }, ...args: unknown[]) => unknown
 
@@ -63,6 +63,7 @@ beforeAll(() => {
   state.userData = mkdtempSync(join(tmpdir(), 'slides-subscription-off-'))
   registerAiIpc()
 })
+afterEach(() => setAiSecretCodec(null))
 afterAll(() => rmSync(state.userData, { recursive: true, force: true }))
 
 async function savedFrom(
@@ -98,4 +99,26 @@ it('does not turn a CLI off because a renderer says so', async () => {
   const written = await savedFrom({ ...stale, internetTools: false }, {})
   expect(written.internetTools).toBe(false)
   expect(written.subscriptionOff).toBeUndefined()
+})
+
+it('keeps the fields a newer build wrote, and the key sealed, when a renderer saves', async () => {
+  const key = 'sk-test-plain-key-9012'
+  const codec = {
+    seal: (plain: string) => `sealed:v1:${Buffer.from(plain).toString('base64')}`,
+    open: (sealed: string) => Buffer.from(sealed.slice('sealed:v1:'.length), 'base64').toString(),
+  }
+  setAiSecretCodec(codec)
+  const newer = {
+    futureTop: { mode: 'x' },
+    providers: { openai: { apiKey: codec.seal(key), model: 'm', futureField: 'kept', effort: 3 } },
+  }
+  const copy = await rendererCopy(newer)
+  expect(copy.providers.openai).toEqual({ apiKey: key, model: 'm' })
+
+  const written = (await savedFrom({ ...copy, internetTools: false }, newer)) as AiSettings &
+    Record<string, unknown>
+  expect(written.internetTools).toBe(false)
+  expect(written.futureTop).toEqual({ mode: 'x' })
+  expect(written.providers.openai).toMatchObject({ apiKey: codec.seal(key), futureField: 'kept' })
+  expect(readFileSync(settingsFile(), 'utf8')).not.toContain(key)
 })

@@ -4,6 +4,7 @@ export const ja = {
   loading: '文書を開いています…',
   editorFailed: 'エディターを起動できませんでした。',
   openFailed: '文書を開けませんでした。',
+  pdfImportCancelled: 'PDF の取り込みを取り消しました。このタブは閉じてかまいません。',
   saveFailed: '文書を保存できませんでした。',
   fileSave: '保存',
   fileSaveAs: '名前を付けて保存…',

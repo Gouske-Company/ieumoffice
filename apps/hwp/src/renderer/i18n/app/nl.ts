@@ -4,6 +4,7 @@ export const nl = {
   loading: 'Document wordt geopend…',
   editorFailed: 'De editor kon niet worden gestart.',
   openFailed: 'Het document kon niet worden geopend.',
+  pdfImportCancelled: 'Het importeren van de PDF is geannuleerd. U kunt dit tabblad sluiten.',
   saveFailed: 'Het document kon niet worden opgeslagen.',
   fileSave: 'Opslaan',
   fileSaveAs: 'Opslaan als…',

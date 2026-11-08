@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: pblsketch <239486537+pblsketch@users.noreply.github.com>
-Date: Mon, 9 Nov 2026 00:00:00 +0900
-Subject: [PATCH 1/1] fix(layout): 편집 중 줄인 셀 높이만큼 행 하한도 내린다
+Date: Sun, 8 Nov 2026 00:00:00 +0900
+Subject: [PATCH 29/29] fix(layout): 편집 중 줄인 셀 높이만큼 행 하한도 내린다
 
 편집 세션의 재측정은 로드 때 잰 행 높이를 행마다 하한으로 둔다(한 칸이 자라도
 다른 행의 몫을 빼앗지 않게). 이 하한이 사용자가 셀 높이를 줄인 경우에도 걸려,
@@ -12,16 +12,18 @@ Subject: [PATCH 1/1] fix(layout): 편집 중 줄인 셀 높이만큼 행 하한�
 - 편집 재측정은 그 값을 로드 측정에서 물려받고, 지금 저장 높이가 로드 때보다
   낮은 행은 그 차이만큼 하한을 내린다. 내용이 줄어 생긴 여유(Enter 지우기 등)는
   종전대로 하한을 지킨다.
+
+Ported onto v0.9.0: applied without conflicts; no code changes needed.
 ---
  src/renderer/height_measurer.rs               | 69 +++++++++++++++++++++++++--
  tests/cases/issue_6714_signed_table_offset.rs |  1 +
  2 files changed, 66 insertions(+), 4 deletions(-)
 
 diff --git a/src/renderer/height_measurer.rs b/src/renderer/height_measurer.rs
-index b196eeecdd78cf069ac00210b7857bf2fb0f6efb..990dd77f298a394383b044068166dcb39f0e2b28 100644
+index d5e6524fc8770811327d9d55669be658fcfc43a3..f35210f1424adec748b2ef68f10d438b0b383ad5 100644
 --- a/src/renderer/height_measurer.rs
 +++ b/src/renderer/height_measurer.rs
-@@ -837,6 +837,27 @@ pub(crate) fn reflowed_tac_table_host_trailing_spacing_px(
+@@ -838,6 +838,27 @@ pub(crate) fn reflowed_tac_table_host_trailing_spacing_px(
      )
  }
  
@@ -49,7 +51,7 @@ index b196eeecdd78cf069ac00210b7857bf2fb0f6efb..990dd77f298a394383b044068166dcb3
  /// 표의 측정된 높이 정보
  #[derive(Debug, Clone)]
  pub struct MeasuredTable {
-@@ -856,6 +877,10 @@ pub struct MeasuredTable {
+@@ -857,6 +878,10 @@ pub struct MeasuredTable {
      /// 직전 측정이 아니라 이 값을 하한으로 써야 undo/삭제로 내용이 줄었을 때
      /// 행이 로드 배분까지 되돌아온다. 비편집 측정은 None(자기 자신이 기준).
      pub baseline_row_heights: Option<Vec<f64>>,
@@ -60,7 +62,7 @@ index b196eeecdd78cf069ac00210b7857bf2fb0f6efb..990dd77f298a394383b044068166dcb3
      /// 조각이 실제 수용한 물리 행 상자의 소유 범위. 원본 전체 측정은 비어 있다.
      pub fragment_block_frames: Vec<(usize, usize)>,
      /// 캡션 높이 (px)
-@@ -882,7 +907,7 @@ pub struct MeasuredTable {
+@@ -883,7 +908,7 @@ pub struct MeasuredTable {
      /// 단일 행 블록이면 row_block_end[r] == r + 1.
      pub row_block_end: Vec<usize>,
  }
@@ -69,7 +71,7 @@ index b196eeecdd78cf069ac00210b7857bf2fb0f6efb..990dd77f298a394383b044068166dcb3
  
  /// 측정된 행 높이가 문서의 **행별 선언 높이**와 이미 일치하는가.
  ///
-@@ -3820,6 +3845,7 @@ let body_height=match nested_body_heights
+@@ -3830,6 +3855,7 @@ let body_height=match nested_body_heights
                  total_height: 0.0,
                  row_heights: storage.filled(rc, 0.0)?,
                  baseline_row_heights: None,
@@ -77,7 +79,7 @@ index b196eeecdd78cf069ac00210b7857bf2fb0f6efb..990dd77f298a394383b044068166dcb3
                  row_frame_heights: None,
                  fragment_block_frames: Vec::new(),
                  unwrapped_table_depth: 0,
-@@ -6247,12 +6273,15 @@ let mut tables=p.controls.iter().filter_map(|c| match c{Control::Table(t)=>Some(
+@@ -6191,12 +6217,15 @@ let mut tables=p.controls.iter().filter_map(|c| match c{Control::Table(t)=>Some(
          }
          let (row_block_start, row_block_end) =
              compute_row_blocks_with_storage(table, row_heights.len(), storage)?;
@@ -93,7 +95,7 @@ index b196eeecdd78cf069ac00210b7857bf2fb0f6efb..990dd77f298a394383b044068166dcb3
              row_frame_heights,
              fragment_block_frames: Vec::new(),
              unwrapped_table_depth: 0,
-@@ -6307,11 +6336,31 @@ let mut tables=p.controls.iter().filter_map(|c| match c{Control::Table(t)=>Some(
+@@ -6251,11 +6280,31 @@ let mut tables=p.controls.iter().filter_map(|c| match c{Control::Table(t)=>Some(
          if baseline.len() != mt.row_heights.len() {
              return Ok(());
          }
@@ -128,7 +130,7 @@ index b196eeecdd78cf069ac00210b7857bf2fb0f6efb..990dd77f298a394383b044068166dcb3
                  changed = true;
              }
          }
-@@ -7388,6 +7437,7 @@ mod tests {
+@@ -7338,6 +7387,7 @@ mod tests {
              total_height: 100.0,
              row_heights: vec![20.0, 30.0, 25.0],
              baseline_row_heights: None,
@@ -136,7 +138,7 @@ index b196eeecdd78cf069ac00210b7857bf2fb0f6efb..990dd77f298a394383b044068166dcb3
              row_frame_heights: None,
              fragment_block_frames: Vec::new(),
              unwrapped_table_depth: 0,
-@@ -7414,6 +7464,7 @@ mod tests {
+@@ -7364,6 +7414,7 @@ mod tests {
              total_height: 100.0,
              row_heights: vec![20.0, 30.0, 25.0, 40.0],
              baseline_row_heights: None,
@@ -144,7 +146,7 @@ index b196eeecdd78cf069ac00210b7857bf2fb0f6efb..990dd77f298a394383b044068166dcb3
              row_frame_heights: None,
              fragment_block_frames: Vec::new(),
              unwrapped_table_depth: 0,
-@@ -7447,6 +7498,7 @@ mod tests {
+@@ -7397,6 +7448,7 @@ mod tests {
              total_height: 100.0,
              row_heights: vec![50.0, 30.0],
              baseline_row_heights: None,
@@ -152,7 +154,7 @@ index b196eeecdd78cf069ac00210b7857bf2fb0f6efb..990dd77f298a394383b044068166dcb3
              row_frame_heights: None,
              fragment_block_frames: Vec::new(),
              unwrapped_table_depth: 0,
-@@ -7472,6 +7524,7 @@ mod tests {
+@@ -7422,6 +7474,7 @@ mod tests {
              total_height: 100.0,
              row_heights: vec![20.0, 30.0, 25.0],
              baseline_row_heights: None,
@@ -160,7 +162,7 @@ index b196eeecdd78cf069ac00210b7857bf2fb0f6efb..990dd77f298a394383b044068166dcb3
              row_frame_heights: None,
              fragment_block_frames: Vec::new(),
              unwrapped_table_depth: 0,
-@@ -7508,6 +7561,7 @@ mod tests {
+@@ -7458,6 +7511,7 @@ mod tests {
              total_height: 100.0,
              row_heights: vec![50.0, 30.0, 25.0],
              baseline_row_heights: None,
@@ -168,7 +170,7 @@ index b196eeecdd78cf069ac00210b7857bf2fb0f6efb..990dd77f298a394383b044068166dcb3
              row_frame_heights: None,
              fragment_block_frames: Vec::new(),
              unwrapped_table_depth: 0,
-@@ -7539,6 +7593,7 @@ mod tests {
+@@ -7489,6 +7543,7 @@ mod tests {
              total_height: 0.0,
              row_heights: vec![],
              baseline_row_heights: None,
@@ -176,7 +178,7 @@ index b196eeecdd78cf069ac00210b7857bf2fb0f6efb..990dd77f298a394383b044068166dcb3
              row_frame_heights: None,
              fragment_block_frames: Vec::new(),
              unwrapped_table_depth: 0,
-@@ -7564,6 +7619,7 @@ mod tests {
+@@ -7514,6 +7569,7 @@ mod tests {
              total_height: 50.0,
              row_heights: vec![50.0],
              baseline_row_heights: None,
@@ -184,7 +186,7 @@ index b196eeecdd78cf069ac00210b7857bf2fb0f6efb..990dd77f298a394383b044068166dcb3
              row_frame_heights: None,
              fragment_block_frames: Vec::new(),
              unwrapped_table_depth: 0,
-@@ -7691,6 +7747,7 @@ mod tests {
+@@ -7641,6 +7697,7 @@ mod tests {
              total_height: 100.0,
              row_heights: vec![20.0, 30.0, 25.0],
              baseline_row_heights: None,
@@ -192,7 +194,7 @@ index b196eeecdd78cf069ac00210b7857bf2fb0f6efb..990dd77f298a394383b044068166dcb3
              row_frame_heights: None,
              fragment_block_frames: Vec::new(),
              unwrapped_table_depth: 0,
-@@ -7727,6 +7784,7 @@ mod tests {
+@@ -7677,6 +7734,7 @@ mod tests {
              total_height: 50.0,
              row_heights: vec![20.0, 30.0],
              baseline_row_heights: None,
@@ -200,7 +202,7 @@ index b196eeecdd78cf069ac00210b7857bf2fb0f6efb..990dd77f298a394383b044068166dcb3
              row_frame_heights: None,
              fragment_block_frames: Vec::new(),
              unwrapped_table_depth: 0,
-@@ -7757,6 +7815,7 @@ mod tests {
+@@ -7707,6 +7765,7 @@ mod tests {
              total_height: 100.0,
              row_heights: vec![10.0, 10.0, 10.0, 10.0, 10.0],
              baseline_row_heights: None,
@@ -208,7 +210,7 @@ index b196eeecdd78cf069ac00210b7857bf2fb0f6efb..990dd77f298a394383b044068166dcb3
              row_frame_heights: None,
              fragment_block_frames: Vec::new(),
              unwrapped_table_depth: 0,
-@@ -7793,6 +7852,7 @@ mod tests {
+@@ -7743,6 +7802,7 @@ mod tests {
              total_height: 100.0,
              row_heights: vec![10.0, 10.0, 10.0, 10.0, 10.0],
              baseline_row_heights: None,
@@ -216,7 +218,7 @@ index b196eeecdd78cf069ac00210b7857bf2fb0f6efb..990dd77f298a394383b044068166dcb3
              row_frame_heights: None,
              fragment_block_frames: Vec::new(),
              unwrapped_table_depth: 0,
-@@ -7821,6 +7881,7 @@ mod tests {
+@@ -7771,6 +7831,7 @@ mod tests {
              total_height: 0.0,
              row_heights: vec![],
              baseline_row_heights: None,

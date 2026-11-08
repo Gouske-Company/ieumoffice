@@ -1,5 +1,6 @@
 import { execSync, spawn } from 'node:child_process'
 import {
+  copyFileSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -9244,7 +9245,35 @@ ipcMain.handle(PDF_CHANNELS.convertOffice, async (e, format: unknown) => {
   if (format === 'docx') await exportPdfAsDocxLocal()
   else if (format === 'xlsx') await exportPdfAsXlsxLocal()
   else if (format === 'pptx') await exportPdfAsPptxLocal()
+  else if (format === 'hwp') await openPdfAsHwp()
 })
+
+/**
+ * Converter › HWP (decision 0116): the PDF opens in a new, untitled Hangul tab, where
+ * the editor's own PDF import asks how to lay it out and converts it in the tab. The
+ * PDF is copied first (pending edits flushed) so the tab reads a file of its own; the
+ * copy goes with the tab, and the first save asks where to put the .hwp/.hwpx.
+ */
+async function openPdfAsHwp(): Promise<void> {
+  const tab = activePdfTarget()
+  if (!tab?.filePath || !tabManager) return
+  if (!(await flushPdfSave(tab.webContents, true))) return
+  const dir = join(app.getPath('temp'), 'ieumoffice-pdf-imports', randomUUID())
+  const baseName = basename(tab.filePath).replace(/\.pdf$/i, '')
+  let tabId: string
+  try {
+    mkdirSync(dir, { recursive: true })
+    const copy = join(dir, basename(tab.filePath))
+    copyFileSync(tab.filePath, copy)
+    tabId = tabManager.openHwpTab(copy, { untitledCopy: { title: baseName, importedPdf: true } })
+  } catch (err) {
+    rmSync(dir, { recursive: true, force: true })
+    throw err
+  }
+  const contents = tabManager.webContentsForTab(tabId)
+  if (contents) contents.once('destroyed', () => rmSync(dir, { recursive: true, force: true }))
+  else rmSync(dir, { recursive: true, force: true })
+}
 
 function openThirdPartyNotices(): Promise<string> {
   const path = app.isPackaged

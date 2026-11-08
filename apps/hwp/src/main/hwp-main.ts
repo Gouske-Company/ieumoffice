@@ -1019,9 +1019,15 @@ function grantAndTrack(
     openPathByWc.set(wcId, openPath)
     allowedByWc.set(wcId, new Set([openPath]))
     if (options.untitledCopy) {
+      // a PDF opened to be imported is named as the document it becomes, in the
+      // format Settings picks for new documents
+      const converted = typeof options.untitledCopy === 'object' ? options.untitledCopy : null
+      const name = converted
+        ? `${converted.baseName}.${readHwpDefaultFormat(app)}`
+        : basename(openPath)
       untitledCopyByWc.set(wcId, {
-        name: basename(openPath),
-        format: hwpFormatOfPath(openPath) ?? 'hwp',
+        name,
+        format: hwpFormatOfPath(name) ?? 'hwp',
       })
     } else {
       savePathByWc.set(wcId, openPath)
@@ -1070,8 +1076,10 @@ export interface HwpViewOptions {
   /**
    * `openPath` is a copy to open as a new, untitled document (a skill
    * template's, spec 5.7): it is read like a file, saved like a new document.
+   * `{ baseName }` is a PDF copy the editor imports (PDF converter menu,
+   * decision 0116): the new document is named `baseName` with the default format.
    */
-  untitledCopy?: boolean | undefined
+  untitledCopy?: boolean | { baseName: string } | undefined
 }
 
 export function createHwpView(

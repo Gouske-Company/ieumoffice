@@ -95,6 +95,8 @@ const detailOf = (error: unknown) => (error instanceof Error ? error.message : S
  */
 const isBridgeTimeout = (error: unknown) =>
   error instanceof Error && error.message.startsWith('Request timeout')
+/** The user closed the editor's PDF import dialog (a PDF opened to be converted, decision 0116). */
+const isPdfImportCancelled = (error: unknown) => detailOf(error).includes('PDF_IMPORT_CANCELLED')
 
 function savePortOf(editor: RhwpEditor): SaveEditorPort {
   const agent = createAgentBridge(() => editor)
@@ -276,6 +278,10 @@ export default function App() {
         if (disposed) return
         if (editor && isBridgeTimeout(error)) return
         setPhase('failed')
+        if (editor && isPdfImportCancelled(error)) {
+          setNotice({ tone: 'info', key: 'pdfImportCancelled', sticky: true })
+          return
+        }
         setNotice({
           tone: 'error',
           key: editor ? 'openFailed' : 'editorFailed',

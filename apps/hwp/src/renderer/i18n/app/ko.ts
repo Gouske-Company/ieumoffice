@@ -4,6 +4,7 @@ export const ko = {
   loading: '문서를 여는 중…',
   editorFailed: '편집기를 시작하지 못했습니다.',
   openFailed: '문서를 열지 못했습니다.',
+  pdfImportCancelled: 'PDF 가져오기를 취소했습니다. 이 탭은 닫아도 됩니다.',
   saveFailed: '문서를 저장하지 못했습니다.',
   fileSave: '저장',
   fileSaveAs: '다른 이름으로 저장…',

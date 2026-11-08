@@ -124,20 +124,6 @@
  *   so its name is the label the app gives it, and it is off while nothing is selected.
  *   Before the plugin registers it the menus leave it out.
  *
- * studio-memo-anchors, studio-memo-delete-undo
- *   The engine drops a memo when Backspace or Delete removes the last character of its
- *   anchor (vendor/rhwp-core patch 0018, decision 0072). The studio's undo of a typed
- *   deletion only puts the text back, so the memo stayed gone. The bridge gains a call
- *   for the memo anchors, and a deletion that touches one captures its paragraph first,
- *   as the studio already does for a link, so undo restores the paragraph with the memo.
- *
- * studio-pdf-import-options
- *   The engine is built without upstream's PDF import until upstream releases it
- *   (vendor/rhwp-core `rhwp.features`, decision 0107). The studio then keeps PDFs out of
- *   its file picker, drops and file command by itself, but its options dialog still
- *   showed the PDF import layout choice. The dialog shows that section only when the
- *   engine has PDF import, and its OK leaves the setting alone when it does not.
- *
  * studio-pc-fonts
  *   The studio lists the PC's fonts only after the 찾기 button of its options dialog,
  *   so its font lists held the base fonts and the document's own until then. At start-up
@@ -1078,95 +1064,6 @@ const PATCHES = {
     find: "      { type: 'command', commandId: 'table:cell-props', label: '셀 속성...' },",
     replace: "      { type: 'command', commandId: 'table:cell-props', label: '표/셀 속성(P)...' },",
   },
-  'studio-memo-anchors': {
-    file: /[\\/]rhwp-studio[\\/]src[\\/]core[\\/]wasm-bridge\.ts$/,
-    // the memo list of vendor/rhwp-core patch 0018, ahead of a neighbour the bridge has once
-    find: '  getHyperlinkContext(target: HyperlinkTarget): HyperlinkContext {',
-    replace: [
-      '  /** The memo anchors of the document; none from an engine without memos. */',
-      '  getMemoAnchors(): {',
-      '    sectionIndex: number;',
-      '    paraIndex: number | null;',
-      '    startCharIdx: number | null;',
-      '    endCharIdx: number | null;',
-      '    path: { controlIndex: number; cellIndex?: number; paraIndex: number }[] | null;',
-      '  }[] {',
-      '    const doc = this.doc as any;',
-      "    if (!doc || typeof doc.getMemoList !== 'function') return [];",
-      '    return JSON.parse(doc.getMemoList());',
-      '  }',
-      '',
-      '  getHyperlinkContext(target: HyperlinkTarget): HyperlinkContext {',
-    ].join('\n'),
-  },
-  'studio-memo-delete-undo': {
-    file: /[\\/]rhwp-studio[\\/]src[\\/]engine[\\/]command\.ts$/,
-    edits: [
-      // whether a deletion touches a memo's anchor, next to the command that asks
-      {
-        find: 'export class DeleteTextCommand implements EditCommand {',
-        replace: [
-          "/** Whether deleting `count` characters at `offset` in `target` touches a memo's anchor. */",
-          'export function memoAnchorOverlaps(',
-          '  wasm: WasmBridge,',
-          '  target: ReturnType<typeof hyperlinkTarget>,',
-          '  offset: number,',
-          '  count: number,',
-          '): boolean {',
-          '  const path = JSON.stringify(target.cellPath);',
-          '  return wasm.getMemoAnchors().some(memo =>',
-          '    memo.sectionIndex === target.section',
-          '    && memo.paraIndex === target.para',
-          '    && JSON.stringify((memo.path ?? []).map(entry =>',
-          '      [entry.controlIndex, entry.cellIndex ?? 0, entry.paraIndex])) === path',
-          '    && memo.startCharIdx !== null && memo.endCharIdx !== null',
-          '    && memo.startCharIdx < memo.endCharIdx',
-          '    && offset < memo.endCharIdx && memo.startCharIdx < offset + count);',
-          '}',
-          '',
-          'export class DeleteTextCommand implements EditCommand {',
-        ].join('\n'),
-      },
-      // the engine drops a memo whose whole anchor goes; capture the paragraph as for a link
-      {
-        find: [
-          '      if (context.links.some(link => this.position.charOffset < link.end',
-          '        && link.start < this.position.charOffset + this.count)) {',
-        ].join('\n'),
-        replace: [
-          '      if (context.links.some(link => this.position.charOffset < link.end',
-          '        && link.start < this.position.charOffset + this.count)',
-          '        || memoAnchorOverlaps(wasm, target, this.position.charOffset, this.count)) {',
-        ].join('\n'),
-      },
-    ],
-  },
-  'studio-pdf-import-options': {
-    file: /[\\/]rhwp-studio[\\/]src[\\/]ui[\\/]options-dialog\.ts$/,
-    edits: [
-      {
-        find: "import { userSettings } from '@/core/user-settings';",
-        replace: [
-          "import { userSettings } from '@/core/user-settings';",
-          "import { HwpDocument } from '@wasm/rhwp.js';",
-          "import { hasPdfImportCapability } from '@/core/pdf-import-capability';",
-        ].join('\n'),
-      },
-      {
-        find: '    panel.appendChild(this.createPdfImportSection());',
-        replace:
-          '    if (hasPdfImportCapability(HwpDocument)) panel.appendChild(this.createPdfImportSection());',
-      },
-      {
-        find: "    userSettings.setPdfImportLayout(this.pdfImportEditableRadio.checked ? 'editable' : 'fidelity');",
-        replace: [
-          '    if (this.pdfImportEditableRadio) {',
-          "      userSettings.setPdfImportLayout(this.pdfImportEditableRadio.checked ? 'editable' : 'fidelity');",
-          '    }',
-        ].join('\n'),
-      },
-    ],
-  },
   'studio-pc-fonts': {
     file: /[\\/]rhwp-studio[\\/]src[\\/]main\.ts$/,
     edits: [
@@ -1176,6 +1073,9 @@ const PATCHES = {
           '  resolveLocalFont,',
           "} from '@/core/local-fonts';",
           `import { installFontPresence, refreshPcFonts } from '${PC_FONTS_MODULE}';`,
+          // under a name of its own: rhwp v0.9.0's main.ts no longer imports it, and a later
+          // one that does must not clash
+          "import { getLocalFontRecords as ieumLocalFontRecords } from '@/core/local-fonts';",
         ].join('\n'),
       },
       {
@@ -1189,14 +1089,14 @@ const PATCHES = {
           '    setupEventListeners();',
           '    installFontPresence({',
           '      resolveLocalFont,',
-          '      records: () => getLocalFontRecords({ includeRegistered: true }),',
+          '      records: () => ieumLocalFontRecords({ includeRegistered: true }),',
           '      detected: getDetectedOSFonts,',
           '      state: getLocalFontState,',
           '    });',
           '    void refreshPcFonts({',
           '      queryLocalFonts: (globalThis as { queryLocalFonts?: () => Promise<{ family: string; fullName: string; postscriptName: string }[]> }).queryLocalFonts?.bind(globalThis),',
           '      loadStored: loadStoredLocalFonts,',
-          '      records: () => getLocalFontRecords({ includeRegistered: true }),',
+          '      records: () => ieumLocalFontRecords({ includeRegistered: true }),',
           '      detect: () => detectLocalFonts({ force: true }),',
           "      changed: () => eventBus.emit('local-fonts-changed', { source: 'pc-fonts' }),",
           '      document,',
@@ -1293,10 +1193,7 @@ export const STUDIO_PATCHES = /** @type {const} */ ([
   'studio-easy-words-context-menu',
   'studio-memo-label-ko',
   'studio-memo-label-en',
-  'studio-memo-anchors',
-  'studio-memo-delete-undo',
   'studio-cell-block-paste',
-  'studio-pdf-import-options',
   'studio-pc-fonts',
   'studio-missing-font-marks',
 ])

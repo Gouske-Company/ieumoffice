@@ -4,6 +4,7 @@ export const he = {
   loading: 'פותח את המסמך…',
   editorFailed: 'לא ניתן היה להפעיל את העורך.',
   openFailed: 'לא ניתן היה לפתוח את המסמך.',
+  pdfImportCancelled: 'ייבוא ה-PDF בוטל. אפשר לסגור את הכרטיסייה הזו.',
   saveFailed: 'לא ניתן היה לשמור את המסמך.',
   fileSave: 'שמירה',
   fileSaveAs: 'שמירה בשם…',

@@ -448,155 +448,6 @@ describe('rhwp easy-words menu patch', () => {
   })
 })
 
-describe('rhwp memo delete-undo patches', () => {
-  // the studio's text around the patches, as the pinned release has it
-  const bridge = [
-    '  getHyperlinkContext(target: HyperlinkTarget): HyperlinkContext {',
-    "    if (!this.doc) throw new Error('문서가 로드되지 않았습니다');",
-    '    return JSON.parse(this.doc.getHyperlinkContext(JSON.stringify(target)));',
-    '  }',
-    '',
-  ].join('\n')
-  const command = [
-    'export class DeleteTextCommand implements EditCommand {',
-    '  execute(wasm: WasmBridge): DocumentPosition {',
-    '    if (!isCaption && this.count > 0) {',
-    '      const target = hyperlinkTarget(this.position);',
-    '      const context = wasm.getHyperlinkContext(target);',
-    '      if (context.links.some(link => this.position.charOffset < link.end',
-    '        && link.start < this.position.charOffset + this.count)) {',
-    '        this.fragmentId = wasm.captureDeleteRange(target.section, target.para, target.para);',
-    '      }',
-    '    }',
-    '  }',
-    '}',
-    '',
-  ].join('\n')
-  const patched = applyPatch('studio-memo-delete-undo', command)
-
-  type Anchor = {
-    sectionIndex: number
-    paraIndex: number | null
-    startCharIdx: number | null
-    endCharIdx: number | null
-    path: { controlIndex: number; cellIndex?: number; paraIndex: number }[] | null
-  }
-  type Target = { section: number; para: number; cellPath: [number, number, number][] }
-
-  /** The helper the patch adds, run against a bridge that holds the given memos. */
-  function overlaps(anchors: Anchor[], target: Target, offset: number, count: number): boolean {
-    const start = patched.indexOf('export function memoAnchorOverlaps(')
-    const block = patched.slice(start, patched.indexOf('\n}\n', start) + 2)
-    const js = ts.transpileModule(block.replace('export function', 'function'), {
-      compilerOptions: { target: ts.ScriptTarget.ES2022 },
-    }).outputText
-    const helper = new Function(`${js}\nreturn memoAnchorOverlaps`)() as (
-      wasm: { getMemoAnchors(): Anchor[] },
-      target: Target,
-      offset: number,
-      count: number,
-    ) => boolean
-    return helper({ getMemoAnchors: () => anchors }, target, offset, count)
-  }
-
-  const body = (start: number, end: number): Anchor => ({
-    sectionIndex: 0,
-    paraIndex: 3,
-    startCharIdx: start,
-    endCharIdx: end,
-    path: null,
-  })
-
-  it('give the bridge the memo anchors, and none from an engine without memos', () => {
-    const patched = applyPatch('studio-memo-anchors', bridge)
-    expect(patched).toContain('  getMemoAnchors(): {')
-    expect(patched).toContain("if (!doc || typeof doc.getMemoList !== 'function') return [];")
-    expect(patched).toContain('return JSON.parse(doc.getMemoList());')
-    expect(patched.indexOf('getMemoAnchors(')).toBeLessThan(
-      patched.indexOf('  getHyperlinkContext('),
-    )
-  })
-
-  it('capture the paragraph when a typed deletion touches a memo anchor, as for a link', () => {
-    expect(patched).toContain(
-      '        || memoAnchorOverlaps(wasm, target, this.position.charOffset, this.count)) {',
-    )
-    expect(patched.indexOf('export function memoAnchorOverlaps(')).toBeLessThan(
-      patched.indexOf('export class DeleteTextCommand'),
-    )
-    expect(patched.split('captureDeleteRange').length).toBe(2)
-  })
-
-  it('see a deletion inside or at the edge of a body memo, not beside it', () => {
-    const at = { section: 0, para: 3, cellPath: [] as [number, number, number][] }
-    expect(overlaps([body(2, 5)], at, 4, 1)).toBe(true)
-    expect(overlaps([body(2, 5)], at, 2, 1)).toBe(true)
-    expect(overlaps([body(2, 5)], at, 1, 1)).toBe(false)
-    expect(overlaps([body(2, 5)], at, 5, 1)).toBe(false)
-    expect(overlaps([body(2, 5)], at, 0, 9)).toBe(true)
-    // a caret memo is not removed by a deletion, so nothing to capture
-    expect(overlaps([body(2, 2)], at, 1, 2)).toBe(false)
-    // another paragraph or section, or a range-less memo spanning paragraphs
-    expect(overlaps([body(2, 5)], { ...at, para: 4 }, 3, 1)).toBe(false)
-    expect(overlaps([{ ...body(2, 5), sectionIndex: 1 }], at, 3, 1)).toBe(false)
-    expect(overlaps([{ ...body(2, 5), startCharIdx: null, endCharIdx: null }], at, 3, 1)).toBe(
-      false,
-    )
-    expect(overlaps([], at, 3, 1)).toBe(false)
-  })
-
-  it('match a memo in a table cell or a text box by its path', () => {
-    const cell: Anchor = {
-      ...body(0, 4),
-      path: [{ controlIndex: 1, cellIndex: 2, paraIndex: 0 }],
-    }
-    const box: Anchor = { ...body(0, 4), path: [{ controlIndex: 5, paraIndex: 1 }] }
-    expect(overlaps([cell], { section: 0, para: 3, cellPath: [[1, 2, 0]] }, 1, 1)).toBe(true)
-    expect(overlaps([cell], { section: 0, para: 3, cellPath: [[1, 3, 0]] }, 1, 1)).toBe(false)
-    expect(overlaps([cell], { section: 0, para: 3, cellPath: [] }, 1, 1)).toBe(false)
-    expect(overlaps([box], { section: 0, para: 3, cellPath: [[5, 0, 1]] }, 3, 1)).toBe(true)
-  })
-
-  it('fail when the text is gone, and are in the studio build', () => {
-    expect(() => applyPatch('studio-memo-anchors', 'export class WasmBridge {}')).toThrow(
-      /rhwp patch/,
-    )
-    expect(() =>
-      applyPatch('studio-memo-delete-undo', command.replace('implements EditCommand', '')),
-    ).toThrow(/rhwp patch/)
-    expect(STUDIO_PATCHES).toContain('studio-memo-anchors')
-    expect(STUDIO_PATCHES).toContain('studio-memo-delete-undo')
-  })
-})
-
-describe('rhwp PDF import options patch', () => {
-  // the studio's text around the patch, as the pinned commit has it
-  const dialog = [
-    "import { userSettings } from '@/core/user-settings';",
-    '    panel.appendChild(this.createPdfImportSection());',
-    "    userSettings.setPdfImportLayout(this.pdfImportEditableRadio.checked ? 'editable' : 'fidelity');",
-    '',
-  ].join('\n')
-  const patched = applyPatch('studio-pdf-import-options', dialog)
-
-  it('shows the PDF import section only when the engine has PDF import', () => {
-    expect(patched).toContain(
-      "import { hasPdfImportCapability } from '@/core/pdf-import-capability';",
-    )
-    expect(patched).toContain(
-      'if (hasPdfImportCapability(HwpDocument)) panel.appendChild(this.createPdfImportSection());',
-    )
-  })
-
-  it('leaves the setting alone on OK when the section is not there', () => {
-    expect(patched).toContain('    if (this.pdfImportEditableRadio) {')
-  })
-
-  it('is in the studio build', () => {
-    expect(STUDIO_PATCHES).toContain('studio-pdf-import-options')
-  })
-})
-
 describe('rhwp PC fonts patch', () => {
   // the studio's text around the patch, as the pinned release has it
   const main = [
@@ -604,7 +455,6 @@ describe('rhwp PC fonts patch', () => {
     'import {',
     '  clearStoredLocalFonts,',
     '  detectLocalFonts,',
-    '  getLocalFontRecords,',
     '  getLocalFontState,',
     '  loadStoredLocalFonts,',
     '  resolveLocalFont,',
@@ -621,8 +471,12 @@ describe('rhwp PC fonts patch', () => {
     expect(patched).toContain(
       `import { installFontPresence, refreshPcFonts } from '${PC_FONTS_MODULE}';`,
     )
-    // the studio imports the records itself; the patch does not import them a second time
-    expect(patched.match(/getLocalFontRecords,/g)).toHaveLength(1)
+    // rhwp v0.9.0's main.ts does not import the records; the patch imports them under a
+    // name of its own, which a later main.ts that imports them again cannot clash with
+    expect(patched).toContain(
+      "import { getLocalFontRecords as ieumLocalFontRecords } from '@/core/local-fonts';",
+    )
+    expect(patched).not.toMatch(/[^.\w]getLocalFontRecords\(/)
     const call = patched.indexOf('void refreshPcFonts({')
     expect(call).toBeGreaterThan(patched.indexOf('setupEventListeners();'))
     expect(call).toBeLessThan(patched.indexOf('setupModalFocusRestore();'))
@@ -638,7 +492,7 @@ describe('rhwp PC fonts patch', () => {
     expect(hand).toBeGreaterThan(patched.indexOf('setupEventListeners();'))
     expect(hand).toBeLessThan(patched.indexOf('void refreshPcFonts({'))
     expect(patched).toContain(
-      '      records: () => getLocalFontRecords({ includeRegistered: true }),\n',
+      '      records: () => ieumLocalFontRecords({ includeRegistered: true }),\n',
     )
     expect(patched).toContain('      detected: getDetectedOSFonts,\n')
     expect(patched).toContain('      state: getLocalFontState,\n')
@@ -782,6 +636,33 @@ describe('rhwp clipboard objects patch', () => {
   })
 })
 
+/**
+ * The names TypeScript cannot find in one file read alone (imports unresolved, so what a file
+ * imports counts as declared): what the code uses that the file neither declares nor imports.
+ */
+function unresolvedNames(file: string, text: string): Set<string> {
+  const slash = (path: string) => path.replaceAll('\\', '/')
+  const target = slash(file)
+  const host = ts.createCompilerHost({})
+  const read = host.getSourceFile
+  host.getSourceFile = (name, language) =>
+    slash(name) === target ? ts.createSourceFile(name, text, language, true) : read(name, language)
+  const program = ts.createProgram(
+    [target],
+    { noResolve: true, noEmit: true, lib: ['lib.esnext.d.ts', 'lib.dom.d.ts'], types: [] },
+    host,
+  )
+  const names = new Set<string>()
+  for (const diagnostic of program.getSemanticDiagnostics(program.getSourceFile(target))) {
+    // 2304: cannot find name; 2552: cannot find name, did you mean
+    if (diagnostic.code !== 2304 && diagnostic.code !== 2552) continue
+    const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, ' ')
+    const name = /'([^']+)'/.exec(message)?.[1]
+    if (name) names.add(name)
+  }
+  return names
+}
+
 describe('the studio source the build fetched', () => {
   // build-studio.mjs keeps it under the tag the engine names (vendor/rhwp-core, decision 0050)
   const core = JSON.parse(
@@ -804,14 +685,12 @@ describe('the studio source the build fetched', () => {
     'src/engine/input-handler-keyboard.ts',
     'src/engine/input-handler-text.ts',
     'src/engine/input-handler-table.ts',
-    'src/engine/command.ts',
     'src/command/commands/edit.ts',
     'src/command/commands/format.ts',
     'src/command/commands/insert.ts',
     'src/command/commands/table.ts',
     'src/command/shortcut-map.ts',
     'src/ui/table-cell-props-dialog.ts',
-    'src/ui/options-dialog.ts',
     'src/ui/toolbar.ts',
     'src/command/registry.ts',
     'src/i18n/locales/ko.ts',
@@ -827,6 +706,27 @@ describe('the studio source the build fetched', () => {
       expect(() => applyPatch(name, readFileSync(targets[0], 'utf8')), name).not.toThrow()
     }
   })
+
+  // A patch that names something its file no longer has builds without a word (the bundler
+  // leaves the name to the global scope) and fails when it runs: rhwp v0.9.0's main.ts stopped
+  // importing getLocalFontRecords, which studio-pc-fonts called (decision 0116).
+  it.skipIf(!existsSync(studio))(
+    'names nothing its file does not declare or import',
+    () => {
+      for (const file of files) {
+        const names = STUDIO_PATCHES.filter((name) => patchTargets(name, file))
+        if (names.length === 0 || !existsSync(file)) continue
+        const before = readFileSync(file, 'utf8')
+        const after = names.reduce((code, name) => applyPatch(name, code), before)
+        const known = unresolvedNames(file, before)
+        expect(
+          [...unresolvedNames(file, after)].filter((name) => !known.has(name)),
+          file,
+        ).toEqual([])
+      }
+    },
+    120_000,
+  )
 
   it.skipIf(!existsSync(studio))(
     'puts 쉬운 말로 풀기 after 메모 in both menus, in build order',

@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: pblsketch <239486537+pblsketch@users.noreply.github.com>
-Date: Wed, 4 Nov 2026 00:00:00 +0900
-Subject: [PATCH 14/30] fix(rendering): 밝기·대비를 조금 바꾼 그림을 워터마크 반투명으로 그리지 않는다
+Date: Sun, 8 Nov 2026 00:00:00 +0900
+Subject: [PATCH 13/29] fix(rendering): 밝기·대비를 조금 바꾼 그림을 워터마크 반투명으로 그리지 않는다
 
 회색조 + 밝기 −4 · 대비 −25 인 칸 배경 그림(교재 머리말 장식 막대)을 한컴
 한글 2024 는 불투명하게, 밝기·대비만 적용해 그린다(원본 255 → 213,
@@ -40,7 +40,7 @@ Ported onto devel 7d06d5c70: the code applied without conflicts. Devel now appli
  5 files changed, 121 insertions(+), 6 deletions(-)
 
 diff --git a/src/renderer/render_tree.rs b/src/renderer/render_tree.rs
-index 1e6da9bc069ef0839b69de3280d1603c5f742e2b..0d2fd4139c1ad36fdd1c51918ba1e839a6638e11 100644
+index 3583c9f51d3dedb31c648035da8ba21d278fb5cf..c0af75019ec57189d9694c1f12036a1fcacadfec 100644
 --- a/src/renderer/render_tree.rs
 +++ b/src/renderer/render_tree.rs
 @@ -118,6 +118,24 @@ pub const REAL_PICTURE_WATERMARK_FILL_CHROMA_GAIN: f64 = 0.42;
@@ -68,7 +68,7 @@ index 1e6da9bc069ef0839b69de3280d1603c5f742e2b..0d2fd4139c1ad36fdd1c51918ba1e839
  /// 한컴 "워터마크 효과" 프리셋(밝기 70 · 대비 −50)인지.
  ///
  /// [#6895] 인자는 **화면 순서**다. 종전에는 이진 저장 순서(`-50, 70`)로 적혀 있었는데,
-@@ -921,6 +939,11 @@ impl PageBackgroundImage {
+@@ -936,6 +954,11 @@ impl PageBackgroundImage {
          self.brightness != 0 && self.contrast != 0
      }
  
@@ -80,7 +80,7 @@ index 1e6da9bc069ef0839b69de3280d1603c5f742e2b..0d2fd4139c1ad36fdd1c51918ba1e839
      pub fn is_real_picture_watermark_tone_preset(&self) -> bool {
          // 이 구조체는 이진 저장 순서를 담으므로 화면 순서로 바꿔 넘긴다(#6895).
          let (bright, contrast) = self.display_brightness_contrast();
-@@ -1760,6 +1783,11 @@ impl ImageNode {
+@@ -1775,6 +1798,11 @@ impl ImageNode {
          self.brightness != 0 && self.contrast != 0
      }
  
@@ -93,10 +93,10 @@ index 1e6da9bc069ef0839b69de3280d1603c5f742e2b..0d2fd4139c1ad36fdd1c51918ba1e839
          // `ImageNode` 의 두 필드는 이미 화면 순서다(#6895).
          is_real_picture_watermark_tone_preset(self.effect, self.brightness, self.contrast)
 diff --git a/src/renderer/skia/renderer.rs b/src/renderer/skia/renderer.rs
-index 595880978fad444e26fb1dd5045cd3a89dc80467..57cadac9b34287401b739b341ddccfdf24be7b78 100644
+index 45ef0f1b63e91581c5da008410dffe05cac711ab..975ae96401f8c5ae0db0a45c9049bcb5ca31daa4 100644
 --- a/src/renderer/skia/renderer.rs
 +++ b/src/renderer/skia/renderer.rs
-@@ -1684,7 +1684,7 @@ impl SkiaLayerRenderer {
+@@ -1872,7 +1872,7 @@ impl SkiaLayerRenderer {
                                  let legacy_non_realpic_watermark = !matches!(
                                      image.effect,
                                      crate::model::image::ImageEffect::RealPic
@@ -106,10 +106,10 @@ index 595880978fad444e26fb1dd5045cd3a89dc80467..57cadac9b34287401b739b341ddccfdf
                                      preserve_color_watermark || legacy_non_realpic_watermark;
                                  if needs_watermark_opacity {
 diff --git a/src/renderer/svg.rs b/src/renderer/svg.rs
-index ef1b4971d5738f2c18268ed91cb63cb41f5dbfc1..2aef01c88a6e3dd0fb491591d0d7d425301f5af9 100644
+index bb86071045b87b9740a14dc1d2a2efc8c28eac1b..ecb58305f11b7f6c07e953a851521fb2e6f2455e 100644
 --- a/src/renderer/svg.rs
 +++ b/src/renderer/svg.rs
-@@ -1945,7 +1945,7 @@ impl SvgRenderer {
+@@ -1958,7 +1958,7 @@ impl SvgRenderer {
          // 워터마크(GrayScale/Pattern 등)는 legacy opacity 계약을 계속 따른다.
          let needs_watermark_opacity = preserve_color_watermark
              || (!matches!(img.effect, crate::model::image::ImageEffect::RealPic)
@@ -118,7 +118,7 @@ index ef1b4971d5738f2c18268ed91cb63cb41f5dbfc1..2aef01c88a6e3dd0fb491591d0d7d425
          if needs_watermark_opacity {
              let opacity = if preserve_color_watermark {
                  REAL_PICTURE_WATERMARK_PAGE_OPACITY
-@@ -2231,8 +2231,9 @@ impl SvgRenderer {
+@@ -2244,8 +2244,9 @@ impl SvgRenderer {
          }
          // 워터마크 반투명 영역. JPEG baked 워터마크는 이미 한컴 톤으로 픽셀화되어
          // 있으므로 추가 opacity를 적용하지 않는다.
@@ -129,7 +129,7 @@ index ef1b4971d5738f2c18268ed91cb63cb41f5dbfc1..2aef01c88a6e3dd0fb491591d0d7d425
          if needs_watermark_opacity {
              let opacity = if preserve_color_watermark {
                  REAL_PICTURE_WATERMARK_FILL_OPACITY
-@@ -2451,8 +2452,11 @@ impl SvgRenderer {
+@@ -2464,8 +2465,11 @@ impl SvgRenderer {
          let slope = (100.0 + contrast as f64) / 100.0;
          let intercept = (0.5 - 0.5 * slope) + b;
  
@@ -243,10 +243,10 @@ index 88d70ebabc8de9267d016ac378e2d98662e13553..615a9833200bf5b0aea9f56940879036
  
  #[test]
 diff --git a/src/renderer/web_canvas.rs b/src/renderer/web_canvas.rs
-index a8356d760c0dc3d520bf1f4dc1ccb1518145a85c..b1282a23de0cedbbb0333a6b21ed2c3c0dc645d7 100644
+index 4ba3946625eab19699a2af08091adb4d9cddcb6c..9ce6c835efdae5edcd090873295937683a20bab2 100644
 --- a/src/renderer/web_canvas.rs
 +++ b/src/renderer/web_canvas.rs
-@@ -1012,7 +1012,7 @@ impl WebCanvasRenderer {
+@@ -1016,7 +1016,7 @@ impl WebCanvasRenderer {
              // 아니다. 다만 기존 비-RealPic 워터마크는 legacy opacity 계약을 유지한다.
              let needs_watermark_opacity = preserve_color_watermark
                  || (!matches!(img.effect, crate::model::image::ImageEffect::RealPic)
@@ -255,7 +255,7 @@ index a8356d760c0dc3d520bf1f4dc1ccb1518145a85c..b1282a23de0cedbbb0333a6b21ed2c3c
              if needs_watermark_opacity {
                  let opacity = if preserve_color_watermark {
                      REAL_PICTURE_WATERMARK_PAGE_OPACITY
-@@ -1496,8 +1496,9 @@ impl WebCanvasRenderer {
+@@ -1500,8 +1500,9 @@ impl WebCanvasRenderer {
              if let Some(ref f) = filter_str {
                  self.ctx.set_filter(f);
              }

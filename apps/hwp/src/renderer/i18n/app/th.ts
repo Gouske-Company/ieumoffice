@@ -4,6 +4,7 @@ export const th = {
   loading: 'กำลังเปิดเอกสาร…',
   editorFailed: 'ไม่สามารถเริ่มตัวแก้ไขได้',
   openFailed: 'ไม่สามารถเปิดเอกสารได้',
+  pdfImportCancelled: 'ยกเลิกการนำเข้า PDF แล้ว ปิดแท็บนี้ได้',
   saveFailed: 'ไม่สามารถบันทึกเอกสารได้',
   fileSave: 'บันทึก',
   fileSaveAs: 'บันทึกเป็น…',

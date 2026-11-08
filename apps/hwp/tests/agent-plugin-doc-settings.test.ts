@@ -103,10 +103,15 @@ describe('note settings', () => {
       const again = new HwpDocument(bytes)
       expect(JSON.parse(again.getFootnoteShape(0))).toMatchObject({
         numberFormat: 'circledDigit',
-        suffixChar: '',
         numberCodeSuperscript: true,
       })
     }
+    // HWPX keeps the emptied suffix. rhwp v0.9.0 reads an empty HWP5 suffix back as
+    // Hangul's default `)` (#6872 marks only HWPX decorations as the source's own;
+    // docs/tracking/findings.md)
+    expect(JSON.parse(new HwpDocument(doc().exportHwpx()).getFootnoteShape(0))).toMatchObject({
+      suffixChar: '',
+    })
   })
 
   it('turns the separator line off and on again', () => {

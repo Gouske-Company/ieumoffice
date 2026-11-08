@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: pblsketch <239486537+pblsketch@users.noreply.github.com>
-Date: Wed, 4 Nov 2026 00:00:00 +0900
-Subject: [PATCH 23/30] fix(layout): 한/글이 재지 않은 TAC host 줄 뒤 사다리로 앞 줄간격을 다시 잇지 않는다
+Date: Sun, 8 Nov 2026 00:00:00 +0900
+Subject: [PATCH 22/29] fix(layout): 한/글이 재지 않은 TAC host 줄 뒤 사다리로 앞 줄간격을 다시 잇지 않는다
 
 한/글이 하는 일
   문서 도구가 만든 HWPX 서식에서 글자처럼 취급 표(선언 200HU, 저장 host 줄 11064HU) 뒤
@@ -98,10 +98,10 @@ index a90e6ea9ba1e5f646a66651b8a63b9cd7eae5d7a..7cfd9d44cba342d08fd15a44827988a1
              }
          };
 diff --git a/src/renderer/height_measurer.rs b/src/renderer/height_measurer.rs
-index 421ed8a1c09de46ea5de5b92bdd96ab68b6aa859..b196eeecdd78cf069ac00210b7857bf2fb0f6efb 100644
+index 021c719b726a060f30d0cde0132b1ee4839ba317..d5e6524fc8770811327d9d55669be658fcfc43a3 100644
 --- a/src/renderer/height_measurer.rs
 +++ b/src/renderer/height_measurer.rs
-@@ -750,6 +750,49 @@ pub(crate) fn stored_tac_table_host_line_outgrown(
+@@ -751,6 +751,49 @@ pub(crate) fn stored_tac_table_host_line_outgrown(
      line + 0.5 < occupied_px
  }
  
@@ -152,10 +152,10 @@ index 421ed8a1c09de46ea5de5b92bdd96ab68b6aa859..b196eeecdd78cf069ac00210b7857bf2
  /// 않는다. 저장 줄 없는 host 는 [`no_ls_tac_table_host_trailing_spacing_px`], 낡은 저장
  /// 줄 host 는 [`stored_tac_table_host_line_outgrown`] 판정 뒤에 이 값을 쓴다.
 diff --git a/src/renderer/layout.rs b/src/renderer/layout.rs
-index 91cd8357c0a25c072dbdac9152cf096b101b735c..2ec8e684c01656bdc1f01dc6e1502a3ada6cc8ae 100644
+index 7127bd4192f4d3768ebb50aab68951fc2346bf4f..9eb14ac6de10e47bb46d2fce72be10d94fa5826e 100644
 --- a/src/renderer/layout.rs
 +++ b/src/renderer/layout.rs
-@@ -1696,6 +1696,19 @@ fn drawn_table_top(node: &RenderNode, para_index: usize, control_index: usize) -
+@@ -1870,6 +1870,19 @@ fn drawn_table_top(node: &RenderNode, para_index: usize, control_index: usize) -
          .find_map(|child| drawn_table_top(child, para_index, control_index))
  }
  
@@ -175,7 +175,7 @@ index 91cd8357c0a25c072dbdac9152cf096b101b735c..2ec8e684c01656bdc1f01dc6e1502a3a
  fn painted_flow_text_bottom(node: &RenderNode) -> Option<f64> {
      fn walk(node: &RenderNode, out: &mut f64) {
          match &node.node_type {
-@@ -9000,6 +9013,20 @@ impl LayoutEngine {
+@@ -9209,6 +9222,20 @@ impl LayoutEngine {
                  }
              }
              hcursor.stored_boundary_spacing_before = 0.0;
@@ -197,10 +197,10 @@ index 91cd8357c0a25c072dbdac9152cf096b101b735c..2ec8e684c01656bdc1f01dc6e1502a3a
                  && !session_fresh_partial_table
                  && !self.hidden_empty_paras.borrow().contains(&item_para)
 diff --git a/src/renderer/typeset.rs b/src/renderer/typeset.rs
-index 3515b77f3d88948df05a36eb192a57fd38c16479..53f6724dd9bde80aeb5fac43caefba4cf7fd7e14 100644
+index e0d576072a0843f1894573848e54e43e74209e99..8c46139f59883449a8e2b0aa8b685679694035c8 100644
 --- a/src/renderer/typeset.rs
 +++ b/src/renderer/typeset.rs
-@@ -4584,6 +4584,16 @@ impl TypesetEngine {
+@@ -4625,6 +4625,16 @@ impl TypesetEngine {
                  })
              && table_height > ft.total_height + 0.5
          {
@@ -218,7 +218,7 @@ index 3515b77f3d88948df05a36eb192a57fd38c16479..53f6724dd9bde80aeb5fac43caefba4c
          } else {
              table_height
 diff --git a/src/renderer/typeset/section/vpos.rs b/src/renderer/typeset/section/vpos.rs
-index d614927c78d174100f5414e0ababbc7d39f4676a..23ac935be60873ece855f4b700a9ea52ffb57c76 100644
+index cd34b2c4520fd1ffc041ec0e5daf85569b54c85c..92a04e9c484755da557f50fc19896ae3d46300ae 100644
 --- a/src/renderer/typeset/section/vpos.rs
 +++ b/src/renderer/typeset/section/vpos.rs
 @@ -58,6 +58,8 @@ impl TypesetEngine {
@@ -231,7 +231,7 @@ index d614927c78d174100f5414e0ababbc7d39f4676a..23ac935be60873ece855f4b700a9ea52
              endnote_note_first_paras: Default::default(),
              endnote_tail_leading_hu: Default::default(),
 diff --git a/src/renderer/typeset/state/commands.rs b/src/renderer/typeset/state/commands.rs
-index ca7966b7002cdc3a2d2ba1c4a7128b3d83508d9d..caadb1a7e45eccbcfe81ce77433131fc07842575 100644
+index dd9bf30075209e1edabd5ce40c362e2bf3f45d40..b4220245f9d8bb9186a9d84e3a84f8eef1c52627 100644
 --- a/src/renderer/typeset/state/commands.rs
 +++ b/src/renderer/typeset/state/commands.rs
 @@ -372,6 +372,9 @@ impl TypesetState {
@@ -245,7 +245,7 @@ index ca7966b7002cdc3a2d2ba1c4a7128b3d83508d9d..caadb1a7e45eccbcfe81ce77433131fc
          self.data.strict_plain_text_fit_after_empty_host_float_once = true;
      }
 diff --git a/src/renderer/typeset/state/data.rs b/src/renderer/typeset/state/data.rs
-index 7e1c3ca9ceef0cdc37c87eebd81fa68f4dea3e5b..66d2c9b99d9a8d186b1adb990ba80c174cf2ac37 100644
+index fd2599042e19e3491abbfc56e4fbeab4f1451b80..baa8231ddd5da9fefcf2f0c5278f30eb28bbbe31 100644
 --- a/src/renderer/typeset/state/data.rs
 +++ b/src/renderer/typeset/state/data.rs
 @@ -261,6 +261,9 @@ pub(in crate::renderer::typeset) struct StateView {
@@ -259,7 +259,7 @@ index 7e1c3ca9ceef0cdc37c87eebd81fa68f4dea3e5b..66d2c9b99d9a8d186b1adb990ba80c17
      /// 시멘틱 승계: hwp3_layout()=HWP3→HWP5 변환본(widow 방지 등 variant 분기,
      /// Task #1007) / hwp3_native_layout()=원본 HWP3 (저장 LINE_SEG 계약) /
 diff --git a/src/renderer/typeset/state/transition.rs b/src/renderer/typeset/state/transition.rs
-index 4c71e4dedcd29b136a05480d67a7e5426565092f..13d69489b0d21b994178ff30f2145596416c3c39 100644
+index 87739700b18ebe87240269966b04b578a3cac2d0..d0c81752f30b91bafe93b4b4e7357b5c69ff65a6 100644
 --- a/src/renderer/typeset/state/transition.rs
 +++ b/src/renderer/typeset/state/transition.rs
 @@ -98,6 +98,7 @@ impl TypesetState {

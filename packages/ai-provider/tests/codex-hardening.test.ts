@@ -1370,6 +1370,56 @@ describe('Codex turned off in this app (decision 0114)', () => {
     expect(h.treeKills).toEqual([h.children[0]])
   })
 
+  it('ends an app-server still being started when Codex was turned off, once its request is done', async () => {
+    let releaseResolve: (() => void) | undefined
+    const resolveHeld = new Promise<void>((resolve) => {
+      releaseResolve = resolve
+    })
+    const h = harness({}, (runtime) =>
+      setCodexAppServerRuntime({
+        ...runtime,
+        resolve: async (...args) => {
+          await resolveHeld
+          return runtime.resolve!(...args)
+        },
+      }),
+    )
+    const setOff = offSwitch()
+    const reading = readCodexAccount(undefined)
+    await settle()
+    expect(h.children).toHaveLength(0)
+    expect((await setOff('codex', true)).ok).toBe(true)
+    releaseResolve!()
+    await reading
+    expect(h.children).toHaveLength(1)
+    expect(h.treeKills).toEqual([h.children[0]])
+    await setOff('codex', false)
+    await readCodexAccount(undefined)
+    expect(h.children).toHaveLength(2)
+    expect(h.treeKills).toEqual([h.children[0]])
+  })
+
+  it('sends a request made while a busy app-server is being ended to a new one', async () => {
+    let finishTurn: (() => void) | undefined
+    const h = harness({
+      'turn/start': (_params, child) => {
+        finishTurn = () => completedTurn(ANSWER).forEach((message) => child.send(message))
+        return { turn: { id: 't1' } }
+      },
+    })
+    const setOff = offSwitch()
+    const running = run(callbacks().cb)
+    await vi.waitFor(() => expect(finishTurn).toBeDefined())
+    await setOff('codex', true)
+    await setOff('codex', false)
+    await readCodexAccount(undefined)
+    expect(h.children).toHaveLength(2)
+    expect(h.treeKills).toEqual([])
+    finishTurn!()
+    await running
+    expect(h.treeKills).toEqual([h.children[0]])
+  })
+
   it('leaves the app-server running when it was Claude that was turned off', async () => {
     const h = harness()
     const setOff = offSwitch()

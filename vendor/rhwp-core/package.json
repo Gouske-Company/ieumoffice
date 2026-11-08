@@ -1,6 +1,6 @@
 {
   "name": "@rhwp/core",
-  "version": "0.9.0-ieum.22",
+  "version": "0.9.0-ieum.23",
   "description": "rhwp v0.9.0 HWP/HWPX engine (WebAssembly) rebuilt with the patches in ./patches",
   "private": true,
   "type": "module",
@@ -46,9 +46,10 @@
       "0036-continuation-terminal-host-advance.patch",
       "0037-hwpx-raw-spans-canonical-prefix.patch",
       "0039-footnote-number-slot-height-and-shape.patch",
-      "0040-caption-footnote-flow-without-stored-lines.patch"
+      "0040-caption-footnote-flow-without-stored-lines.patch",
+      "0041-edited-row-floor-follows-shrunk-cells.patch"
     ],
     "wasmPack": "0.15.0",
-    "wasmSha256": "d04efeaf2b88650aec1019ff6ab90bf2b46d5d574367e9b5e9d37798c284a2cc"
+    "wasmSha256": "37cb065529d2f569ed3a22308f276ea00b5f93805b794fb310d1c1840aad8569"
   }
 }

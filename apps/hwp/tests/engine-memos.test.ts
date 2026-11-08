@@ -309,6 +309,16 @@ function textBoxDocument(): { doc: HwpDocument; path: string } {
   return { doc, path }
 }
 
+/** An instant as the engine writes a memo time: this PC's wall time followed by Z. */
+function wallTimeZ(utc: string): string {
+  const at = new Date(utc)
+  const two = (n: number) => String(n).padStart(2, '0')
+  return (
+    `${at.getFullYear()}-${two(at.getMonth() + 1)}-${two(at.getDate())}` +
+    `T${two(at.getHours())}:${two(at.getMinutes())}:${two(at.getSeconds())}Z`
+  )
+}
+
 describe('reading memos', () => {
   it('reads the Hancom HWP sample memo', () => {
     const doc = open('memo-source.hwp')
@@ -317,7 +327,9 @@ describe('reading memos', () => {
     expect(list[0]).toMatchObject({
       index: 1,
       author: 'CDC',
-      date: '2022-09-15T13:44:46Z',
+      // the file stores 2022-09-15 04:44:46 UTC; the engine writes it as this PC's wall
+      // time followed by Z, as Hancom does (13:44:46 in Korea)
+      date: wallTimeZ('2022-09-15T04:44:46Z'),
       text: '수정',
       place: 'body',
       sectionIndex: 0,

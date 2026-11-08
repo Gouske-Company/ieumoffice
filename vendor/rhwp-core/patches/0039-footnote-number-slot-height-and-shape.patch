@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: pblsketch <239486537+pblsketch@users.noreply.github.com>
 Date: Sun, 8 Nov 2026 00:00:00 +0900
-Subject: [PATCH 27/28] fix(footnote): 자동 번호 없는 각주와 저장 줄 없는 각주를 한글처럼 그리고 각주 모양 호출을 더한다
+Subject: [PATCH 27/29] fix(footnote): 자동 번호 없는 각주와 저장 줄 없는 각주를 한글처럼 그리고 각주 모양 호출을 더한다
 
 생성기가 만든 HWPX(번호를 글로 적고 줄 배치를 저장하지 않은 문서)의 각주를 한컴
 한글 2024가 인쇄한 대로 다룬다.

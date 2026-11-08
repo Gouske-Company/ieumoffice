@@ -18,7 +18,6 @@ import { join } from 'node:path'
 import { readSlidesAiFonts } from './ai-default-fonts'
 import {
   sanitizeAiSettings,
-  withStoredSubscriptionOff,
   withStoredUnknownFields,
   setAiUserAgent,
   setRescueFetch,
@@ -28,6 +27,7 @@ import {
   sealAiSecrets,
 } from '@genoffice/ai-provider'
 import { shutdownCodexAppServers } from '@genoffice/ai-provider/codex-app-server'
+import { withStoredMainFields } from '@genoffice/ai-provider/key-models'
 import {
   ensureSubscriptionIpc,
   sharedSubscriptionStatuses,
@@ -192,8 +192,9 @@ export function registerAiIpc(): void {
       console.warn('[ai] rejected invalid ai:set-settings payload')
       return
     }
-    // only the Settings card turns a CLI off or on (decision 0114): the file's switch is kept
-    writeAiSettingsFile(withStoredSubscriptionOff(sanitized, readAiSettings()))
+    // the live model lists (decision 0087) and the CLIs turned off (decision 0114) are the
+    // main process's: the file's copy is kept
+    writeAiSettingsFile(withStoredMainFields(sanitized, readAiSettings()))
     broadcastToWindows('ai:settings-changed')
   })
 

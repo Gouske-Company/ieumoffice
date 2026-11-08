@@ -19,7 +19,7 @@ import {
   listsKeyProviderModels,
   type KeyModelListing,
 } from './key-models'
-import { listedModelsOf } from './providers'
+import { listedModelsOf, withStoredSubscriptionOff } from './providers'
 import type { AiProviderConfig, AiProviderId, AiSettings } from './types'
 
 /** What the list was asked with; a hash, so the key itself is not kept beside the settings */
@@ -51,6 +51,15 @@ export function withStoredKeyModels(next: AiSettings, stored: AiSettings): AiSet
     }
   }
   return { ...next, providers }
+}
+
+/**
+ * The settings to write when a renderer saves `next`. Every field only the
+ * main process writes comes from `stored`: the key providers' live model
+ * lists (decision 0087) and the CLIs turned off (decision 0114).
+ */
+export function withStoredMainFields(next: AiSettings, stored: AiSettings): AiSettings {
+  return withStoredSubscriptionOff(withStoredKeyModels(next, stored), stored)
 }
 
 /**

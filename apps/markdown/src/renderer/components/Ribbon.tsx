@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { Editor } from '@tiptap/core'
 import { useEditorState } from '@tiptap/react'
@@ -16,6 +16,7 @@ import {
 import { useI18n } from '../i18n/locale'
 import { SOURCE_VIEW_SHORTCUT } from '../source-view-key'
 import { editorFontChoices, useSystemFonts } from '../editor-font'
+import { useRibbonFold } from './ribbon-overflow'
 import { MARKDOWN_THEME_IDS, type MarkdownTheme } from '../../shared/markdown-theme'
 import type { StringKey } from '../i18n/locale'
 import { uiOp, type BlockType, type ListKind, type StylableMark } from '../editor/ops'
@@ -43,6 +44,7 @@ import {
   IconTaskList,
   IconUndo,
   IconPalette,
+  IconMore,
 } from './icons'
 
 interface Props {
@@ -207,6 +209,7 @@ function ThemePicker({
     <div className="md-theme-wrap" ref={wrapRef}>
       <IconBtn
         title={t('mdThemeTitle')}
+        hasPopup
         active={open}
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
@@ -290,6 +293,7 @@ function IconBtn({
   active,
   disabled,
   shortcut,
+  hasPopup,
   onClick,
   children,
 }: {
@@ -298,6 +302,8 @@ function IconBtn({
   disabled?: boolean
   /** shown after the label in the ScreenTip; the accessible name stays `title` */
   shortcut?: string
+  /** opens a menu rather than acting, so the More flyout stays open around it */
+  hasPopup?: boolean
   onClick: () => void
   children: ReactNode
 }) {
@@ -307,6 +313,7 @@ function IconBtn({
       className={`rb-btn${active ? ' active' : ''}`}
       data-tip={shortcut ? `${title} (${shortcut})` : title}
       aria-label={title}
+      aria-haspopup={hasPopup ? 'menu' : undefined}
       disabled={disabled}
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
@@ -363,6 +370,10 @@ export function Ribbon({
   const [linkUrl, setLinkUrl] = useState('')
   const linkInputRef = useRef<HTMLInputElement>(null)
   const linkAnchorRef = useRef<HTMLSpanElement>(null)
+  const bodyRef = useRef<HTMLDivElement>(null)
+  const viewRowRef = useRef<HTMLDivElement>(null)
+  const moreRef = useRef<HTMLSpanElement>(null)
+  const [moreOpen, setMoreOpen] = useState(false)
 
   const state = useEditorState({
     editor,
@@ -399,6 +410,10 @@ export function Ribbon({
 
   useDismissablePopover(linkOpen, () => setLinkOpen(false), {
     inside: () => [linkAnchorRef.current],
+  })
+
+  useDismissablePopover(moreOpen, () => setMoreOpen(false), {
+    inside: () => [moreRef.current],
   })
 
   // editor-shaped commands stand down while the pane hides the selection;
@@ -439,6 +454,146 @@ export function Ribbon({
     },
     { kind: 'mindmap', btn: 'aiMindMapBtn', prompt: () => t('aiMindMapPrompt') },
   ] as const
+
+  // the right-hand view tools, in row order; when the band runs out of room
+  // the trailing ones move behind the More button instead of off-screen
+  const viewTools: { key: string; node: ReactNode }[] = []
+  if (!sourceMode) {
+    viewTools.push(
+      {
+        key: 'source',
+        node: (
+          <IconBtn
+            title={t('sourceView')}
+            shortcut={SOURCE_VIEW_SHORTCUT}
+            active={sourceViewOpen}
+            disabled={disabled}
+            onClick={onToggleSource}
+          >
+            <IconSourceCode size={ICON} />
+          </IconBtn>
+        ),
+      },
+      {
+        key: 'properties',
+        node: (
+          <IconBtn
+            title={t('fmProperties')}
+            active={frontmatterOpen}
+            disabled={disabled}
+            onClick={onToggleFrontmatter}
+          >
+            <IconProperties size={ICON} />
+          </IconBtn>
+        ),
+      },
+      {
+        key: 'outline',
+        node: (
+          <IconBtn
+            title={t('outline')}
+            active={outlineOpen}
+            disabled={disabled}
+            onClick={onToggleOutline}
+          >
+            <IconOutlineView size={ICON} />
+          </IconBtn>
+        ),
+      },
+    )
+  }
+  viewTools.push({
+    key: 'theme',
+    node: (
+      <ThemePicker
+        mdTheme={mdTheme}
+        disabled={disabled || sourceMode || sourceViewOpen}
+        onPick={onMarkdownTheme}
+      />
+    ),
+  })
+  if (!sourceMode) {
+    viewTools.push(
+      {
+        key: 'font',
+        node: (
+          <EditorFontPicker
+            font={editorFont}
+            disabled={disabled || sourceViewOpen}
+            onPick={onEditorFont}
+          />
+        ),
+      },
+      {
+        key: 'backlinks',
+        node: (
+          <IconBtn
+            title={t('backlinks')}
+            active={backlinksOpen}
+            disabled={disabled}
+            onClick={onToggleBacklinks}
+          >
+            <IconBacklinks size={ICON} />
+          </IconBtn>
+        ),
+      },
+      {
+        key: 'tags',
+        node: (
+          <IconBtn title={t('tags')} active={tagsOpen} disabled={disabled} onClick={onToggleTags}>
+            <IconTag size={ICON} />
+          </IconBtn>
+        ),
+      },
+      {
+        key: 'graph',
+        node: (
+          <IconBtn title={t('graph')} disabled={disabled} onClick={onOpenGraph}>
+            <IconGraph size={ICON} />
+          </IconBtn>
+        ),
+      },
+    )
+  }
+  viewTools.push({
+    key: 'spellcheck',
+    node: (
+      <IconBtn
+        title={t('spellcheck')}
+        active={spellcheck}
+        disabled={disabled}
+        onClick={onToggleSpellcheck}
+      >
+        <IconSpellcheck size={ICON} />
+      </IconBtn>
+    ),
+  })
+  if (!sourceMode) {
+    viewTools.push({
+      key: 'redact',
+      node: (
+        <IconBtn
+          title={t('redactEnable')}
+          active={redactEnabled}
+          disabled={disabled}
+          onClick={() => onToggleRedact(!redactEnabled)}
+        >
+          <IconEyeOff size={ICON} />
+        </IconBtn>
+      ),
+    })
+  }
+  const foldedCount = useRibbonFold(
+    bodyRef,
+    viewRowRef,
+    viewTools.map((v) => v.key),
+  )
+  const inlineTools = viewTools.slice(0, viewTools.length - foldedCount)
+  const foldedTools = viewTools.slice(viewTools.length - foldedCount)
+
+  useEffect(() => {
+    if (!foldedCount) setMoreOpen(false)
+  }, [foldedCount])
 
   return (
     <div className={`ribbon ${collapse.rootClass}`} ref={collapse.rootRef}>
@@ -515,7 +670,7 @@ export function Ribbon({
         <RibbonExpandButton state={collapse} label={t('ribbonExpand')} />
       </div>
 
-      <div className="ribbon-body" data-ribbon-body="">
+      <div className="ribbon-body" data-ribbon-body="" ref={bodyRef}>
         <div className="ribbon-group">
           <div className="ribbon-group-items">
             <button
@@ -716,92 +871,37 @@ export function Ribbon({
         <div className="rb-spacer" />
 
         <div className="ribbon-group">
-          <div className="ribbon-group-items">
-            {!sourceMode && (
-              <IconBtn
-                title={t('sourceView')}
-                shortcut={SOURCE_VIEW_SHORTCUT}
-                active={sourceViewOpen}
-                disabled={disabled}
-                onClick={onToggleSource}
-              >
-                <IconSourceCode size={ICON} />
-              </IconBtn>
-            )}
-            {!sourceMode && (
-              <IconBtn
-                title={t('fmProperties')}
-                active={frontmatterOpen}
-                disabled={disabled}
-                onClick={onToggleFrontmatter}
-              >
-                <IconProperties size={ICON} />
-              </IconBtn>
-            )}
-            {!sourceMode && (
-              <IconBtn
-                title={t('outline')}
-                active={outlineOpen}
-                disabled={disabled}
-                onClick={onToggleOutline}
-              >
-                <IconOutlineView size={ICON} />
-              </IconBtn>
-            )}
-            <ThemePicker
-              mdTheme={mdTheme}
-              disabled={disabled || sourceMode || sourceViewOpen}
-              onPick={onMarkdownTheme}
-            />
-            {!sourceMode && (
-              <EditorFontPicker
-                font={editorFont}
-                disabled={disabled || sourceViewOpen}
-                onPick={onEditorFont}
-              />
-            )}
-            {!sourceMode && (
-              <IconBtn
-                title={t('backlinks')}
-                active={backlinksOpen}
-                disabled={disabled}
-                onClick={onToggleBacklinks}
-              >
-                <IconBacklinks size={ICON} />
-              </IconBtn>
-            )}
-            {!sourceMode && (
-              <IconBtn
-                title={t('tags')}
-                active={tagsOpen}
-                disabled={disabled}
-                onClick={onToggleTags}
-              >
-                <IconTag size={ICON} />
-              </IconBtn>
-            )}
-            {!sourceMode && (
-              <IconBtn title={t('graph')} disabled={disabled} onClick={onOpenGraph}>
-                <IconGraph size={ICON} />
-              </IconBtn>
-            )}
-            <IconBtn
-              title={t('spellcheck')}
-              active={spellcheck}
-              disabled={disabled}
-              onClick={onToggleSpellcheck}
-            >
-              <IconSpellcheck size={ICON} />
-            </IconBtn>
-            {!sourceMode && (
-              <IconBtn
-                title={t('redactEnable')}
-                active={redactEnabled}
-                disabled={disabled}
-                onClick={() => onToggleRedact(!redactEnabled)}
-              >
-                <IconEyeOff size={ICON} />
-              </IconBtn>
+          <div className="ribbon-group-items" ref={viewRowRef}>
+            {inlineTools.map(({ key, node }) => (
+              <Fragment key={key}>{node}</Fragment>
+            ))}
+            {foldedTools.length > 0 && (
+              <span className="rb-more-wrap" ref={moreRef}>
+                <IconBtn
+                  title={t('ribbonMore')}
+                  hasPopup
+                  active={moreOpen}
+                  onClick={() => setMoreOpen((v) => !v)}
+                >
+                  <IconMore size={ICON} />
+                </IconBtn>
+                {moreOpen && (
+                  <div
+                    className="rb-more-pop"
+                    role="group"
+                    aria-label={t('ribbonMore')}
+                    onClick={(e) => {
+                      // a command closes the flyout; a menu trigger keeps it as the menu's anchor
+                      const btn = (e.target as Element).closest('button')
+                      if (btn && !btn.hasAttribute('aria-haspopup')) setMoreOpen(false)
+                    }}
+                  >
+                    {foldedTools.map(({ key, node }) => (
+                      <Fragment key={key}>{node}</Fragment>
+                    ))}
+                  </div>
+                )}
+              </span>
             )}
           </div>
         </div>

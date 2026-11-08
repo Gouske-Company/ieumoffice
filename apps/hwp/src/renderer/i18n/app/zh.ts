@@ -3,6 +3,7 @@ export const zh = {
   loading: '正在打开文档…',
   editorFailed: '编辑器无法启动。',
   openFailed: '无法打开文档。',
+  pdfImportCancelled: '已取消 PDF 导入。可以关闭此标签页。',
   saveFailed: '无法保存文档。',
   fileSave: '保存',
   fileSaveAs: '另存为…',

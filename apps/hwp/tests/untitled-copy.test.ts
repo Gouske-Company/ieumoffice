@@ -174,6 +174,27 @@ describe('an untitled copy in an HWP tab', () => {
     expect(showSaveDialog).toHaveBeenCalledTimes(1)
   })
 
+  it('names a PDF opened to be imported as the document it becomes (decision 0116)', async () => {
+    const pdfPath = join(dir, 'Annual report.pdf')
+    const PDF = Uint8Array.from([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x37])
+    writeFileSync(pdfPath, PDF)
+    const contents = createHwpView(pdfPath, { untitledCopy: { baseName: 'Annual report' } })
+      .webContents as unknown as FakeContents
+    expect(call(HWP_CHANNELS.consumePending, contents)).toBe(pdfPath)
+    // Settings has no default format here: a new document is .hwp
+    expect(call(HWP_CHANNELS.untitledCopy, contents)).toEqual({
+      name: 'Annual report.hwp',
+      format: 'hwp',
+    })
+    // the PDF reaches the editor as it is; its import converts it
+    const bytes = await call<Promise<Uint8Array>>(HWP_CHANNELS.readFile, contents, pdfPath)
+    expect([...bytes]).toEqual([...PDF])
+    await call<Promise<BeginSaveResult>>(HWP_CHANNELS.beginSave, contents, 'save')
+    const options = showSaveDialog.mock.calls.at(-1)!.at(-1) as { defaultPath: string }
+    expect(basename(options.defaultPath)).toBe('Annual report.hwp')
+    expect([...readFileSync(pdfPath)]).toEqual([...PDF])
+  })
+
   it('leaves an ordinary open as it was', async () => {
     const file = join(dir, 'doc.hwpx')
     writeFileSync(file, HWPX)

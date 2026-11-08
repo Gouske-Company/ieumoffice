@@ -81,6 +81,7 @@ Six tools: **ink, rectangle, ellipse, arrow, note**, plus the **redaction box** 
 ## Export and print
 
 - **Export as Word… / PowerPoint… / Excel…** in the File menu, or the same three from **PDF Converter** on the ribbon — all local, no upload. The .pptx comes out one slide per page and the .xlsx one worksheet per page. Each asks where to save it.
+- **PDF to HWP** under **PDF Converter** on the ribbon turns the PDF into a Hangul document in a new Hangul tab. Choose **Import** (가져오기) in the PDF import window the tab shows; the document is made in that tab, and its first save asks where to put the .hwp or .hwpx. The PDF itself is left as it was, and the conversion runs on this PC. Whether body text comes in as paragraphs that flow over the pages or as fixed text boxes is set in the Hangul tab's options (환경 설정) under PDF import.
 - **Print**: current order and rotations through the system dialog; page ranges supported.
 
 ## Saving

@@ -4,6 +4,7 @@ export const ar = {
   loading: 'جارٍ فتح المستند…',
   editorFailed: 'تعذّر بدء المحرر.',
   openFailed: 'تعذّر فتح المستند.',
+  pdfImportCancelled: 'تم إلغاء استيراد PDF. يمكنك إغلاق علامة التبويب هذه.',
   saveFailed: 'تعذّر حفظ المستند.',
   fileSave: 'حفظ',
   fileSaveAs: 'حفظ باسم…',

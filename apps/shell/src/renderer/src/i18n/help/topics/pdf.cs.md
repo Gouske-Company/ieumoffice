@@ -81,6 +81,7 @@ Co očekávat:
 ## Export a tisk
 
 - **Exportovat jako Word… / PowerPoint… / Excel…** v nabídce Soubor, nebo ty stejné tři z **Převodník PDF** na pásku karet — vše lokálně, bez nahrávání. Ze souboru .pptx vyjde jeden snímek na stránku a ze souboru .xlsx jeden list na stránku. U každého se zeptá, kam uložit.
+- **PDF do HWP** v nabídce **Převodník PDF** na pásu karet převede PDF na dokument HWP v nové kartě HWP. V okně importu PDF, které karta zobrazí, zvolte **Importovat** (가져오기); dokument vznikne v této kartě a první uložení se zeptá, kam uložit soubor .hwp nebo .hwpx. Samotné PDF zůstane beze změny a převod probíhá na tomto počítači. Zda se text převezme jako odstavce plynoucí přes stránky, nebo jako pevná textová pole, zvolíte v možnostech (환경 설정) karty HWP v části import PDF.
 - **Tisk**: aktuální pořadí a otočení přes systémový dialog; podporuje rozsahy stránek.
 
 ## Ukládání

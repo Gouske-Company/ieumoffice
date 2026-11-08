@@ -1,7 +1,7 @@
 {
   "name": "@rhwp/core",
-  "version": "0.9.0-devel.ieum.22",
-  "description": "rhwp devel (7d06d5c70, ahead of the v0.9.0 release) HWP/HWPX engine (WebAssembly) rebuilt with the patches in ./patches",
+  "version": "0.9.0-ieum.22",
+  "description": "rhwp v0.9.0 HWP/HWPX engine (WebAssembly) rebuilt with the patches in ./patches",
   "private": true,
   "type": "module",
   "main": "rhwp.js",
@@ -16,13 +16,8 @@
     "./snippets/*"
   ],
   "rhwp": {
-    "tag": "devel-7d06d5c70",
-    "branch": "devel",
-    "commit": "7d06d5c706f1d89f1662e739abf2b1b25d2a98e4",
-    "features": [
-      "console_error_panic_hook",
-      "wasm-api"
-    ],
+    "tag": "v0.9.0",
+    "commit": "c9095c5f67632e6721e800ccc7fb43ea49d26682",
     "patches": [
       "0001-host-inline-table-clears-paper-square-table.patch",
       "0003-footnote-area-below-body-flow.patch",
@@ -32,7 +27,6 @@
       "0014-page-number-pos-insert.patch",
       "0015-canvas-metric-requests-without-advances.patch",
       "0016-single-cell-resize.patch",
-      "0018-memo-support.patch",
       "0020-topbottom-float-anchor-flow.patch",
       "0021-table-look-and-cell-first-lead.patch",
       "0022-selection-follows-drawn-lines.patch",
@@ -51,12 +45,10 @@
       "0035-tail-table-successor-at-table-bottom.patch",
       "0036-continuation-terminal-host-advance.patch",
       "0037-hwpx-raw-spans-canonical-prefix.patch",
-      "0038-tests-follow-memo-index.patch",
       "0039-footnote-number-slot-height-and-shape.patch",
-      "0040-caption-footnote-flow-without-stored-lines.patch",
-      "0041-edited-row-floor-follows-shrunk-cells.patch"
+      "0040-caption-footnote-flow-without-stored-lines.patch"
     ],
     "wasmPack": "0.15.0",
-    "wasmSha256": "dd4fc5776685d7a6bf20896b01ae3eedb819728c68898a734651c69f6ffab66a"
+    "wasmSha256": "d04efeaf2b88650aec1019ff6ab90bf2b46d5d574367e9b5e9d37798c284a2cc"
   }
 }

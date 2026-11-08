@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: pblsketch <239486537+pblsketch@users.noreply.github.com>
-Date: Wed, 4 Nov 2026 00:00:00 +0900
-Subject: [PATCH 26/30] fix(layout): 이어지는 쪽 끝 조각 뒤 흐름을 그 쪽의 저장 다음 줄로 확인하고 바깥 아래 여백을 한 번만 둔다
+Date: Sun, 8 Nov 2026 00:00:00 +0900
+Subject: [PATCH 25/28] fix(layout): 이어지는 쪽 끝 조각 뒤 흐름을 그 쪽의 저장 다음 줄로 확인하고 바깥 아래 여백을 한 번만 둔다
 
 What Hangul does: a native HWP5, non-TAC, paragraph-relative RowBreak
 table with a positive offset in an empty host splits across pages. On the
@@ -59,10 +59,10 @@ Evidence (Hangul 2024 13.0.0.711 print through the official automation):
  6 files changed, 109 insertions(+), 13 deletions(-)
 
 diff --git a/src/renderer/layout.rs b/src/renderer/layout.rs
-index 5eb5ecdce76333d98d6bf5a909a514d493f917a7..e5a09224198d441619aea8d6af705cd0f72ebb22 100644
+index 3837f7733828f08c667a9584aa328e12c7105450..6fd958f9ac2882e26dc479fd3c1708fd5da92e40 100644
 --- a/src/renderer/layout.rs
 +++ b/src/renderer/layout.rs
-@@ -3759,7 +3759,9 @@ mod table_host_flow;
+@@ -3943,7 +3943,9 @@ mod table_host_flow;
  mod table_inline_picture_origin;
  pub(crate) mod table_layout;
  mod table_paragraph_cut;
@@ -73,7 +73,7 @@ index 5eb5ecdce76333d98d6bf5a909a514d493f917a7..e5a09224198d441619aea8d6af705cd0
  mod kopub_symbol_metrics;
  mod leader_tab;
  mod paragraph_frame_widths;
-@@ -16775,8 +16777,17 @@ impl LayoutEngine {
+@@ -17057,8 +17059,17 @@ impl LayoutEngine {
                      {
                          // 결정된 캡션 프레임의 원점과 흐름 끝을 함께 사용한다.
                          // 종료 여백은 표 내용이 아닌 뒤 흐름에 속한다.
@@ -92,7 +92,7 @@ index 5eb5ecdce76333d98d6bf5a909a514d493f917a7..e5a09224198d441619aea8d6af705cd0
                      }
                  }
              }
-@@ -16884,7 +16895,23 @@ impl LayoutEngine {
+@@ -17188,7 +17199,23 @@ impl LayoutEngine {
                              table,
                              paragraphs.get(para_index + 1),
                              host_pre_emitted,
@@ -158,10 +158,10 @@ index 42aadd0021611e4e3edbb31d148d039e506c9f64..bdac42fc0ae7c191884af2f95b73b0e3
 +    (i64::from(next_line.vertical_pos) - expected).abs() as f64 <= units_per_px
 +}
 diff --git a/src/renderer/typeset.rs b/src/renderer/typeset.rs
-index 3c9302ae643c050d5a6de08563882d2fbdf18b48..c1b78e3807c8b97fa4850840298d7d656286f412 100644
+index 33e987f96185aba1ec3d0940126d5a9e28f0b405..03a79eed3d401cbb885c82afbe9063fba5ecb78b 100644
 --- a/src/renderer/typeset.rs
 +++ b/src/renderer/typeset.rs
-@@ -8172,6 +8172,7 @@ mod tests {
+@@ -8334,6 +8334,7 @@ mod tests {
              host_spacing_after_only: 0.0,
              terminal_outer_bottom_flow: 0.0,
              terminal_host_spacing: 0.0,
@@ -170,10 +170,10 @@ index 3c9302ae643c050d5a6de08563882d2fbdf18b48..c1b78e3807c8b97fa4850840298d7d65
              budget_para_start_height: 0.0,
              first_fragment_actual_footnote_boundary: None,
 diff --git a/src/renderer/typeset/table/block/prepare.rs b/src/renderer/typeset/table/block/prepare.rs
-index aa5c2c8d1bcf63014c8469a1968270a9a9f21c53..623599fad7d93cacef7b90206b2909eec0719b6b 100644
+index e7b2e6390aedf2ca60b9f36830ce71e0427b5df2..689eb76d0d7f1a2f5c7adf2db2e83af5549c9576 100644
 --- a/src/renderer/typeset/table/block/prepare.rs
 +++ b/src/renderer/typeset/table/block/prepare.rs
-@@ -1328,16 +1328,19 @@ impl TypesetEngine {
+@@ -1391,16 +1391,19 @@ impl TypesetEngine {
              table,
              self.dpi,
          ) + layout_engine
@@ -198,7 +198,7 @@ index aa5c2c8d1bcf63014c8469a1968270a9a9f21c53..623599fad7d93cacef7b90206b2909ee
          // 호스트 배치를 처음 조회한 뒤 내용 소비 없는 이월로 조각이 바뀔 수 있다.
          // 실제 새 프레임에서 닫힌 원본 상자를 다시 결정하고,
          // 스캐너 예산과 확정 단계가 그 원점·흐름 끝을 함께 사용하게 한다.
-@@ -1527,6 +1530,7 @@ impl TypesetEngine {
+@@ -1589,6 +1592,7 @@ impl TypesetEngine {
              host_spacing_after_only: ft.host_spacing.spacing_after_only,
              terminal_outer_bottom_flow: ft.host_spacing.terminal_outer_bottom_flow,
              terminal_host_spacing,
@@ -207,10 +207,10 @@ index aa5c2c8d1bcf63014c8469a1968270a9a9f21c53..623599fad7d93cacef7b90206b2909ee
              budget_para_start_height,
              first_fragment_actual_footnote_boundary:
 diff --git a/src/renderer/typeset/table/continuation.rs b/src/renderer/typeset/table/continuation.rs
-index 4317d1419847d5e7502240ab8f84ceca4dd0de97..0ecdcbd81e2df47e40a4f35ead9cecb9c91adcfb 100644
+index 9bb4dbd44819cb41585ba95f801b1eefdddb0162..0a9e560a4150455a127b5db9835ad2e1ef2a36f6 100644
 --- a/src/renderer/typeset/table/continuation.rs
 +++ b/src/renderer/typeset/table/continuation.rs
-@@ -185,6 +185,9 @@ pub(in crate::renderer::typeset) struct BlockTableContinuationPreparedState {
+@@ -184,6 +184,9 @@ pub(in crate::renderer::typeset) struct BlockTableContinuationPreparedState {
      /// 마지막 RowBreak child 뒤의 저장 empty-host line spacing. 첫 anchor
      /// fragment가 아니라 terminal continuation 뒤에서 한 번만 소비한다.
      pub(in crate::renderer::typeset) terminal_host_spacing: f64,
@@ -221,7 +221,7 @@ index 4317d1419847d5e7502240ab8f84ceca4dd0de97..0ecdcbd81e2df47e40a4f35ead9cecb9
      pub(in crate::renderer::typeset) budget_para_start_height: f64,
      /// 원본 RowBreak 표가 기존 FootnoteArea 직전까지의 물리 경계를
 diff --git a/src/renderer/typeset/table/continuation/fragment/emit.rs b/src/renderer/typeset/table/continuation/fragment/emit.rs
-index a18b4318d1457a33b7e79c44e7e44b7b06eda5f8..4804b8b03413fc11b158b787ccd31a61fb8a1efa 100644
+index 9e0de1b776cb2273267d5cdfb66f9427bb7c6f26..70449a2da4d5e98d65337cee0ae897f9f51624f2 100644
 --- a/src/renderer/typeset/table/continuation/fragment/emit.rs
 +++ b/src/renderer/typeset/table/continuation/fragment/emit.rs
 @@ -45,6 +45,30 @@ impl TypesetEngine {
@@ -255,7 +255,7 @@ index a18b4318d1457a33b7e79c44e7e44b7b06eda5f8..4804b8b03413fc11b158b787ccd31a61
          let start_cut_is_block = input.start.start_cut_is_block;
          let start_row_height_override = input.start.start_row_height_override;
          let start_cut = &input.start.start_cut;
-@@ -1235,8 +1259,12 @@ impl TypesetEngine {
+@@ -1270,8 +1294,12 @@ impl TypesetEngine {
                              )
                          })
                  });
@@ -268,9 +268,9 @@ index a18b4318d1457a33b7e79c44e7e44b7b06eda5f8..4804b8b03413fc11b158b787ccd31a61
 +                        )
 +                });
                  st.advance_flow_by(occupied + terminal_spacing);
-                 terminal_host_push = terminal_spacing;
-                 flow_after_terminal_advance = st.current_height;
-@@ -1889,9 +1917,10 @@ impl TypesetEngine {
+                 // [#8468] host 글줄은 조각 하단 + 바깥 아래 여백에 놓인다. 다음 문단과의
+                 // 종료 간격은 그 글줄 뒤의 흐름이라 첫 줄의 앞 간격에 넣지 않는다(전진량은 같다).
+@@ -1971,9 +1999,10 @@ impl TypesetEngine {
                          styles,
                      )
                  });

@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: pblsketch <239486537+pblsketch@users.noreply.github.com>
-Date: Wed, 4 Nov 2026 00:00:00 +0900
-Subject: [PATCH 13/30] fix(rendering): 맞쪽 짝수 쪽의 양쪽 바탕쪽을 본문이 옮겨 간 만큼 옮겨 그린다
+Date: Sun, 8 Nov 2026 00:00:00 +0900
+Subject: [PATCH 12/28] fix(rendering): 맞쪽 짝수 쪽의 양쪽 바탕쪽을 본문이 옮겨 간 만큼 옮겨 그린다
 
 좌우 여백이 다른 맞쪽 제본(gutterType LEFT_RIGHT) 문서에서 본문은 짝수 쪽마다
 좌우 여백을 바꿔 그렸지만, 바탕쪽의 용지 기준 개체는 홀수 쪽 자리에 그대로
@@ -41,6 +41,9 @@ HWP→HWP, HWPX→HWPX 저장은 전부 같고, HWP→HWPX 변환은 짝수·홀
 IeumOffice patch onto v0.8.7 (not proposed upstream yet).
 
 Ported onto devel 7d06d5c70: devel builds PageLayoutInfo inside `from_page_def_for_page_with_storage` and lists its fields in a `clone_fields!` macro, so the new `duplex_master_shift_hu` field is set there and added to that list. The rest applied as is.
+
+
+Ported onto v0.9.0: v0.9.0 lays master-page text paragraphs in the declared text frame (body origin, master text width and height) instead of the paper area. The shifted copy of the paragraphs (mp_paragraphs) now goes through that text frame loop; paper-relative objects still use the shifted copy as before.
 ---
  src/parser/body_text.rs       | 32 +++++++++++--------
  src/parser/body_text/tests.rs | 36 +++++++++++++++++++--
@@ -50,10 +53,10 @@ Ported onto devel 7d06d5c70: devel builds PageLayoutInfo inside `from_page_def_f
  5 files changed, 154 insertions(+), 21 deletions(-)
 
 diff --git a/src/parser/body_text.rs b/src/parser/body_text.rs
-index 8903c898ff1c2c2fed2091f14cec144777950238..eb99df0494cbd7adffe80885f0a6cd882438f1d0 100644
+index 17489e1c45839a4a4c6787df0d43660e82d60cfb..972d2556e25b5f12eaf6d88dd343a9e3d9231e89 100644
 --- a/src/parser/body_text.rs
 +++ b/src/parser/body_text.rs
-@@ -1289,7 +1289,7 @@ fn parse_master_pages_from_raw(raw_records: &[RawRecord], section_flags: u32) ->
+@@ -1183,7 +1183,7 @@ fn parse_master_pages_from_raw(raw_records: &[RawRecord], section_flags: u32) ->
      ];
  
      for (mp_idx, &start) in list_header_positions.iter().enumerate() {
@@ -62,7 +65,7 @@ index 8903c898ff1c2c2fed2091f14cec144777950238..eb99df0494cbd7adffe80885f0a6cd88
              .or_else(|| apply_order.get(mp_idx).copied())
              .unwrap_or(HeaderFooterApply::Both);
  
-@@ -1372,18 +1372,24 @@ fn parse_master_pages_from_raw(raw_records: &[RawRecord], section_flags: u32) ->
+@@ -1266,18 +1266,24 @@ fn parse_master_pages_from_raw(raw_records: &[RawRecord], section_flags: u32) ->
      master_pages
  }
  
@@ -149,7 +152,7 @@ index f65dcc16f536356b6d65746ffe83952cc589aed2..eb7215ccbdfbca113501ec3761b560ad
  
  #[test]
 diff --git a/src/renderer/layout.rs b/src/renderer/layout.rs
-index 67c25f6a744f85a190d83cc4c3fe70bcc1eddea4..0bd2a630226f2d44e7854d1abef16cb6f40346b6 100644
+index abe67a1f1ae203e2bc2c72fa6f725a3db1058501..d353c734a108a25f49bf330e45371d1ee5d2088e 100644
 --- a/src/renderer/layout.rs
 +++ b/src/renderer/layout.rs
 @@ -44,7 +44,7 @@ use super::{
@@ -161,7 +164,7 @@ index 67c25f6a744f85a190d83cc4c3fe70bcc1eddea4..0bd2a630226f2d44e7854d1abef16cb6
  use crate::model::page::{PageBorderBasis, PageBorderFill};
  use crate::model::paragraph::Paragraph;
  use crate::model::shape::{
-@@ -5722,10 +5722,27 @@ impl LayoutEngine {
+@@ -5954,6 +5954,23 @@ impl LayoutEngine {
                  // 바탕쪽 그룹에 provenance layer 부여 (#2318): layer 없는 자식(텍스트 라인 등)이
                  // 상속받아 replay plane 분류에서 BehindText 상한이 적용된다.
                  mp_node.layer = Some(RenderLayerInfo::new(None, 0, 0).for_master_page());
@@ -184,13 +187,17 @@ index 67c25f6a744f85a190d83cc4c3fe70bcc1eddea4..0bd2a630226f2d44e7854d1abef16cb6
 +                    shifted_paragraphs.as_deref().unwrap_or(&mp.paragraphs);
                  // 바탕쪽 문단 렌더링: 컨트롤(표/도형/그림)은 compute_object_position으로 배치,
                  // 텍스트 문단은 layout_paragraph로 배치
-                 let mut mp_y_offset = paper_area.y;
+                 // Master-page plain paragraphs belong to the declared text frame,
+@@ -5966,7 +5983,7 @@ impl LayoutEngine {
+                     height: hwpunit_to_px(mp.text_height as i32, self.dpi),
+                 };
+                 let mut mp_y_offset = text_area.y;
 -                for (pi, para) in mp.paragraphs.iter().enumerate() {
 +                for (pi, para) in mp_paragraphs.iter().enumerate() {
                      let has_controls = !para.controls.is_empty();
                      if has_controls {
                          for (ci, ctrl) in para.controls.iter().enumerate() {
-@@ -5766,7 +5783,7 @@ impl LayoutEngine {
+@@ -6007,7 +6024,7 @@ impl LayoutEngine {
                                      self.layout_shape(
                                          tree.frame_mut(),
                                          target_node,
@@ -199,7 +206,7 @@ index 67c25f6a744f85a190d83cc4c3fe70bcc1eddea4..0bd2a630226f2d44e7854d1abef16cb6
                                          pi,
                                          ci,
                                          section_index,
-@@ -5946,6 +5963,56 @@ impl LayoutEngine {
+@@ -6187,6 +6204,56 @@ impl LayoutEngine {
          }
      }
  
@@ -256,7 +263,7 @@ index 67c25f6a744f85a190d83cc4c3fe70bcc1eddea4..0bd2a630226f2d44e7854d1abef16cb6
      #[allow(clippy::too_many_arguments)]
      /// 머리말·꼬리말에 직접 놓인 부동 그림.
      ///
-@@ -7159,6 +7226,7 @@ impl LayoutEngine {
+@@ -7362,6 +7429,7 @@ impl LayoutEngine {
              separator_width: 0,
              separator_color: 0,
              pagination_tolerance_px: 0.0,

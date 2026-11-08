@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: pblsketch <239486537+pblsketch@users.noreply.github.com>
-Date: Wed, 4 Nov 2026 00:00:00 +0900
-Subject: [PATCH 21/30] fix(layout): 통째로 놓인 빈 host 자리차지 표 뒤 첫 줄은 max(제자리 + 앞 간격, 띠 끝)에 선다
+Date: Sun, 8 Nov 2026 00:00:00 +0900
+Subject: [PATCH 20/28] fix(layout): 통째로 놓인 빈 host 자리차지 표 뒤 첫 줄은 max(제자리 + 앞 간격, 띠 끝)에 선다
 
 한/글이 하는 일
   글 없는 host 문단의 문단 기준 자리차지 표(세로 오프셋 0)가 한 쪽에 통째로 놓이면,
@@ -53,10 +53,10 @@ devel 이 하던 일
  mode change 100755 => 100644 src/renderer/typeset.rs
 
 diff --git a/src/renderer/float_placement.rs b/src/renderer/float_placement.rs
-index c007b77359d56c6074c11557ca6e621cb3f453cd..05ce8f669f32aca07b3e8dda716cc5903acca79e 100644
+index 20ffb3b4e36af0670db78b33fafbe9852ba3b686..6811b86c12a8512ab692b424df73c338047d5301 100644
 --- a/src/renderer/float_placement.rs
 +++ b/src/renderer/float_placement.rs
-@@ -3912,6 +3912,31 @@ pub(crate) fn stored_frame_successor_shared_spacing_px(
+@@ -4163,6 +4163,31 @@ pub(crate) fn stored_frame_successor_shared_spacing_px(
          .unwrap_or(0.0)
  }
  
@@ -88,7 +88,7 @@ index c007b77359d56c6074c11557ca6e621cb3f453cd..05ce8f669f32aca07b3e8dda716cc590
  /// [#8149] 글 없는 host 의 문단 기준 자리차지 표 상자 바로 뒤 문단은 한/글이 앞 간격을 그
  /// 표의 바깥 아래 여백 안에서 소비한다 — 다음 글줄이 상자 바닥에 놓인다. 저장 사다리가 상자를
  /// 인증하면 `stored_frame_successor_shared_spacing_px` 가 같은 일을 하므로, 이 함수는 인증
-@@ -3939,12 +3964,14 @@ pub(crate) fn empty_host_float_successor_absorbed_spacing_px(
+@@ -4190,12 +4215,14 @@ pub(crate) fn empty_host_float_successor_absorbed_spacing_px(
      hwpx_container: bool,
      hwp5_origin_hwpx: bool,
      flow_from_body_top: f64,
@@ -103,7 +103,7 @@ index c007b77359d56c6074c11557ca6e621cb3f453cd..05ce8f669f32aca07b3e8dda716cc590
      let (owner, control_index) = match previous_item {
          Some(PageItem::Table {
              para_index,
-@@ -4009,10 +4036,23 @@ pub(crate) fn empty_host_float_successor_absorbed_spacing_px(
+@@ -4260,10 +4287,23 @@ pub(crate) fn empty_host_float_successor_absorbed_spacing_px(
          return 0.0;
      }
      let outer_bottom = hwpunit_to_px(i32::from(table.outer_margin_bottom), dpi).max(0.0);
@@ -129,7 +129,7 @@ index c007b77359d56c6074c11557ca6e621cb3f453cd..05ce8f669f32aca07b3e8dda716cc590
      // 다음 문단의 저장 첫 줄이 이 쪽 커서 기준으로 앞 간격 소비량(0..=앞 간격)을 증언하면 그
      // 값을 쓴다. 증언 범위 밖의 vpos(구역·쪽 경계 되감기 등)면 위 규칙을 그대로 쓴다.
      let stored_consumption = stored_layout
-@@ -10141,4 +10181,77 @@ mod tests {
+@@ -10394,4 +10434,77 @@ mod tests {
              Some(&next),
          ));
      }
@@ -208,10 +208,10 @@ index c007b77359d56c6074c11557ca6e621cb3f453cd..05ce8f669f32aca07b3e8dda716cc590
 +    }
  }
 diff --git a/src/renderer/layout.rs b/src/renderer/layout.rs
-index 94896363dc2195ebdb8864fdc45215a5701ec0fc..91cd8357c0a25c072dbdac9152cf096b101b735c 100644
+index f916250874a3d61f9cc72fed1287273734ad9361..7127bd4192f4d3768ebb50aab68951fc2346bf4f 100644
 --- a/src/renderer/layout.rs
 +++ b/src/renderer/layout.rs
-@@ -1683,6 +1683,19 @@ fn para_is_empty_topbottom_table_anchor(para: &Paragraph) -> bool {
+@@ -1857,6 +1857,19 @@ fn para_is_empty_topbottom_table_anchor(para: &Paragraph) -> bool {
  /// 흐름 커서는 그 좁은 상자만 전진하므로, 뒤따르는 표가 이미 그려진 글자를 물 수
  /// 있다. 그때 하한으로 쓴다. 개체(그림·도형·글상자)는 절대 좌표라 흐름 하한이 될
  /// 수 없어 하위 노드까지 건너뛴다.
@@ -231,7 +231,7 @@ index 94896363dc2195ebdb8864fdc45215a5701ec0fc..91cd8357c0a25c072dbdac9152cf096b
  fn painted_flow_text_bottom(node: &RenderNode) -> Option<f64> {
      fn walk(node: &RenderNode, out: &mut f64) {
          match &node.node_type {
-@@ -10221,6 +10234,33 @@ impl LayoutEngine {
+@@ -10430,6 +10443,33 @@ impl LayoutEngine {
                              self.profile.get().hwpx_container(),
                              self.profile.get().hwp5_origin_hwpx(),
                              y_offset - col_area.y,
@@ -268,10 +268,10 @@ index 94896363dc2195ebdb8864fdc45215a5701ec0fc..91cd8357c0a25c072dbdac9152cf096b
 diff --git a/src/renderer/typeset.rs b/src/renderer/typeset.rs
 old mode 100755
 new mode 100644
-index a9362fc75691f04cb82b643cd60e39dfa1d0e3da..30b865682877e863e739d81f96e5dfec5768e7fd
+index 9ad66608ae4aeef75e9ce0460d0b5550ed390227..48fa84c1241a13080a98d1b271fad3e76744d88c
 --- a/src/renderer/typeset.rs
 +++ b/src/renderer/typeset.rs
-@@ -5136,6 +5136,7 @@ impl TypesetEngine {
+@@ -5185,6 +5185,7 @@ impl TypesetEngine {
          strict_following_plain_text_fit: bool,
          styles: &ResolvedStyleSet,
      ) {
@@ -280,10 +280,10 @@ index a9362fc75691f04cb82b643cd60e39dfa1d0e3da..30b865682877e863e739d81f96e5dfec
          // footer 의 저장 vpos 동기화 차단용. 이 표들의 저장 누적은 절대 위치
          // 산물이라 본문 흐름 좌표가 아니다(36496000 pi3 실측).
 diff --git a/src/renderer/typeset/paragraph/flow.rs b/src/renderer/typeset/paragraph/flow.rs
-index 13d939641156d9306ddddb7233c020ea5d2f0d07..f7d07ba08d7aa283250af2a036b6f496f4451e16 100644
+index f820365e7edb368ce76a08e005f09f1e28f59080..52b94d15d4aba63dc330840053b230669084882a 100644
 --- a/src/renderer/typeset/paragraph/flow.rs
 +++ b/src/renderer/typeset/paragraph/flow.rs
-@@ -78,6 +78,22 @@ pub(in crate::renderer::typeset) fn place_with_storage<S: crate::storage::Storag
+@@ -79,6 +79,22 @@ pub(in crate::renderer::typeset) fn place_with_storage<S: crate::storage::Storag
              st.profile.hwpx_container(),
              st.profile.hwp5_origin_hwpx(),
              st.current_height,
@@ -307,7 +307,7 @@ index 13d939641156d9306ddddb7233c020ea5d2f0d07..f7d07ba08d7aa283250af2a036b6f496
          )
      };
 diff --git a/src/renderer/typeset/state/commands.rs b/src/renderer/typeset/state/commands.rs
-index 085bf58775cde6bd37daeb11920cccfee5130633..ca7966b7002cdc3a2d2ba1c4a7128b3d83508d9d 100644
+index 9facfea3a774851848b86495c36128097e4485c2..dd9bf30075209e1edabd5ce40c362e2bf3f45d40 100644
 --- a/src/renderer/typeset/state/commands.rs
 +++ b/src/renderer/typeset/state/commands.rs
 @@ -364,6 +364,14 @@ impl TypesetState {
@@ -326,7 +326,7 @@ index 085bf58775cde6bd37daeb11920cccfee5130633..ca7966b7002cdc3a2d2ba1c4a7128b3d
          self.data.strict_plain_text_fit_after_empty_host_float_once = true;
      }
 diff --git a/src/renderer/typeset/state/data.rs b/src/renderer/typeset/state/data.rs
-index bfc208362ac63eed983cc78ad5cc3eb745885417..7e1c3ca9ceef0cdc37c87eebd81fa68f4dea3e5b 100644
+index a3adec1509f1695e2c5a57ccb2577ebb20175368..fd2599042e19e3491abbfc56e4fbeab4f1451b80 100644
 --- a/src/renderer/typeset/state/data.rs
 +++ b/src/renderer/typeset/state/data.rs
 @@ -258,6 +258,9 @@ pub(in crate::renderer::typeset) struct StateView {
@@ -340,11 +340,11 @@ index bfc208362ac63eed983cc78ad5cc3eb745885417..7e1c3ca9ceef0cdc37c87eebd81fa68f
      /// 시멘틱 승계: hwp3_layout()=HWP3→HWP5 변환본(widow 방지 등 variant 분기,
      /// Task #1007) / hwp3_native_layout()=원본 HWP3 (저장 LINE_SEG 계약) /
 diff --git a/src/renderer/typeset/state/transition.rs b/src/renderer/typeset/state/transition.rs
-index 452c26916d843f6cda1686153ac629cc005e9880..4c71e4dedcd29b136a05480d67a7e5426565092f 100644
+index 6c682251001d576ee499a6f47f69eea99144562e..87739700b18ebe87240269966b04b578a3cac2d0 100644
 --- a/src/renderer/typeset/state/transition.rs
 +++ b/src/renderer/typeset/state/transition.rs
 @@ -97,6 +97,7 @@ impl TypesetState {
-                 skip_footnote_margin_once: false,
+                 skip_safety_margin_once: false,
                  tail_saved_bounds_once: None,
                  strict_plain_text_fit_after_empty_host_float_once: false,
 +                last_table_host_start: None,

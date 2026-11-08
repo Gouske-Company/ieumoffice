@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: pblsketch <239486537+pblsketch@users.noreply.github.com>
-Date: Wed, 4 Nov 2026 00:00:00 +0900
-Subject: [PATCH 5/30] fix(style): 스타일 걸기·고치기를 속성마다 맞추고 모든 문단에 퍼뜨린다
+Date: Sun, 8 Nov 2026 00:00:00 +0900
+Subject: [PATCH 5/28] fix(style): 스타일 걸기·고치기를 속성마다 맞추고 모든 문단에 퍼뜨린다
 
 한컴 한글 2024 와 같게 한다.
 
@@ -25,10 +25,10 @@ Ported onto devel 7d06d5c70: formatting.rs apply_cell_style_native conflict — 
  6 files changed, 631 insertions(+), 105 deletions(-)
 
 diff --git a/src/document_core/commands/formatting.rs b/src/document_core/commands/formatting.rs
-index b4ee54171b4d4fcecb46ab6814b2b0613f0b9fa2..518f9a2b5e6e67b84f61ec8e97c2abf912618955 100644
+index bd2b7a130db4adbcd6ce7d8fb2ca2d14e5bb1307..168f5232f279d1af28b007922c9abbfebc899e4f 100644
 --- a/src/document_core/commands/formatting.rs
 +++ b/src/document_core/commands/formatting.rs
-@@ -2041,6 +2041,194 @@ impl DocumentCore {
+@@ -2235,6 +2235,194 @@ impl DocumentCore {
          base_psid
      }
  
@@ -223,7 +223,7 @@ index b4ee54171b4d4fcecb46ab6814b2b0613f0b9fa2..518f9a2b5e6e67b84f61ec8e97c2abf9
      /// 본문 문단의 LineSeg를 현재 CharShape/ParaShape 기준으로 다시 계산한다.
      pub(crate) fn reflow_body_paragraph(&mut self, sec_idx: usize, para_idx: usize) {
          let para_shape_id = match self
-@@ -2269,10 +2457,25 @@ impl DocumentCore {
+@@ -2381,10 +2569,25 @@ impl DocumentCore {
              return Ok("{\"ok\":true}".to_string());
          }
  
@@ -253,7 +253,7 @@ index b4ee54171b4d4fcecb46ab6814b2b0613f0b9fa2..518f9a2b5e6e67b84f61ec8e97c2abf9
  
          let para = self
              .document
-@@ -2285,13 +2488,11 @@ impl DocumentCore {
+@@ -2397,13 +2600,11 @@ impl DocumentCore {
  
          para.style_id = style_id as u8;
          para.para_shape_id = new_para_shape_id;
@@ -272,7 +272,7 @@ index b4ee54171b4d4fcecb46ab6814b2b0613f0b9fa2..518f9a2b5e6e67b84f61ec8e97c2abf9
          }
  
          self.reflow_body_paragraph(sec_idx, para_idx);
-@@ -2375,10 +2576,15 @@ impl DocumentCore {
+@@ -2487,10 +2688,15 @@ impl DocumentCore {
              return Ok("{\"ok\":true}".to_string());
          }
  
@@ -292,7 +292,7 @@ index b4ee54171b4d4fcecb46ab6814b2b0613f0b9fa2..518f9a2b5e6e67b84f61ec8e97c2abf9
          let (old_indent, new_indent) = self.para_shape_indents(current_psid, new_para_shape_id);
          self.restamp_cell_format_origin(
              (
-@@ -2391,6 +2597,20 @@ impl DocumentCore {
+@@ -2503,6 +2709,20 @@ impl DocumentCore {
              current_psid,
              new_para_shape_id,
          )?;
@@ -313,7 +313,7 @@ index b4ee54171b4d4fcecb46ab6814b2b0613f0b9fa2..518f9a2b5e6e67b84f61ec8e97c2abf9
  
          {
              let cell_para = self.get_cell_paragraph_mut(
-@@ -2404,13 +2624,11 @@ impl DocumentCore {
+@@ -2516,13 +2736,11 @@ impl DocumentCore {
              cell_para.para_shape_id = new_para_shape_id;
              cell_para.cell_format_vpos_dirty = true;
              restamp_indentation(&mut cell_para.line_segs, old_indent, new_indent);
@@ -333,10 +333,10 @@ index b4ee54171b4d4fcecb46ab6814b2b0613f0b9fa2..518f9a2b5e6e67b84f61ec8e97c2abf9
          }
  
 diff --git a/src/model/document.rs b/src/model/document.rs
-index 4b9f87945f645d9211f154e7c35f586c70bee2a1..c7fc39d5ae273810a259061c92525e0f5b0394e6 100644
+index 587a2337236a86299eb5190c58c5688ec4e0106e..9c2b319d9a721b866a05985aa0d0462f4988b896 100644
 --- a/src/model/document.rs
 +++ b/src/model/document.rs
-@@ -727,6 +727,81 @@ impl Document {
+@@ -754,6 +754,81 @@ impl Document {
          new_id
      }
  
@@ -419,10 +419,10 @@ index 4b9f87945f645d9211f154e7c35f586c70bee2a1..c7fc39d5ae273810a259061c92525e0f
      pub fn find_or_create_tab_def(&mut self, new_td: super::style::TabDef) -> u16 {
          // 동일한 TabDef가 이미 있는지 검색
 diff --git a/src/model/paragraph.rs b/src/model/paragraph.rs
-index 29e29fc5c28d930f85466c60881a1eaa074e87a9..f8c016cff24e37b0f70d1e3f2144b5664eb50396 100644
+index 743cfd6d6abf869df6f8c001fa42f84cc90bff16..c8444900df4b96bfbbb263c0b21e6d9ad4291680 100644
 --- a/src/model/paragraph.rs
 +++ b/src/model/paragraph.rs
-@@ -3726,6 +3726,32 @@ impl Paragraph {
+@@ -3907,6 +3907,32 @@ impl Paragraph {
          }
      }
  
@@ -456,10 +456,10 @@ index 29e29fc5c28d930f85466c60881a1eaa074e87a9..f8c016cff24e37b0f70d1e3f2144b566
      pub fn apply_char_shape_to_entire_text(&mut self, char_shape_id: u32) {
          let text_len = self.text.chars().count();
 diff --git a/src/model/style.rs b/src/model/style.rs
-index 55a3659f1e3137e02f1d72e56b61293f4a5c1dfd..a98c7a44ef431cd882dafa339d47ad5de0455685 100644
+index ca1e5e29aa6621599e3ac50dde3bd64c7538980b..b2d9132c48b10f847a60f73c3684ad664ee3d15e 100644
 --- a/src/model/style.rs
 +++ b/src/model/style.rs
-@@ -1221,6 +1221,130 @@ impl ParaShapeMods {
+@@ -1224,6 +1224,130 @@ impl ParaShapeMods {
      }
  }
  
@@ -591,10 +591,10 @@ index 55a3659f1e3137e02f1d72e56b61293f4a5c1dfd..a98c7a44ef431cd882dafa339d47ad5d
  mod tests {
      use super::*;
 diff --git a/src/wasm_api.rs b/src/wasm_api.rs
-index 2829611c13ee21ece3628ae183cc88c4aed4e2ae..ef08cafd7bf79674540625bfd8ec360c38bf97f0 100644
+index 7858aeee62f37f83031d690424d90b82a246fec3..588bcc133b1d37a6aae148604fd35e9c7152a6b2 100644
 --- a/src/wasm_api.rs
 +++ b/src/wasm_api.rs
-@@ -7836,7 +7836,6 @@ impl HwpDocument {
+@@ -8128,7 +8128,6 @@ impl HwpDocument {
          };
          let old_csid = style.char_shape_id as u32;
          let old_psid = style.para_shape_id;
@@ -602,7 +602,7 @@ index 2829611c13ee21ece3628ae183cc88c4aed4e2ae..ef08cafd7bf79674540625bfd8ec360c
  
          // CharShape 수정
          if !char_mods_json.is_empty() && char_mods_json != "{}" {
-@@ -7901,88 +7900,9 @@ impl HwpDocument {
+@@ -8193,88 +8192,9 @@ impl HwpDocument {
          self.core.document.doc_info.styles[style_id as usize].raw_data = None;
          self.core.document.doc_info.raw_stream_dirty = true;
  
@@ -695,7 +695,7 @@ index 2829611c13ee21ece3628ae183cc88c4aed4e2ae..ef08cafd7bf79674540625bfd8ec360c
          // 스타일 캐시 무효화 + 전체 리빌드
          let num_sections = self.core.document.sections.len();
 diff --git a/src/wasm_api/tests.rs b/src/wasm_api/tests.rs
-index 3842d58e066b08562cbcca32c6a610ac08a13f09..8c2dcc1c5f22562e096201efb3d9b43eeafc1cb6 100644
+index e9e82431b7199f98c0af101b5e63308b631425a8..1dee75acb0331e4f8843ac272baac224b5f6fc17 100644
 --- a/src/wasm_api/tests.rs
 +++ b/src/wasm_api/tests.rs
 @@ -26876,3 +26876,166 @@ fn issue_4576_rebuild_derived_state_recomputes_composition_and_pagination() {

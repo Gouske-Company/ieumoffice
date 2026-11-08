@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: pblsketch <239486537+pblsketch@users.noreply.github.com>
-Date: Wed, 4 Nov 2026 00:00:00 +0900
-Subject: [PATCH 22/30] fix(typeset): 선언한 표가 아닌 높이를 적은 TAC host 저장 줄은 그린 표로 센다
+Date: Sun, 8 Nov 2026 00:00:00 +0900
+Subject: [PATCH 21/28] fix(typeset): 선언한 표가 아닌 높이를 적은 TAC host 저장 줄은 그린 표로 센다
 
 한/글이 하는 일
   글 없는 host 에 글자처럼 취급하는 표 하나만 든 줄은 그 표의 바깥 상자 높이다. 한/글이
@@ -31,10 +31,10 @@ devel 이 하던 일
  1 file changed, 42 insertions(+)
 
 diff --git a/src/renderer/typeset.rs b/src/renderer/typeset.rs
-index 30b865682877e863e739d81f96e5dfec5768e7fd..3515b77f3d88948df05a36eb192a57fd38c16479 100644
+index 48fa84c1241a13080a98d1b271fad3e76744d88c..e0d576072a0843f1894573848e54e43e74209e99 100644
 --- a/src/renderer/typeset.rs
 +++ b/src/renderer/typeset.rs
-@@ -4546,6 +4546,48 @@ impl TypesetEngine {
+@@ -4587,6 +4587,48 @@ impl TypesetEngine {
          } else {
              table_height
          };

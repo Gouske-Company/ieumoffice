@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: pblsketch <239486537+pblsketch@users.noreply.github.com>
-Date: Wed, 4 Nov 2026 00:00:00 +0900
-Subject: [PATCH 3/30] fix(typeset): 쪽 첫 줄이 제목 표 아래에서 시작한 쪽은 저장 위치를 그대로 쓴다
+Date: Sun, 8 Nov 2026 00:00:00 +0900
+Subject: [PATCH 3/28] fix(typeset): 쪽 첫 줄이 제목 표 아래에서 시작한 쪽은 저장 위치를 그대로 쓴다
 
 쪽·종이 기준 어울림(Square) 제목 표가 쪽 위를 차지하면 한글은 그 쪽의 첫 줄을 표 바깥
 상자 아래에서 시작하고, 저장 첫 줄 vpos 가 그 상자 바닥과 같다. 조판과 렌더는 쪽 첫
@@ -29,10 +29,10 @@ Ported onto devel 7d06d5c70: devel already has the page-origin parts through #81
  1 file changed, 22 insertions(+)
 
 diff --git a/src/renderer/typeset.rs b/src/renderer/typeset.rs
-index d41eb8ac7c765d2cf5508b9f09262bc0aa2988bb..c4bc500dec92443b0d8fcfd27a57bbf34f46445c 100755
+index 3f428f430c945ea924bc3e6ab94cf104be3e86d7..b06bc793e3329dc8b2bc1f9c4ee3d79f9882ff93 100755
 --- a/src/renderer/typeset.rs
 +++ b/src/renderer/typeset.rs
-@@ -4660,6 +4660,28 @@ impl TypesetEngine {
+@@ -4701,6 +4701,28 @@ impl TypesetEngine {
                  if side_wrap_placement.is_none_or(|current| placement.y > current.y) {
                      side_wrap_placement = Some(placement);
                  }

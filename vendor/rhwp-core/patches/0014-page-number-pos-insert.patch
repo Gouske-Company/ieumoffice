@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: pblsketch <239486537+pblsketch@users.noreply.github.com>
-Date: Wed, 4 Nov 2026 00:00:00 +0900
-Subject: [PATCH 6/30] Ported onto devel 7d06d5c70: dropped the src/parser/hwpx/section.rs and src/serializer/hwpx/section.rs hunks — devel #7633 already reads sideChar="" (and whitespace) as no dash and writes a no-dash page number as sideChar=""; kept set_page_number_pos_native/get_page_number_pos_native and the setPageNumberPos/getPageNumberPos wasm exports unchanged.
+Date: Sun, 8 Nov 2026 00:00:00 +0900
+Subject: [PATCH 6/28] Ported onto devel 7d06d5c70: dropped the src/parser/hwpx/section.rs and src/serializer/hwpx/section.rs hunks — devel #7633 already reads sideChar="" (and whitespace) as no dash and writes a no-dash page number as sideChar=""; kept set_page_number_pos_native/get_page_number_pos_native and the setPageNumberPos/getPageNumberPos wasm exports unchanged.
 
 
 ---
@@ -10,10 +10,10 @@ Subject: [PATCH 6/30] Ported onto devel 7d06d5c70: dropped the src/parser/hwpx/s
  2 files changed, 139 insertions(+)
 
 diff --git a/src/document_core/commands/object_ops/common.rs b/src/document_core/commands/object_ops/common.rs
-index cf8d4c93288d38a4b63a39506db8e0c245935190..6f9a11b9f29df8b07cac2d35ba993f3836a20f2f 100644
+index d5f26176449b6bad1b273245e5397128e1fe7460..edee7923ae9d1d211facd0b644f2081a9b86f8e8 100644
 --- a/src/document_core/commands/object_ops/common.rs
 +++ b/src/document_core/commands/object_ops/common.rs
-@@ -616,3 +616,115 @@ impl crate::document_core::DocumentCore {
+@@ -631,3 +631,115 @@ impl crate::document_core::DocumentCore {
          )))
      }
  }
@@ -130,10 +130,10 @@ index cf8d4c93288d38a4b63a39506db8e0c245935190..6f9a11b9f29df8b07cac2d35ba993f38
 +    }
 +}
 diff --git a/src/wasm_api.rs b/src/wasm_api.rs
-index ef08cafd7bf79674540625bfd8ec360c38bf97f0..1e31a22df2aa763570ef746cb5624363862d4be4 100644
+index 588bcc133b1d37a6aae148604fd35e9c7152a6b2..638b7deaca614b7be83a928b438d851ec407d722 100644
 --- a/src/wasm_api.rs
 +++ b/src/wasm_api.rs
-@@ -2890,6 +2890,33 @@ impl HwpDocument {
+@@ -2947,6 +2947,33 @@ impl HwpDocument {
          .map_err(|e| e.into())
      }
  

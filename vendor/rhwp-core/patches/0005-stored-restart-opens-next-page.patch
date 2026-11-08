@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: pblsketch <239486537+pblsketch@users.noreply.github.com>
-Date: Wed, 4 Nov 2026 00:00:00 +0900
-Subject: [PATCH 4/30] fix(typeset): 저장 사다리가 다음 쪽 위에서 다시 시작한 문단을 이 쪽에 남기지 않는다
+Date: Sun, 8 Nov 2026 00:00:00 +0900
+Subject: [PATCH 4/28] fix(typeset): 저장 사다리가 다음 쪽 위에서 다시 시작한 문단을 이 쪽에 남기지 않는다
 
 저장 줄 위치가 앞 저장 줄보다 위, 쪽 위쪽 띠에서 다시 시작하면 한글은 그 문단으로
 새 쪽을 열었다. 두 예외가 이 증거를 넘어 문단을 앞 쪽 꼬리에 남겨 본문 아래로
@@ -23,10 +23,10 @@ Ported onto devel 7d06d5c70: devel already passes stored_vpos_rewind_break || st
  3 files changed, 20 insertions(+), 3 deletions(-)
 
 diff --git a/src/renderer/typeset/paragraph.rs b/src/renderer/typeset/paragraph.rs
-index 5ac45bd2e14b89e27e4b29981400c4b3d209627d..dc1960ebec9a1d93a2e7731bd690b0a495ee564b 100644
+index 046a0c909839b22c0c8777777e93805ef95a5959..951ba544eeda767856a54ace4938489d86732c4e 100644
 --- a/src/renderer/typeset/paragraph.rs
 +++ b/src/renderer/typeset/paragraph.rs
-@@ -727,6 +727,7 @@ pub(super) fn try_place_overflow_paragraph(
+@@ -805,6 +805,7 @@ pub(super) fn try_place_overflow_paragraph(
      available: f64,
      forced_page_break_line: Option<usize>,
      stored_page_boundary_break: bool,
@@ -34,7 +34,7 @@ index 5ac45bd2e14b89e27e4b29981400c4b3d209627d..dc1960ebec9a1d93a2e7731bd690b0a4
      current_page_vpos_base: Option<i32>,
      dpi: f64,
  ) -> bool {
-@@ -742,6 +743,7 @@ pub(super) fn try_place_overflow_paragraph(
+@@ -820,6 +821,7 @@ pub(super) fn try_place_overflow_paragraph(
          available,
          forced_page_break_line,
          stored_page_boundary_break,
@@ -42,7 +42,7 @@ index 5ac45bd2e14b89e27e4b29981400c4b3d209627d..dc1960ebec9a1d93a2e7731bd690b0a4
          current_page_vpos_base,
          dpi,
          &crate::storage::Unbounded,
-@@ -763,6 +765,7 @@ pub(super) fn try_place_overflow_paragraph_with_storage<S: crate::storage::Stora
+@@ -841,6 +843,7 @@ pub(super) fn try_place_overflow_paragraph_with_storage<S: crate::storage::Stora
      available: f64,
      forced_page_break_line: Option<usize>,
      stored_page_boundary_break: bool,
@@ -50,7 +50,7 @@ index 5ac45bd2e14b89e27e4b29981400c4b3d209627d..dc1960ebec9a1d93a2e7731bd690b0a4
      current_page_vpos_base: Option<i32>,
      dpi: f64,
      storage: &S,
-@@ -818,7 +821,9 @@ pub(super) fn try_place_overflow_paragraph_with_storage<S: crate::storage::Stora
+@@ -896,7 +899,9 @@ pub(super) fn try_place_overflow_paragraph_with_storage<S: crate::storage::Stora
          forced_page_break_line,
          dpi,
      );
@@ -62,10 +62,10 @@ index 5ac45bd2e14b89e27e4b29981400c4b3d209627d..dc1960ebec9a1d93a2e7731bd690b0a4
          // 다음 문단이 어차피 쪽나누기로 페이지를 끝내므로, 다음 페이지 layout clamp 를
          // 막으려던 LAYOUT_DRIFT_SAFETY_PX(현재 페이지 한정) 여유는 이 경우 의미가 없다.
 diff --git a/src/renderer/typeset/paragraph/flow.rs b/src/renderer/typeset/paragraph/flow.rs
-index a383456a07f28ec5f8ec5334684d90b72c2f8139..13d939641156d9306ddddb7233c020ea5d2f0d07 100644
+index 634f3b878d9d63309ccc9a2a18cc2bc8e8d1ccae..f820365e7edb368ce76a08e005f09f1e28f59080 100644
 --- a/src/renderer/typeset/paragraph/flow.rs
 +++ b/src/renderer/typeset/paragraph/flow.rs
-@@ -355,6 +355,7 @@ pub(in crate::renderer::typeset) fn place_with_storage<S: crate::storage::Storag
+@@ -390,6 +390,7 @@ pub(in crate::renderer::typeset) fn place_with_storage<S: crate::storage::Storag
          forced_page_break_line,
          // 저장 쪽 경계로 전체 fit을 거부했다면 atomic spill이 그 경계를 덮지 않는다.
          stored_vpos_rewind_break || stored_vpos_rewind_overflow_break,
@@ -74,7 +74,7 @@ index a383456a07f28ec5f8ec5334684d90b72c2f8139..13d939641156d9306ddddb7233c020ea
          dpi,
          storage,
 diff --git a/src/renderer/typeset/paragraph/whole_fit.rs b/src/renderer/typeset/paragraph/whole_fit.rs
-index 4ba3d6b7cddceb9518a3e0478e13defa48e65633..607878c1afb9cd3453ee1e6dbad5d5a35cdb7c96 100644
+index 5896d13e0850698b83fc3176fb8d19d982422a40..32729ae9cf3422e553134262f12f346a935d11ca 100644
 --- a/src/renderer/typeset/paragraph/whole_fit.rs
 +++ b/src/renderer/typeset/paragraph/whole_fit.rs
 @@ -1,8 +1,9 @@

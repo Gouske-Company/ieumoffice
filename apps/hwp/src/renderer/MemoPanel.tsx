@@ -118,12 +118,15 @@ export function memoPageParams(page: number): Params | null {
 
 /**
  * The date the panel shows, when the file carries one. A date the browser can
- * parse is localized; an unfamiliar string is shown as the file wrote it.
+ * parse is localized; an unfamiliar string is shown as the file wrote it. The
+ * engine writes a memo's time as Hancom does, the local wall time followed by
+ * `Z` (rhwp `memo_time::date`), so that `Z` does not mean UTC here.
  */
 export function memoDateText(date: string | null, lang: string): string | null {
   const raw = (date ?? '').trim()
   if (!raw) return null
-  const parsed = new Date(raw)
+  const wall = /^(\d{4}-\d\d-\d\dT\d\d:\d\d(?::\d\d)?)Z$/.exec(raw)?.[1]
+  const parsed = new Date(wall ?? raw)
   if (Number.isNaN(parsed.getTime())) return raw
   try {
     return new Intl.DateTimeFormat(lang, { dateStyle: 'medium', timeStyle: 'short' }).format(parsed)

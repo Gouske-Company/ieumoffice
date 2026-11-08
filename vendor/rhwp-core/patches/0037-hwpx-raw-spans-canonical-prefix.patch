@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: pblsketch <239486537+pblsketch@users.noreply.github.com>
-Date: Wed, 4 Nov 2026 00:00:00 +0900
-Subject: [PATCH 27/30] fix(hwpx): 원본에서 옮기는 XML 구간의 접두사를 이름공간의 표준 접두사로 쓴다
+Date: Sun, 8 Nov 2026 00:00:00 +0900
+Subject: [PATCH 26/28] fix(hwpx): 원본에서 옮기는 XML 구간의 접두사를 이름공간의 표준 접두사로 쓴다
 
 HWPX 헤더의 번호 매기기·글머리표 paraHead 구간과 본문 필드의 parameters 자식은 원본
 XML을 그대로 옮겨 다시 쓴다. 다른 도구가 OWPML 이름공간을 다른 접두사(ns0 등)로
@@ -20,10 +20,10 @@ parameters 자식은 모두 문단 이름공간이라 hp:로 쓴다.
  3 files changed, 235 insertions(+), 7 deletions(-)
 
 diff --git a/src/parser/hwpx/header.rs b/src/parser/hwpx/header.rs
-index 35f9e3007fc1f4b26656970dd89da7fcd1352ecc..e0f29087f64fdbba22ad696782c6cbde6d613e91 100644
+index 77c4682e13f813f24fcf9505c3721a1d9fa72e56..8886ff702fbbc2e2af7adb992d94ea549d3c96fc 100644
 --- a/src/parser/hwpx/header.rs
 +++ b/src/parser/hwpx/header.rs
-@@ -2203,7 +2203,8 @@ fn parse_bullet_hwpx(
+@@ -2219,7 +2219,8 @@ fn parse_bullet_hwpx(
          }
  
          if inner_end >= inner_start && inner_end <= xml.len() {
@@ -33,7 +33,7 @@ index 35f9e3007fc1f4b26656970dd89da7fcd1352ecc..e0f29087f64fdbba22ad696782c6cbde
          }
      }
  
-@@ -2315,7 +2316,8 @@ fn parse_numbering(
+@@ -2331,7 +2332,8 @@ fn parse_numbering(
          // 무손실 splice 용 원본 paraHead 구간 보존(7수준 모델로 표현 못하는
          // 8~10수준/checkable/형식문자열 포함). 경계가 깨졌으면 보존하지 않는다.
          if inner_end >= inner_start && inner_end <= xml.len() {
@@ -43,7 +43,7 @@ index 35f9e3007fc1f4b26656970dd89da7fcd1352ecc..e0f29087f64fdbba22ad696782c6cbde
          }
      }
  
-@@ -2782,6 +2784,36 @@ mod tests {
+@@ -2808,6 +2810,36 @@ mod tests {
          );
      }
  
@@ -81,10 +81,10 @@ index 35f9e3007fc1f4b26656970dd89da7fcd1352ecc..e0f29087f64fdbba22ad696782c6cbde
      fn bullet_para_head_align_useinstwidth_survive_roundtrip_via_raw_splice() {
          // [#2790] 종전 parse_bullet_hwpx 는 char/useImage 만 읽고 <hh:paraHead> 를
 diff --git a/src/parser/hwpx/section.rs b/src/parser/hwpx/section.rs
-index 8ef6a228504383ac530d608ddad68308b3dfc18e..781e720c46bd799b90f724f70da3d9e8b022b8e5 100644
+index 72200968c0ebe3b789d988b0336daa1a6f55c525..2b75c684edd9a66d60e53a46f065cbd77076a379 100644
 --- a/src/parser/hwpx/section.rs
 +++ b/src/parser/hwpx/section.rs
-@@ -6408,7 +6408,10 @@ fn parse_field_parameters(
+@@ -6385,7 +6385,10 @@ fn parse_field_parameters(
              Ok(Event::Start(ref ce)) => {
                  let cname = ce.name();
                  let local = local_name(cname.as_ref());
@@ -96,7 +96,7 @@ index 8ef6a228504383ac530d608ddad68308b3dfc18e..781e720c46bd799b90f724f70da3d9e8
                  raw.push('<');
                  raw.push_str(&tag);
                  for attr in ce.attributes().flatten() {
-@@ -6444,7 +6447,8 @@ fn parse_field_parameters(
+@@ -6421,7 +6424,8 @@ fn parse_field_parameters(
                  let cname = ce.name();
                  let local = local_name(cname.as_ref());
                  raw.push('<');
@@ -106,7 +106,7 @@ index 8ef6a228504383ac530d608ddad68308b3dfc18e..781e720c46bd799b90f724f70da3d9e8
                  for attr in ce.attributes().flatten() {
                      raw.push(' ');
                      raw.push_str(&String::from_utf8_lossy(attr.key.as_ref().as_bytes()));
-@@ -6521,9 +6525,8 @@ fn parse_field_parameters(
+@@ -6498,9 +6502,8 @@ fn parse_field_parameters(
                  // 임의 깊이 중첩(listParam 안의 stringParam 등)에서도 균형 잡힌 XML 을
                  // 재조립하도록, 단일 open_param 추적 대신 End 이벤트 자신의 정규화 이름으로 닫는다.
                  // 종전엔 open_param 이 마지막 Start 로 덮여, 바깥 태그의 닫는 태그가 누락됐다.
@@ -118,7 +118,7 @@ index 8ef6a228504383ac530d608ddad68308b3dfc18e..781e720c46bd799b90f724f70da3d9e8
                  raw.push('>');
                  if local == b"stringParam" {
                      in_command = false;
-@@ -9501,6 +9504,40 @@ mod tests {
+@@ -9489,6 +9492,40 @@ mod tests {
          assert_eq!(field.memo_index, 2);
      }
  

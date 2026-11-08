@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: pblsketch <239486537+pblsketch@users.noreply.github.com>
-Date: Wed, 4 Nov 2026 00:00:00 +0900
-Subject: [PATCH 1/30] fix(typeset): 같은 host 의 글자처럼 취급 표가 쪽·종이 기준 어울림 표를 피한다
+Date: Sun, 8 Nov 2026 00:00:00 +0900
+Subject: [PATCH 1/28] fix(typeset): 같은 host 의 글자처럼 취급 표가 쪽·종이 기준 어울림 표를 피한다
 
 쪽·종이 기준 어울림(Square) 표와 같은 문단의 글자처럼 취급 표는 옆에 들어갈 폭이
 없으면 한글이 그 줄을 어울림 표의 바깥 아래 여백 아래에 둔다(한글 2024 저장 vpos 가
@@ -27,10 +27,10 @@ Ported onto devel 7d06d5c70: upstream merged #8121 reworked (#8388) only for hos
  2 files changed, 60 insertions(+)
 
 diff --git a/src/renderer/typeset.rs b/src/renderer/typeset.rs
-index dbfe577ab3a9b3c3e726de5f3a0af996004bac18..d41eb8ac7c765d2cf5508b9f09262bc0aa2988bb 100755
+index 52ebe112e2248cbb1c208956fd25f2146e4bf277..3f428f430c945ea924bc3e6ab94cf104be3e86d7 100755
 --- a/src/renderer/typeset.rs
 +++ b/src/renderer/typeset.rs
-@@ -4637,6 +4637,31 @@ impl TypesetEngine {
+@@ -4678,6 +4678,31 @@ impl TypesetEngine {
              placement.clearance = (placement.y - column.y - natural_top).max(0.0);
              placement
          });
@@ -63,10 +63,10 @@ index dbfe577ab3a9b3c3e726de5f3a0af996004bac18..d41eb8ac7c765d2cf5508b9f09262bc0
          // 회피 프레임에서 수용한 원본 개체 줄은 본체·바깥여백·뒤 간격을
          // 하나의 끝점으로 발행한다. 저장 줄 상한이 이 공간을 회수하거나
 diff --git a/src/renderer/typeset/state/transition.rs b/src/renderer/typeset/state/transition.rs
-index 743496eeb74a3ad18ce2a28691d394046ca181f2..950b5c984fcedecd9c764a21a06e65d2ed671061 100644
+index 279ca706170e39fab4e5a98235c45f18368bb5f6..21a680ad81b56ea709cd7351ed667c62265fb539 100644
 --- a/src/renderer/typeset/state/transition.rs
 +++ b/src/renderer/typeset/state/transition.rs
-@@ -527,6 +527,41 @@ impl TypesetState {
+@@ -495,6 +495,41 @@ impl TypesetState {
          frame.page_anchored_square_table_exclusion(table)
      }
  

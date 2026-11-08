@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: pblsketch <239486537+pblsketch@users.noreply.github.com>
-Date: Wed, 4 Nov 2026 00:00:00 +0900
-Subject: [PATCH 25/30] fix(layout): 글 있는 문단을 끝내는 문단 기준 위아래 표 뒤 첫 줄을 표 아래끝에 둔다
+Date: Sun, 8 Nov 2026 00:00:00 +0900
+Subject: [PATCH 24/28] fix(layout): 글 있는 문단을 끝내는 문단 기준 위아래 표 뒤 첫 줄을 표 아래끝에 둔다
 
 What Hangul does: when a paragraph-relative topAndBottom table ends the flow
 of a paragraph that has text, Hangul 2024 starts the next paragraph's first
@@ -56,10 +56,10 @@ Evidence (Hangul 2024 13.0.0.711 print through the official automation):
  4 files changed, 69 insertions(+), 1 deletion(-)
 
 diff --git a/src/model/document.rs b/src/model/document.rs
-index c7fc39d5ae273810a259061c92525e0f5b0394e6..1d1cb347e42120c05834ce07d2dfcbc5de65ee77 100644
+index 9c2b319d9a721b866a05985aa0d0462f4988b896..c41025c52c62dabd77af7516b8980a1744ba1d8a 100644
 --- a/src/model/document.rs
 +++ b/src/model/document.rs
-@@ -455,6 +455,25 @@ impl Document {
+@@ -482,6 +482,25 @@ impl Document {
          })
      }
  
@@ -85,7 +85,7 @@ index c7fc39d5ae273810a259061c92525e0f5b0394e6..1d1cb347e42120c05834ce07d2dfcbc5
      /// [#2403 Stage 1] 레이아웃 호환 정책 질의 표면.
      ///
      /// 계보와 실제 저장 포맷을 구분한다. HWP5의 문단 단위·저장 줄은 HWP5 계약을
-@@ -504,6 +523,7 @@ impl Document {
+@@ -531,6 +550,7 @@ impl Document {
              self.provenance.format == SourceFormat::Hwp3 && self.header.encrypted,
          )
          .with_stored_rows_before_hancom_2020(self.provenance.stored_rows_before_hancom_2020)
@@ -137,10 +137,10 @@ index 888dbf8927a57d5bbe054773c6ddc2a8f5d4ba98..87e93e2e6ed4c098d4d5befce59a8820
      /// 유도한다(native HWP5 raw_stream 소실 신호).
      pub(crate) fn with_session_edited(mut self, enabled: bool) -> Self {
 diff --git a/src/renderer/layout.rs b/src/renderer/layout.rs
-index 2ec8e684c01656bdc1f01dc6e1502a3ada6cc8ae..5eb5ecdce76333d98d6bf5a909a514d493f917a7 100644
+index 9eb14ac6de10e47bb46d2fce72be10d94fa5826e..3837f7733828f08c667a9584aa328e12c7105450 100644
 --- a/src/renderer/layout.rs
 +++ b/src/renderer/layout.rs
-@@ -16330,10 +16330,28 @@ impl LayoutEngine {
+@@ -16612,10 +16612,28 @@ impl LayoutEngine {
          // A complete stored object frame owns the successor's line origin.
          // Consume that same accepted result after painting; generic empty-host
          // line advances above must not replace it with a separate cursor.
@@ -170,10 +170,10 @@ index 2ec8e684c01656bdc1f01dc6e1502a3ada6cc8ae..5eb5ecdce76333d98d6bf5a909a514d4
              y_offset = col_area.y + origin;
          }
 diff --git a/src/renderer/typeset/table/block/entry.rs b/src/renderer/typeset/table/block/entry.rs
-index d5f7a9a4a7050cb759abf626a4d331ad90e4d0ec..253ba72a5075ddbafffd3f5ecdf97b0949817a8b 100644
+index b40210c7dccf101ca275d462aa83aef88d5461c5..8a6f9d41ac2e21e058b3aa5cb96aa3e26a5368fd 100644
 --- a/src/renderer/typeset/table/block/entry.rs
 +++ b/src/renderer/typeset/table/block/entry.rs
-@@ -2567,7 +2567,19 @@ impl TypesetEngine {
+@@ -2593,7 +2593,19 @@ impl TypesetEngine {
                          && p.table_top + ft.effective_height <= available + below_body_slack)
                      })))
          {

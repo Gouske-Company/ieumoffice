@@ -130,9 +130,23 @@ const everyFieldNamed: [
   Unnamed<AiMediaProviderConfig, NonNullable<AiSettingsInput['media']>['providers'][string]>,
 ] = [true, true, true, true, true, true, true]
 
+type Same<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false
+type InputModelEffort = NonNullable<AiSettingsInput['providers'][string]['modelEfforts']>[string]
+type InputProfile = NonNullable<InputEndpoint['modelProfiles']>[string]
+// fails to compile when the schema takes a wider effort than the settings type
+const effortsAsTyped: [
+  Same<InputModelEffort['efforts'], AiModelEffort['efforts']>,
+  Same<InputModelEffort['defaultEffort'], AiModelEffort['defaultEffort']>,
+  Same<InputProfile['efforts'], AiLocalModelProfile['efforts']>,
+  Same<InputProfile['defaultEffort'], AiLocalModelProfile['defaultEffort']>,
+  Same<AiSettingsInput['providers'][string]['effort'], AiProviderConfig['effort']>,
+  Same<InputEndpoint['effort'], AiCustomEndpoint['effort']>,
+] = [true, true, true, true, true, true]
+
 describe('the strict settings schema of the standalone sheets editor', () => {
   it('names every field of the settings type', () => {
     expect(everyFieldNamed.every((named) => named === true)).toBe(true)
+    expect(effortsAsTyped.every((same) => same === true)).toBe(true)
   })
 
   // every field the app writes, as another editor or the Settings window leaves the file
@@ -193,6 +207,70 @@ describe('the strict settings schema of the standalone sheets editor', () => {
     for (const subscriptionOff of [{ chatgpt: true }, { codex: false }, { codex: 'yes' }]) {
       expect(() => aiSettingsInputSchema.parse({ ...base, subscriptionOff })).toThrow()
     }
+  })
+
+  it('takes a model effort level only from the fixed list', () => {
+    const base = JSON.parse(JSON.stringify(aiSettingsFromStored(written))) as AiSettingsInput
+    const withOpenAi = (fields: Record<string, unknown>) => ({
+      ...base,
+      providers: { ...base.providers, openai: { ...base.providers.openai!, ...fields } },
+    })
+    const withProfile = (profile: Record<string, unknown>) => ({
+      ...base,
+      customEndpoints: [{ ...base.customEndpoints![0]!, modelProfiles: { qwen3: profile } }],
+    })
+    expect(
+      aiSettingsInputSchema.parse(
+        withOpenAi({
+          modelEfforts: { 'gpt-5.5': { efforts: ['none', 'max'], defaultEffort: 'max' } },
+        }),
+      ).providers.openai?.modelEfforts,
+    ).toEqual({ 'gpt-5.5': { efforts: ['none', 'max'], defaultEffort: 'max' } })
+    for (const unknownLevel of [
+      withOpenAi({ modelEfforts: { 'gpt-5.5': { efforts: ['low', 'ultra'] } } }),
+      withOpenAi({ modelEfforts: { 'gpt-5.5': { efforts: ['low'], defaultEffort: 'ultra' } } }),
+      withProfile({ efforts: ['low', 'ultra'] }),
+      withProfile({ efforts: ['low'], defaultEffort: 'ultra' }),
+    ]) {
+      expect(() => aiSettingsInputSchema.parse(unknownLevel)).toThrow()
+    }
+    // the chosen level is a plain string in the type: empty runs the program's own default
+    expect(aiSettingsInputSchema.parse(withOpenAi({ effort: '' })).providers.openai?.effort).toBe(
+      '',
+    )
+  })
+
+  it('accepts what it reads from a file that lists a level this build does not know', () => {
+    const stored = file({
+      providers: {
+        openai: {
+          apiKey: 'sk-test',
+          model: 'gpt-5.5',
+          models: ['gpt-5.5', 'gpt-6'],
+          modelEfforts: {
+            'gpt-5.5': { efforts: ['low', 'ultra'], defaultEffort: 'ultra' },
+            'gpt-6': { efforts: ['ultra'] },
+          },
+        },
+      },
+      customEndpoints: [
+        {
+          id: 'local-1',
+          name: 'Ollama',
+          baseUrl: 'http://127.0.0.1:11434/v1',
+          apiKey: '',
+          model: 'qwen3',
+          kind: 'local',
+          modelProfiles: { qwen3: { efforts: ['ultra', 'high'], defaultEffort: 'ultra' } },
+        },
+      ],
+      customEndpoint: 'local-1',
+    })
+    const parsed = aiSettingsInputSchema.parse(
+      JSON.parse(JSON.stringify(aiSettingsFromStored(stored))),
+    )
+    expect(parsed.providers.openai?.modelEfforts).toEqual({ 'gpt-5.5': { efforts: ['low'] } })
+    expect(parsed.customEndpoints?.[0]?.modelProfiles?.qwen3).toEqual({ efforts: ['high'] })
   })
 })
 

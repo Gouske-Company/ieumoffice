@@ -99,6 +99,7 @@ export const zh = {
   noticeTheme: '此导图在这里以默认外观显示。文件中的主题风格不会被更改。',
   noticeImported:
     '这是从 FreeMind 或 Freeplane 文件（.mm）导入的新导图。保存时会写入新文件，原来的 .mm 文件保持不变。图标、颜色和字体不会导入。',
+  importedPicture: '（图片）',
   openLegacy: '此文件为旧版格式，无法打开',
   openEncrypted: '此文件已加密，无法打开',
   openUnreadable: '无法读取此文件',

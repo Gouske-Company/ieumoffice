@@ -91,14 +91,19 @@ export async function openCopiedMap(seed: MindmapCopySeed): Promise<OpenedMap> {
  * A FreeMind or Freeplane file (`.mm`) read into a NEW, UNSAVED map named
  * `title`, like a seeded map: the `.mm` is never its path, and the first save
  * asks where to put the `.xmind`. A file that cannot be read is `unreadable`.
+ * `pictureTitle` names a topic that shows only a picture with no name.
  */
-export async function importedMap(bytes: Uint8Array, title: string): Promise<OpenedMap> {
+export async function importedMap(
+  bytes: Uint8Array,
+  title: string,
+  pictureTitle: string,
+): Promise<OpenedMap> {
   const read = parseFreeMind(bytes)
   if (!read.ok) {
     console.warn(`[mindmap] the .mm file cannot be read (${read.problem})`)
     return { status: 'unreadable' }
   }
-  const document = await freeMindToXmind(read.root, title)
+  const document = await freeMindToXmind(read.root, title, pictureTitle)
   const baseline = await document.save()
   document.markChanged()
   return {

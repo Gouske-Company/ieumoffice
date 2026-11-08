@@ -104,6 +104,7 @@ export const cs = {
   noticeTheme: 'Tato mapa se zde zobrazuje s výchozím vzhledem. Motiv souboru se nemění.',
   noticeImported:
     'Toto je nová mapa importovaná ze souboru FreeMind nebo Freeplane (.mm). Uložením vznikne nový soubor a soubor .mm zůstane beze změny. Ikony, barvy a písma se neimportují.',
+  importedPicture: '(obrázek)',
   openLegacy: 'Tento soubor je ve starším formátu a nelze jej otevřít',
   openEncrypted: 'Tento soubor je chráněn heslem a nelze jej otevřít',
   openUnreadable: 'Tento soubor nelze přečíst',

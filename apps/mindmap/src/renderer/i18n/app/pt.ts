@@ -104,6 +104,7 @@ export const pt = {
   noticeTheme: 'Este mapa é exibido aqui com a aparência padrão. O tema do arquivo não é alterado.',
   noticeImported:
     'Este é um novo mapa importado de um arquivo do FreeMind ou Freeplane (.mm). Ao salvar, é criado um novo arquivo e o arquivo .mm não é alterado. Ícones, cores e fontes não são importados.',
+  importedPicture: '(imagem)',
   openLegacy: 'Este arquivo está em um formato antigo e não pode ser aberto',
   openEncrypted: 'Este arquivo está protegido por senha e não pode ser aberto',
   openUnreadable: 'Não é possível ler este arquivo',

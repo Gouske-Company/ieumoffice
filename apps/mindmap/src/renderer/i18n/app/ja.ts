@@ -103,6 +103,7 @@ export const ja = {
   noticeTheme: 'このマップはここでは既定の見た目で表示されます。ファイルのテーマは変更されません。',
   noticeImported:
     'FreeMind・Freeplane ファイル（.mm）から読み込んだ新しいマップです。保存すると新しいファイルになり、元の .mm ファイルはそのまま残ります。アイコン・色・フォントは読み込みません。',
+  importedPicture: '（画像）',
   openLegacy: '古い形式のファイルのため開けません',
   openEncrypted: 'パスワードで保護されたファイルのため開けません',
   openUnreadable: '読み取れないファイルです',

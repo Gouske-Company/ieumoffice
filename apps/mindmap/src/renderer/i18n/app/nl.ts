@@ -106,6 +106,7 @@ export const nl = {
     'Deze mindmap wordt hier met het standaarduiterlijk getoond. Het thema van het bestand wordt niet gewijzigd.',
   noticeImported:
     'Dit is een nieuwe map, geïmporteerd uit een FreeMind- of Freeplane-bestand (.mm). Opslaan maakt een nieuw bestand; het .mm-bestand blijft ongewijzigd. Pictogrammen, kleuren en lettertypen worden niet overgenomen.',
+  importedPicture: '(afbeelding)',
   openLegacy: 'Dit bestand heeft een oudere indeling en kan niet worden geopend',
   openEncrypted: 'Dit bestand is met een wachtwoord beveiligd en kan niet worden geopend',
   openUnreadable: 'Dit bestand kan niet worden gelezen',

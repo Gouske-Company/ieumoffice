@@ -10,9 +10,13 @@
  * link, whether it is folded, and which side of the central topic its main
  * branches stand on. Rich text and notes become plain text, wherever the two
  * programs keep them: a `richcontent` element, HTML inside the `TEXT`
- * attribute (FreeMind 0.8), and the note hook of FreeMind 0.7 and 0.8. Icons,
- * fonts, colours, edges, clouds, arrow links, attributes, details and links to
- * other nodes are left behind.
+ * attribute (FreeMind 0.8), and the note hook of FreeMind 0.7 and 0.8. A table
+ * row becomes one line, its cells set apart by " | ". Pictures are not
+ * brought: a node whose text is only a picture (in its HTML, or Freeplane's
+ * picture hook) is titled with the picture's alt text, else its title, else
+ * its file name, and a picture with none of these gets the placeholder the
+ * caller hands in. Icons, fonts, colours, edges, clouds, arrow links,
+ * attributes, details and links to other nodes are left behind too.
  */
 import {
   MAX_TOPIC_DEPTH,
@@ -33,6 +37,8 @@ export interface FreeMindNode {
   folded?: boolean
   /** set on the central topic's own branches only */
   side?: 'left' | 'right'
+  /** the text is empty because the node shows only a picture that has no name */
+  picture?: true
 }
 
 export type FreeMindRead =
@@ -55,54 +61,113 @@ function decode(bytes: Uint8Array): string | null {
   }
 }
 
-const BLOCKS = new Set(['p', 'div', 'li', 'tr', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'br'])
+const BLOCKS = new Set(['p', 'div', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'br'])
+const CELLS = new Set(['td', 'th'])
 const SKIPPED = new Set(['head', 'style', 'script'])
 
-/** HTML as a browser shows it: one line per block, white space collapsed. */
-function htmlText(content: Node): string {
+/** Rich text as plain text, and the name of its first picture ('' when the picture has none). */
+interface RichText {
+  text: string
+  picture?: string
+}
+
+/** The file name a picture's address ends in, '' when it names no file. */
+function fileName(address: string): string {
+  if (/^data:/i.test(address)) return ''
+  const path = address.replace(/[?#][^]*$/, '')
+  const file = path.slice(Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\')) + 1)
+  try {
+    return decodeURIComponent(file).trim()
+  } catch {
+    return file.trim()
+  }
+}
+
+/** A picture's alt text, else its title, else the file name its `src` ends in. */
+function pictureName(img: Element): string {
+  const named = img.getAttribute('alt')?.trim() || img.getAttribute('title')?.trim()
+  return named || fileName(img.getAttribute('src')?.trim() ?? '')
+}
+
+/**
+ * HTML as a browser shows it: one line per block, white space collapsed. A
+ * table row is one line: blocks inside it do not break it, and its cells are
+ * set apart by " | ".
+ */
+function htmlText(content: Node): RichText {
   const lines: string[] = []
   let line = ''
   const breakLine = (): void => {
     lines.push(line.trim())
     line = ''
   }
-  const pending: (Node | 'break')[] = [content]
+  // table rows open around the current node; whether the next text begins a cell
+  let rows = 0
+  let cellStarts = false
+  let picture: string | undefined
+  const pending: (Node | 'break' | 'row' | 'row-end' | 'cell')[] = [content]
   for (let next = pending.pop(); next !== undefined; next = pending.pop()) {
     if (next === 'break') {
-      breakLine()
+      if (rows === 0) breakLine()
+      else line += ' '
+      continue
+    }
+    if (next === 'row') {
+      rows++
+      continue
+    }
+    if (next === 'row-end') {
+      if (--rows === 0) line = line.replace(/ {2,}/g, ' ')
+      continue
+    }
+    if (next === 'cell') {
+      cellStarts = true
       continue
     }
     if (next.nodeType === Node.TEXT_NODE || next.nodeType === Node.CDATA_SECTION_NODE) {
-      line += (next.nodeValue ?? '').replace(/\s+/g, ' ')
+      const text = (next.nodeValue ?? '').replace(/\s+/g, ' ')
+      if (cellStarts && text.trim()) {
+        if (line.trim()) line = `${line.trimEnd()} | `
+        cellStarts = false
+      }
+      line += text
       continue
     }
     if (next.nodeType !== Node.ELEMENT_NODE) continue
     const name = (next as Element).localName?.toLowerCase() ?? ''
     if (SKIPPED.has(name)) continue
-    const block = BLOCKS.has(name)
-    if (block) pending.push('break')
+    if (name === 'img') {
+      picture ??= pictureName(next as Element)
+      continue
+    }
+    if (name === 'tr') pending.push('break', 'row-end')
+    else if (BLOCKS.has(name)) pending.push('break')
     const children = Array.from(next.childNodes)
     for (let at = children.length - 1; at >= 0; at--) pending.push(children[at]!)
-    if (block) pending.push('break')
+    if (name === 'tr') pending.push('row', 'break')
+    else if (CELLS.has(name)) pending.push('cell')
+    else if (BLOCKS.has(name)) pending.push('break')
   }
   breakLine()
-  return lines
+  const text = lines
     .join('\n')
     .replace(/\n{2,}/g, '\n')
     .trim()
+  return picture === undefined ? { text } : { text, picture }
 }
 
 /**
  * The text of a `richcontent` element. Content without HTML (Freeplane's plain
  * forms) is taken line by line as it stands.
  */
-function richText(content: Element): string {
+function richText(content: Element): RichText {
   if (content.getElementsByTagName('html').length > 0) return htmlText(content)
-  return (content.textContent ?? '')
+  const text = (content.textContent ?? '')
     .split(/\r\n?|\n/)
-    .map((text) => text.trim())
+    .map((part) => part.trim())
     .filter(Boolean)
     .join('\n')
+  return { text }
 }
 
 /**
@@ -110,8 +175,8 @@ function richText(content: Element): string {
  * when it starts with `<html`. A document from `DOMParser` is inert: nothing in
  * it runs or loads.
  */
-function markupText(text: string): string {
-  if (!/^\s*<html/i.test(text)) return text.replace(/\r\n?/g, '\n').trim()
+function markupText(text: string): RichText {
+  if (!/^\s*<html/i.test(text)) return { text: text.replace(/\r\n?/g, '\n').trim() }
   return htmlText(new DOMParser().parseFromString(text, 'text/html').documentElement)
 }
 
@@ -127,10 +192,18 @@ function hookNote(node: Element): string | undefined {
     (child) => child.getAttribute('NAME') === NOTE_HOOK,
   )
   const text = hook ? elementChildren(hook, 'text')[0]?.textContent : undefined
-  return text ? markupText(text) || undefined : undefined
+  return text ? markupText(text).text || undefined : undefined
 }
 
-function richContent(node: Element, type: 'NODE' | 'NOTE'): string | undefined {
+/** Freeplane keeps a picture shown on a node in a hook rather than in its text. */
+function hookPicture(node: Element): string | undefined {
+  const hook = elementChildren(node, 'hook').find(
+    (child) => child.getAttribute('NAME') === 'ExternalObject',
+  )
+  return hook ? fileName(hook.getAttribute('URI')?.trim() ?? '') : undefined
+}
+
+function richContent(node: Element, type: 'NODE' | 'NOTE'): RichText | undefined {
   const content = elementChildren(node, 'richcontent').find(
     (child) => child.getAttribute('TYPE')?.toUpperCase() === type,
   )
@@ -139,9 +212,11 @@ function richContent(node: Element, type: 'NODE' | 'NOTE'): string | undefined {
 
 function nodeOf(element: Element, depth: number): FreeMindNode {
   const attribute = element.getAttribute('TEXT')
-  const text = attribute !== null ? markupText(attribute) : (richContent(element, 'NODE') ?? '')
-  const node: FreeMindNode = { text, children: [] }
-  const note = richContent(element, 'NOTE') || hookNote(element)
+  const read = attribute !== null ? markupText(attribute) : richContent(element, 'NODE')
+  const picture = read?.picture ?? hookPicture(element)
+  const node: FreeMindNode = { text: read?.text || picture || '', children: [] }
+  if (!node.text && picture !== undefined) node.picture = true
+  const note = richContent(element, 'NOTE')?.text || hookNote(element)
   if (note) node.note = note
   const link = element.getAttribute('LINK')?.trim()
   // a link to another node of the same map has no counterpart in a web link
@@ -196,7 +271,8 @@ function dress(topic: XmindTopic, node: FreeMindNode): void {
 
 /**
  * A new map file from a read `.mm`: one sheet named `title`, the central
- * topic named after the map's root (or `title` when the root has no text).
+ * topic named after the map's root (or `title` when the root has no text), and
+ * `pictureTitle` for a topic that shows only a picture with no name.
  *
  * Sides: main branches all on one side give that one-sided layout. With both
  * sides, the right-hand branches come first, each side in its own order. The
@@ -204,7 +280,11 @@ function dress(topic: XmindTopic, node: FreeMindNode): void {
  * branches on the right, so a side with more than half of them gives the rest
  * to the other side.
  */
-export function freeMindToXmind(root: FreeMindNode, title: string): Promise<XmindDocument> {
+export function freeMindToXmind(
+  root: FreeMindNode,
+  title: string,
+  pictureTitle: string,
+): Promise<XmindDocument> {
   const sheet = newSheet({ title, rootTitle: root.text || title })
   dress(sheet.rootTopic, root)
   const sides = new Set(root.children.map((child) => child.side))
@@ -224,7 +304,7 @@ export function freeMindToXmind(root: FreeMindNode, title: string): Promise<Xmin
     if (children.length === 0) continue
     topic.children = {
       attached: children.map((child) => {
-        const made = newTopic(child.text)
+        const made = newTopic(child.text || (child.picture ? pictureTitle : ''))
         dress(made, child)
         if (child.folded && child.children.length > 0) made.branch = 'folded'
         pending.push([made, child.children])

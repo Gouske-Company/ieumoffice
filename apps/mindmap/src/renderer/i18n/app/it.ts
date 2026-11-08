@@ -106,6 +106,7 @@ export const it = {
     "Questa mappa viene mostrata qui con l'aspetto predefinito. Il tema del file non viene modificato.",
   noticeImported:
     'Questa è una nuova mappa importata da un file FreeMind o Freeplane (.mm). Il salvataggio crea un nuovo file e il file .mm resta invariato. Icone, colori e caratteri non vengono importati.',
+  importedPicture: '(immagine)',
   openLegacy: 'Questo file è in un formato precedente e non può essere aperto',
   openEncrypted: 'Questo file è protetto da password e non può essere aperto',
   openUnreadable: 'Impossibile leggere questo file',

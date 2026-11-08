@@ -3,6 +3,7 @@ import {
   DIAGRAM_MAX_CANVAS_DIM_PX,
   clampDiagramMaxWidth,
   computeDiagramRasterSize,
+  diagramSvgSize,
   parseSvgViewBox,
   pinSvgIntrinsicSize,
 } from '../src/renderer/editor/diagrams'
@@ -20,6 +21,27 @@ describe('diagram viewBox guards', () => {
     expect(parseSvgViewBox('<svg viewBox="0 0 200,100">')).toEqual({ width: 200, height: 100 })
     expect(parseSvgViewBox("<svg viewBox='0, 0, 64, 48'>")).toEqual({ width: 64, height: 48 })
     expect(parseSvgViewBox('<svg viewBox="0 0 200 100">')).toEqual({ width: 200, height: 100 })
+  })
+
+  it('parses signed and exponent-form numbers', () => {
+    // a mermaid state diagram's own root viewBox
+    expect(
+      parseSvgViewBox(
+        '<svg viewBox="-21.756999969482422 9.5367431640625e-7 116.11637878417969 346.8571472167969">',
+      ),
+    ).toEqual({ width: 117, height: 347 })
+    expect(parseSvgViewBox('<svg viewBox="+0 -.5 1.2E2 4e+1">')).toEqual({ width: 120, height: 40 })
+  })
+
+  it('sizes a diagram without a viewBox by its width and height', () => {
+    expect(diagramSvgSize('<svg width="360" height="60.5">')).toEqual({ width: 360, height: 61 })
+    expect(diagramSvgSize("<svg width='3.6e2px' height='60'>")).toEqual({ width: 360, height: 60 })
+    expect(diagramSvgSize('<svg width="900" height="540" viewBox="0 -25 450 270">')).toEqual({
+      width: 450,
+      height: 270,
+    })
+    expect(diagramSvgSize('<svg width="100%" height="50">')).toBeNull()
+    expect(diagramSvgSize('<svg>')).toBeNull()
   })
 
   it('returns null for a missing or invalid viewBox', () => {

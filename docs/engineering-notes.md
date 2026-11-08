@@ -39,6 +39,7 @@
 - **키 제공자의 모델 목록을 화면에서 저장했는데 남지 않는다.** `providers.<id>.models`는 뒷단이 회사에 물어 쓰는 값이라(결정 0087), 화면이 보낸 값은 검사에서 버리고 파일의 값을 그대로 둔다. → 목록을 바꾸려면 키를 다시 저장하거나 앱을 다시 켠다. 설정을 쓰는 새 길을 만들면 `withStoredKeyModels`를 거친다. 거치지 않으면 그 저장이 목록을 지운다.
 - **설정 하나만 바꿔 썼는데 키가 평문으로 남는다.** `normalizeAiSettings`와 그것을 거치는 도우미(`withMeteredAccepted` 등)는 봉인된 키를 풀어 돌려준다. 그 값을 `writeJsonAtomic`으로 바로 쓰면 다음 봉인 저장이나 앱을 다시 켤 때까지 키가 평문으로 남는다. → 그 뒷단의 `writeAiSettingsFile`로 쓴다. 이 함수가 봉인한다.
 - **화면에서 저장한 설정에 `subscriptionOff`가 남지 않는다.** 이 앱에서 끈 프로그램의 목록은 설정 → AI 카드의 창구(`ai:subscription-off`)로만 바뀐다(결정 0114). `ai:set-settings`는 파일의 값을 그대로 둔다(`withStoredSubscriptionOff`). 끄기 전에 읽은 사본을 다른 창이 저장해도 프로그램이 다시 켜지지 않게 하려는 것이다. → 설정을 쓰는 새 길을 만들면 `withStoredKeyModels`와 함께 이것도 거친다. 시험용으로 심을 때는 파일에 직접 적는다.
+- **다른 판이 적은 설정 값이 저장 뒤에 사라진다.** 편집기 화면은 이 판이 아는 값만 받는다. 엑셀 단독 실행의 검사(`aiSettingsInputSchema`)는 모르는 값을 거절하기 때문이다. 그래서 화면이 보낸 설정을 그대로 쓰면 새 판이 적은 값이 지워진다. → 각 뒷단의 `writeAiSettingsFile`이 쓰기 직전에 파일을 다시 읽어 모르는 값을 되살린다(`withStoredUnknownFields`). 설정을 쓰는 새 길도 이 함수로 쓴다. 아는 값의 목록은 `providers.ts`의 `KNOWN_SETTINGS_FIELDS`·`KNOWN_PROVIDER_FIELDS`다. 설정 형식에 값을 더하면 형식 검사가 이 목록에도 넣으라고 알린다.
 - **제공자 선택을 바꿀 때는 저장된 사본을 먼저 읽는다.** 모델 목록과 "…로 계속" 버튼은 그 순간 저장된 설정을 읽어 선택값만 바꿔 쓴다. 화면이 들고 있던 낡은 사본을 통째로 쓰면 다른 창에서 바꾼 값이 되돌아간다.
 
 ## 로컬 AI

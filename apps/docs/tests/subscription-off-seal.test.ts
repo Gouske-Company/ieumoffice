@@ -156,3 +156,35 @@ it('keeps a CLI off when the metered "use anyway" answer is written', async () =
   expect(written.meteredAccepted?.['claude-code']).toBe(true)
   expect(written.subscriptionOff).toEqual({ codex: true })
 })
+
+it('keeps the fields a newer build wrote, and the key sealed, on every write', async () => {
+  setAiSecretCodec(codec)
+  const newer = {
+    futureTop: { mode: 'x' },
+    providers: {
+      custom: {
+        apiKey: codec.seal(KEY),
+        baseUrl: 'https://example.invalid/v1',
+        futureField: 'kept',
+        effort: 3,
+      },
+    },
+  }
+  seed(newer)
+  const copy = await read()
+  expect(copy.providers.custom).not.toHaveProperty('futureField')
+  expect(copy.providers.custom).not.toHaveProperty('effort')
+
+  await state.handlers.get('ai:set-settings')!({}, { ...copy, internetTools: false })
+  await state.setup!.setMeteredAccepted('codex', true)
+
+  const { text, written } = onDisk()
+  expect(text).not.toContain(KEY)
+  expect(written.internetTools).toBe(false)
+  expect(written.meteredAccepted?.codex).toBe(true)
+  expect((written as unknown as Record<string, unknown>).futureTop).toEqual({ mode: 'x' })
+  expect(written.providers.custom).toMatchObject({
+    apiKey: codec.seal(KEY),
+    futureField: 'kept',
+  })
+})

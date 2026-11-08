@@ -118,6 +118,7 @@ import {
   type AiStreamChunk,
   sealAiSecrets,
   withStoredSubscriptionOff,
+  withStoredUnknownFields,
 } from '@genoffice/ai-provider'
 import { shutdownCodexAppServers } from '@genoffice/ai-provider/codex-app-server'
 import { withStoredKeyModels } from '@genoffice/ai-provider/key-models'
@@ -2753,9 +2754,13 @@ function readJson<T>(path: string, fallback: T): T {
 
 const SETTINGS_PATH = () => userDataPath('ai-settings.json')
 
-/** the only write of the settings file: keys and tokens go to disk sealed (decision 0063) */
+/**
+ * The only write of the settings file: keys and tokens go to disk sealed
+ * (decision 0063), and fields a newer build wrote stay as they are.
+ */
 function writeAiSettingsFile(settings: unknown): void {
-  writeJsonAtomic(SETTINGS_PATH(), sealAiSecrets(settings))
+  const stored = readJson<unknown>(SETTINGS_PATH(), {})
+  writeJsonAtomic(SETTINGS_PATH(), sealAiSecrets(withStoredUnknownFields(settings, stored)))
 }
 
 // Dev-only automation hooks: a fixed CDP port for driving the app from test

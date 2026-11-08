@@ -304,6 +304,64 @@ describe('pictures', () => {
   })
 })
 
+describe('characters that change how text reads', () => {
+  const richPicture = (img: string): string =>
+    `<node><richcontent TYPE="NODE"><html><head/><body><p>${img}</p></body></html></richcontent></node>`
+
+  it('leave out direction overrides, embeddings and isolates in titles and notes, and control characters in plain text', async () => {
+    const file = bytes(
+      `<map version="1.0.1"><node TEXT="Root">` +
+        richPicture('<img src="Images/photo%E2%80%AEgnp.exe" />') +
+        richPicture('<img src="x.png" alt="&#x2067;Plan&#x2069; &#x202D;A" />') +
+        `<node TEXT=""><hook URI="Images/scan%E2%81%A6cod.exe" NAME="ExternalObject"/></node>` +
+        `<node TEXT="report&#x202E;fdp.exe"/>` +
+        `<node TEXT="a&#x85;b&#x9F;c&#x7F;"/>` +
+        `<node TEXT="line one&#10;line&#x202C; two"/>` +
+        `<node><richcontent TYPE="NODE">plain&#x202B; rich&#10;&#x80;second</richcontent></node>` +
+        `<node TEXT="Notes">` +
+        `<richcontent TYPE="NOTE">first&#x202A; line&#10;second&#x85; line</richcontent></node>` +
+        `<node TEXT="HTML note"><richcontent TYPE="NOTE"><html><body><p>to&#x2068;do</p><p>done&#x202E;!</p></body></html></richcontent></node>` +
+        `</node></map>`,
+    )
+    const [sheet] = await importAndReopen(file, 'Bidi')
+    expect(sheet!.root.children.map(shown)).toEqual([
+      { title: 'photognp.exe' },
+      { title: 'Plan A' },
+      { title: 'scancod.exe' },
+      { title: 'reportfdp.exe' },
+      { title: 'abc' },
+      { title: 'line one\nline two' },
+      { title: 'plain rich\nsecond' },
+      { title: 'Notes', note: 'first line\nsecond line' },
+      { title: 'HTML note', note: 'todo\ndone!' },
+    ])
+  })
+
+  it('keep the marks right-to-left text needs and the joiners emoji and scripts need', async () => {
+    const kept = [
+      'مرحبا\u200F 2024',
+      'שלום\u200F!',
+      'abc\u200E def',
+      '👩\u200D💻 개발',
+      'می\u200Cخواهم',
+      'long\u200Bword',
+    ]
+    const file = bytes(
+      `<map version="1.0.1"><node TEXT="Root">` +
+        kept.map((text) => `<node TEXT="${text}"/>`).join('') +
+        richPicture(`<img src="x.png" alt="${kept[0]}" />`) +
+        `<node TEXT="Note"><richcontent TYPE="NOTE">${kept[1]}&#10;${kept[3]}</richcontent></node>` +
+        `</node></map>`,
+    )
+    const [sheet] = await importAndReopen(file, 'Kept')
+    expect(sheet!.root.children.map(shown)).toEqual([
+      ...kept.map((title) => ({ title })),
+      { title: kept[0] },
+      { title: 'Note', note: `${kept[1]}\n${kept[3]}` },
+    ])
+  })
+})
+
 describe('rich text layout', () => {
   it('puts each table row on one line with its cells set apart, even with no space between them', () => {
     const read = parseFreeMind(

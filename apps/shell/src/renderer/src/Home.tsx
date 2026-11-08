@@ -938,8 +938,11 @@ function AccountEntry({
           : aiSubscriptionText(lang, 'cardReady')
       : summary.state === 'needs-connection'
         ? t('homeAiNeedsConnection')
-        : null
-  const named = summary.state === 'connected' || summary.state === 'needs-connection'
+        : summary.state === 'off'
+          ? aiSubscriptionText(lang, 'cardOff')
+          : null
+  const named =
+    summary.state === 'connected' || summary.state === 'needs-connection' || summary.state === 'off'
   const label = named
     ? names
     : summary.state === 'checking'

@@ -18,6 +18,7 @@ import { join } from 'node:path'
 import { readSlidesAiFonts } from './ai-default-fonts'
 import {
   sanitizeAiSettings,
+  withStoredSubscriptionOff,
   setAiUserAgent,
   setRescueFetch,
   type AiSettings,
@@ -186,7 +187,8 @@ export function registerAiIpc(): void {
       console.warn('[ai] rejected invalid ai:set-settings payload')
       return
     }
-    writeAiSettingsFile(sanitized)
+    // only the Settings card turns a CLI off or on (decision 0114): the file's switch is kept
+    writeAiSettingsFile(withStoredSubscriptionOff(sanitized, readAiSettings()))
     broadcastToWindows('ai:settings-changed')
   })
 

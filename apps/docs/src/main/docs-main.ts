@@ -130,6 +130,7 @@ import {
   setRescueFetch,
   streamForProvider,
   subscriptionOffIn,
+  withStoredSubscriptionOff,
   type AiChatRequest,
   type AiSettings,
   type AiStreamChunk,
@@ -193,7 +194,6 @@ import {
   resolveAiRun,
   subscriptionStreamCallbacks,
   withMeteredAccepted,
-  withStoredSubscriptionOff,
   withSubscriptionOff,
   type AiRunTexts,
 } from './ai-run'

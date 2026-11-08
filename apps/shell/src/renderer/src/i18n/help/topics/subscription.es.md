@@ -122,7 +122,7 @@ Lo que haya ocultado con **Ocultar la selección a la IA** no se envía, sea cua
 
 - **Velocidad.** Una respuesta a través de Claude Code o Codex empieza unos segundos más tarde que con una clave de API, porque primero tiene que arrancar el programa. ChatGPT conectado directamente no arranca ningún programa.
 - **Plan gratuito de ChatGPT.** Aparece como Conectado, pero sus límites son pequeños, así que las solicitudes se detienen antes. La línea de uso no aparece con él.
-- **Generación de imágenes.** En esta versión una suscripción no genera imágenes, con ningún plan. Para eso hace falta la clave de un proveedor de imágenes; vea [Modelos de IA y ajustes](help://ai-models).
+- **Generación de imágenes.** Una suscripción de Codex puede generar imágenes, con cargo a ese plan de ChatGPT. El plan gratuito no tiene herramienta de imágenes, así que no puede. Claude, ChatGPT conectado directamente y un inicio de sesión que cobra por uso no generan imágenes. Vea [Modelos de IA y ajustes](help://ai-models).
 - **Proxies.** Claude Code y Codex no toman la configuración de proxy de GenOffice. Usan el proxy definido para este PC, por ejemplo la variable de entorno `HTTPS_PROXY`, igual que cuando se ejecutan en un terminal. Si no pueden conectarse en un terminal, tampoco podrán desde aquí.
 - **Comandos y otros programas.** Una solicitud que llega del comando `ieumoffice` o de un agente de codificación conectado no usa su suscripción a menos que usted lo permita. Aun así, usa Claude Code o Codex, nunca ChatGPT conectado directamente. Vea [Conectar un agente de programación](help://mcp).
 - **Modo agente.** El [Modo agente](help://agent-mode) ejecuta Claude Code o Codex en este PC. ChatGPT conectado directamente no puede ejecutar el agente.

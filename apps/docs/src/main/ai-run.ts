@@ -186,15 +186,3 @@ export function withSubscriptionOff(
   else delete next[provider]
   return Object.keys(next).length > 0 ? { ...settings, subscriptionOff: next } : settings
 }
-
-/**
- * `next` with the CLIs turned off as `stored` has them. Only the switch on the
- * Settings card changes them: a window that saves a copy it read earlier
- * neither turns a CLI back on nor off.
- */
-export function withStoredSubscriptionOff(next: AiSettings, stored: AiSettings): AiSettings {
-  const { subscriptionOff: _sent, ...settings } = next
-  return stored.subscriptionOff
-    ? { ...settings, subscriptionOff: stored.subscriptionOff }
-    : settings
-}

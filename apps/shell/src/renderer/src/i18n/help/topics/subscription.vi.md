@@ -122,7 +122,7 @@ Bất cứ thứ gì bạn đã ẩn bằng **Ẩn vùng chọn khỏi AI** đ�
 
 - **Tốc độ.** Câu trả lời qua Claude Code hoặc Codex bắt đầu chậm hơn vài giây so với qua khóa API, vì chương trình phải khởi động trước. ChatGPT kết nối trực tiếp không khởi động chương trình nào.
 - **Gói ChatGPT miễn phí.** Gói này hiển thị là "Đã kết nối", nhưng giới hạn của nó nhỏ nên yêu cầu sẽ dừng sớm hơn. Dòng mức sử dụng không xuất hiện với gói này.
-- **Tạo hình ảnh.** Trong phiên bản này, gói đăng ký không tạo được hình ảnh, dù là gói nào. Việc đó cần khóa của nhà cung cấp hình ảnh; xem [Mô hình AI và cài đặt](help://ai-models).
+- **Tạo hình ảnh.** Gói đăng ký Codex có thể tạo hình ảnh, tính vào gói ChatGPT đó. Gói miễn phí không có công cụ hình ảnh nên không tạo được. Claude, ChatGPT kết nối trực tiếp và đăng nhập tính phí theo mức dùng không tạo hình ảnh; xem [Mô hình AI và cài đặt](help://ai-models).
 - **Proxy.** Claude Code và Codex không nhận cài đặt proxy từ GenOffice. Chúng dùng proxy được thiết lập cho máy tính này, chẳng hạn biến môi trường `HTTPS_PROXY`, giống hệt như khi bạn chạy chúng trong terminal. Nếu chúng không kết nối được trong terminal thì ở đây cũng không kết nối được.
 - **Lệnh và các chương trình khác.** Một yêu cầu đến từ lệnh `ieumoffice` hoặc từ một tác nhân lập trình đã kết nối sẽ không dùng gói đăng ký của bạn trừ khi bạn cho phép. Ngay cả khi đó, nó dùng Claude Code hoặc Codex, không bao giờ dùng ChatGPT kết nối trực tiếp. Xem [Kết nối tác nhân lập trình](help://mcp).
 - **Chế độ tác tử.** [Chế độ tác tử](help://agent-mode) chạy Claude Code hoặc Codex trên máy tính này. ChatGPT kết nối trực tiếp không thể chạy tác tử.

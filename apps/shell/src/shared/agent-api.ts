@@ -36,6 +36,11 @@ export const AGENT_CHANNELS = {
   templateAsIs: 'agent-window:template-as-is',
   /** "make a blank template": the candidate's copy in a template preview tab */
   templateBlank: 'agent-window:template-blank',
+  /**
+   * main → every window: the subscription statuses changed (`SUBSCRIPTION_IPC_CHANNELS.changed`,
+   * named here so the agent preload imports no AI package); the window reads its connections again
+   */
+  statusesChanged: 'ai:subscription-changed',
 } as const
 
 export type AgentProvider = 'claude-code' | 'codex'
@@ -263,6 +268,8 @@ export interface AgentWindowApi {
   getInit(): Promise<AgentInit>
   getTheme(): Promise<'light' | 'dark' | 'system'>
   onThemeChanged(handler: (theme: 'light' | 'dark' | 'system') => void): () => void
+  /** a program was checked, signed in or out, or turned off or on in this app */
+  onStatusesChanged(handler: () => void): () => void
   /** the folder dialog; null when cancelled */
   pickFolder(): Promise<string | null>
   setPrefs(prefs: Partial<AgentPrefs>): Promise<AgentPrefs>

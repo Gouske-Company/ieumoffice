@@ -4159,7 +4159,9 @@ export function registerAiIpc(): void {
       broadcastAiSettingsChanged()
     },
     setSubscriptionOff: (provider: AiSubscriptionCliId, off: boolean) => {
-      writeAiSettingsFile(withSubscriptionOff(readJson<unknown>(SETTINGS_PATH(), {}), provider, off))
+      writeAiSettingsFile(
+        withSubscriptionOff(readJson<unknown>(SETTINGS_PATH(), {}), provider, off),
+      )
       broadcastAiSettingsChanged()
     },
     dataDir: app.getPath('userData'),

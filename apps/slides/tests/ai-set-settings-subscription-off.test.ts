@@ -1,0 +1,101 @@
+// @vitest-environment node
+/**
+ * The slides main saves the renderer's AI settings on ai:set-settings, but
+ * only the Settings card turns a vendor CLI off or on (decision 0114): the
+ * file's switch survives a save from a renderer that read the settings before
+ * the switch changed. The subscription service is mocked.
+ */
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { afterAll, beforeAll, expect, it, vi } from 'vitest'
+import type { AiSettings } from '@genoffice/ai-provider'
+
+type Handler = (event: { sender: unknown }, ...args: unknown[]) => unknown
+
+const state = vi.hoisted(() => ({
+  userData: '',
+  handlers: new Map<string, Handler>(),
+}))
+
+vi.mock('electron', () => ({
+  app: {
+    getPath: (name: string) => (name === 'userData' ? state.userData : tmpdir()),
+    getName: () => 'slides-test',
+    getVersion: () => '0',
+    once: () => {},
+  },
+  ipcMain: {
+    handle: (channel: string, fn: Handler) => state.handlers.set(channel, fn),
+    on: () => {},
+    removeHandler: () => {},
+  },
+  nativeImage: {},
+  net: {},
+  webContents: { getAllWebContents: () => [], fromId: () => null },
+}))
+
+// The shaping chain loads a harfbuzz wasm that cannot resolve in the unit-test env;
+// nothing here renders text.
+vi.mock('../src/main/shaped-metrics', () => ({
+  shapedMetricsReady: async () => {},
+  refineComplexWidths: async () => {},
+  complexScriptOf: () => null,
+  initShapedMetrics: () => {},
+  gtMeasure: (t: string) => ({ width: t.length * 8 }),
+  shapedFamily: () => null,
+  shapedMeasure: () => ({ width: 0 }),
+}))
+
+vi.mock('@genoffice/ai-provider/subscription', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@genoffice/ai-provider/subscription')>()),
+  ensureSubscriptionIpc: () => ({}),
+  sharedSubscriptionStatuses: () => ({}),
+}))
+
+import { registerAiIpc } from '../src/main/ai-ipc'
+
+const settingsFile = () => join(state.userData, 'ai-settings.json')
+const onDisk = () => JSON.parse(readFileSync(settingsFile(), 'utf8')) as AiSettings
+const event = { sender: { id: 1, isDestroyed: () => false, send: () => {} } }
+
+beforeAll(() => {
+  state.userData = mkdtempSync(join(tmpdir(), 'slides-subscription-off-'))
+  registerAiIpc()
+})
+afterAll(() => rmSync(state.userData, { recursive: true, force: true }))
+
+async function savedFrom(
+  renderer: AiSettings,
+  stored: Record<string, unknown>,
+): Promise<AiSettings> {
+  writeFileSync(settingsFile(), JSON.stringify({ provider: 'auto', providers: {}, ...stored }))
+  await state.handlers.get('ai:set-settings')!(event, JSON.parse(JSON.stringify(renderer)))
+  return onDisk()
+}
+
+async function rendererCopy(stored: Record<string, unknown>): Promise<AiSettings> {
+  writeFileSync(settingsFile(), JSON.stringify({ provider: 'auto', providers: {}, ...stored }))
+  return (await state.handlers.get('ai:get-settings')!(event)) as AiSettings
+}
+
+it('keeps a CLI the file turned off when a renderer that read the settings before saves', async () => {
+  const stale = await rendererCopy({})
+  expect(stale.subscriptionOff).toBeUndefined()
+
+  const written = await savedFrom(
+    { ...stale, internetTools: false },
+    { subscriptionOff: { 'claude-code': true } },
+  )
+  expect(written.internetTools).toBe(false)
+  expect(written.subscriptionOff).toEqual({ 'claude-code': true })
+})
+
+it('does not turn a CLI off because a renderer says so', async () => {
+  const stale = await rendererCopy({ subscriptionOff: { codex: true } })
+  expect(stale.subscriptionOff).toEqual({ codex: true })
+
+  const written = await savedFrom({ ...stale, internetTools: false }, {})
+  expect(written.internetTools).toBe(false)
+  expect(written.subscriptionOff).toBeUndefined()
+})

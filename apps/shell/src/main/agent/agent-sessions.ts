@@ -78,6 +78,13 @@ export type AgentStartResult =
       message?: string | undefined
     }
 
+/** the window closed, or the app quit, before the session was running */
+const STOPPED_WHILE_STARTING: AgentStartResult = {
+  ok: false,
+  reason: 'start-failed',
+  message: 'The session was stopped while it started',
+}
+
 export interface AgentRunners {
   claude: (
     options: AgentSessionOptions,
@@ -347,7 +354,8 @@ interface LiveSession {
   ownerId: number
   provider: AgentStartRequest['provider']
   session: AgentSession | undefined
-  sessionDir: string
+  /** undefined until the session folder is made */
+  sessionDir: string | undefined
   appMcp?: { stop(): Promise<void> } | undefined
   /** the relays of the person's MCP servers (user MCP spec 9) */
   relays?: AgentMcpRelays | undefined
@@ -383,26 +391,35 @@ export function createAgentManager(deps: AgentManagerDeps): AgentManager {
   const protectedPaths = agentProtectedPaths(homeDir, deps.userData)
   const live = new Map<string, LiveSession>()
 
-  const cleanup = (entry: LiveSession, { quitting = false } = {}): void => {
-    if (!live.has(entry.id)) return
-    live.delete(entry.id)
-    void entry.appMcp?.stop().catch(() => undefined)
+  /** let go of what the session holds now; a part let go of once is not stopped again */
+  const release = (entry: LiveSession, quitting: boolean): void => {
+    const { appMcp, relays, sessionDir } = entry
+    entry.appMcp = undefined
+    entry.relays = undefined
+    entry.sessionDir = undefined
+    void appMcp?.stop().catch(() => undefined)
     // a question still waiting is a refusal; the relays and their calls end with the session
     for (const settle of [...entry.relayAsks.values()]) settle({ allow: false })
-    void entry.relays?.stop().catch(() => undefined)
+    void relays?.stop().catch(() => undefined)
+    if (sessionDir === undefined) return
     // the folder is the program's working directory: Windows refuses to remove it until the
     // ended process is gone, which can take a moment
     const options = { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }
     if (!quitting) {
-      void rm(entry.sessionDir, options).catch(() => undefined)
+      void rm(sessionDir, options).catch(() => undefined)
       return
     }
     // the app is going away and would not wait for an asynchronous removal
     try {
-      rmSync(entry.sessionDir, options)
+      rmSync(sessionDir, options)
     } catch {
       // left for the system's temporary-file cleanup
     }
+  }
+
+  const cleanup = (entry: LiveSession, { quitting = false } = {}): void => {
+    if (!live.delete(entry.id)) return
+    release(entry, quitting)
   }
 
   const own = (ownerId: number, sessionId: string): LiveSession | undefined => {
@@ -464,14 +481,13 @@ export function createAgentManager(deps: AgentManagerDeps): AgentManager {
       if (!connection) return { ok: false, reason: 'not-connected' }
 
       const id = randomUUID()
-      const sessionDir = await mkdtemp(join(tmpdir(), 'ieum-agent-'))
       const openAtStart = deps.openDocuments()
       const entry: LiveSession = {
         id,
         ownerId,
         provider: request.provider,
         session: undefined,
-        sessionDir,
+        sessionDir: undefined,
         projectRoot,
         protectedDocuments: new Set(
           openAtStart.map((path) => comparablePath(path, path, platform)),
@@ -479,12 +495,24 @@ export function createAgentManager(deps: AgentManagerDeps): AgentManager {
         warnedDocuments: new Set(),
         relayAsks: new Map(),
       }
+      // live while it is prepared: its window closing or the app quitting stops it here too
       live.set(id, entry)
+      /** stopped meanwhile: what came after the stop, a program the runner gave included, ends */
+      const stopped = (): boolean => {
+        if (live.has(id)) return false
+        entry.session?.stop()
+        release(entry, false)
+        return true
+      }
       try {
+        const sessionDir = await mkdtemp(join(tmpdir(), 'ieum-agent-'))
+        entry.sessionDir = sessionDir
+        if (stopped()) return STOPPED_WHILE_STARTING
         const appMcp = deps.startAppMcp
           ? await deps.startAppMcp(projectRoot, { ownerId, sessionId: id })
           : undefined
         entry.appMcp = appMcp
+        if (stopped()) return STOPPED_WHILE_STARTING
         // the person's MCP servers as they are set now: a change applies to the next session
         const relays = deps.startRelays
           ? await deps.startRelays(
@@ -493,6 +521,7 @@ export function createAgentManager(deps: AgentManagerDeps): AgentManager {
             )
           : undefined
         entry.relays = relays
+        if (stopped()) return STOPPED_WHILE_STARTING
         const relayList = relays?.relays ?? []
         // the skills as they are now: a change made during the session applies to the next one
         const skills = deps.buildSkills ? await deps.buildSkills(projectRoot) : undefined
@@ -506,6 +535,7 @@ export function createAgentManager(deps: AgentManagerDeps): AgentManager {
           skills?.skills,
           relayList.map((relay) => relay.name),
         )
+        if (stopped()) return STOPPED_WHILE_STARTING
         const options: AgentSessionOptions = {
           projectRoot,
           mode: request.mode,
@@ -542,6 +572,7 @@ export function createAgentManager(deps: AgentManagerDeps): AgentManager {
                 },
                 onEvent,
               )
+        if (stopped()) return STOPPED_WHILE_STARTING
         // turned off while the runner prepared its files and found the program: it ends now
         if (offInApp(request.provider)) {
           entry.session.stop()

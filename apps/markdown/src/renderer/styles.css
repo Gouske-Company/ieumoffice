@@ -844,6 +844,15 @@ html.markdown-graph-open .ribbon-tabs {
   background: var(--hover);
 }
 
+/* a band too narrow even with the view tools folded shows the entry's icon
+   alone. The label is clipped, not removed: it keeps its line, so the icon
+   sits level with its labelled neighbours, and it still names the button. */
+.rb-big.ai-entry.compact > :not(.rb-big-icon) {
+  width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
 /* neutral gray open state, same control across docs/sheets/slides ribbons */
 .rb-big.ai-entry.active {
   background: var(--active-bg);
@@ -895,6 +904,33 @@ html.markdown-graph-open .ribbon-tabs {
   border-color: var(--color-border-strong);
   color: var(--text-primary);
   font-size: 13px;
+}
+
+/* More: the view tools that no longer fit the band, in a floating row under
+   the button (the slides ribbon's collapsed-group flyout). Fixed + anchored so
+   the ribbon-body clip cannot cut it off; it opens leftward from the window edge. */
+.rb-more-wrap {
+  position: relative;
+  display: inline-flex;
+  anchor-name: --rb-more-anchor;
+  anchor-scope: --rb-more-anchor;
+}
+
+.rb-more-pop {
+  position: fixed;
+  position-anchor: --rb-more-anchor;
+  top: calc(anchor(bottom) + 6px);
+  right: anchor(right);
+  position-try-fallbacks: flip-inline;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 8px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px var(--md-shadow-color);
 }
 
 /* Anchor for the link popover, which is position: fixed so it escapes the
@@ -3677,12 +3713,18 @@ div.tiptap-mathematics-render {
 
 .md-theme-wrap {
   position: relative;
+  anchor-name: --md-theme-anchor;
+  anchor-scope: --md-theme-anchor;
 }
 
+/* fixed + anchored like .rb-link-pop: the ribbon body clips both axes, so an
+   absolute menu below the band was cut off at the band's bottom edge */
 .md-theme-menu {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
+  position: fixed;
+  position-anchor: --md-theme-anchor;
+  top: calc(anchor(bottom) + 6px);
+  left: anchor(left);
+  position-try-fallbacks: flip-inline;
   z-index: 30;
   min-width: 190px;
   padding: 5px;

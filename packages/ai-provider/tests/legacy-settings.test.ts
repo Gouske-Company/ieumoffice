@@ -68,11 +68,11 @@ describe('normalizeAiSettings', () => {
     expect(activeSearchProvider(settings)).toBe('parallel')
   })
 
-  it('drops the cloud-tools switch so the next save no longer writes it', () => {
+  it('drops the cloud-tools switch from the settings the app works with', () => {
     for (const gskToolsEnabled of [true, false]) {
       const settings = normalizeAiSettings({ ...gensparkEraFile(), gskToolsEnabled })
       expect('gskToolsEnabled' in settings).toBe(false)
-      // the save path is the IPC guard: it must not bring the field back
+      // a renderer's copy goes through the IPC guard: it must not bring the field back
       expect('gskToolsEnabled' in sanitizeAiSettings(settings)!).toBe(false)
     }
   })

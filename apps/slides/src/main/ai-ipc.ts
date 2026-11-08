@@ -19,6 +19,7 @@ import { readSlidesAiFonts } from './ai-default-fonts'
 import {
   sanitizeAiSettings,
   withStoredSubscriptionOff,
+  withStoredUnknownFields,
   setAiUserAgent,
   setRescueFetch,
   type AiSettings,
@@ -73,9 +74,13 @@ import { registerTemplateSelectionIpc } from './template-selection-ipc'
 
 const AI_SETTINGS_PATH = () => join(app.getPath('userData'), 'ai-settings.json')
 
-/** the only write of the settings file: keys and tokens go to disk sealed (decision 0063) */
+/**
+ * The only write of the settings file: keys and tokens go to disk sealed
+ * (decision 0063), and fields a newer build wrote stay as they are.
+ */
 function writeAiSettingsFile(settings: unknown): void {
-  writeJsonAtomic(AI_SETTINGS_PATH(), sealAiSecrets(settings))
+  const stored = readJson<unknown>(AI_SETTINGS_PATH(), {})
+  writeJsonAtomic(AI_SETTINGS_PATH(), sealAiSecrets(withStoredUnknownFields(settings, stored)))
 }
 
 /**

@@ -4,6 +4,7 @@ import { aiModelEffortsOf } from './effort'
 import { defaultAiMediaSettings, resolveAiMediaSettings } from './media'
 import { defaultAiSearchSettings, resolveAiSearchSettings } from './search-settings'
 import type {
+  AiProviderConfig,
   AiProviderId,
   AiProviderMeta,
   AiReadUrlSettings,
@@ -621,6 +622,80 @@ export function withStoredSubscriptionOff(next: AiSettings, stored: AiSettings):
     : settings
 }
 
+/** Every top-level field this build reads, with the pre-provider ones it migrates */
+const KNOWN_SETTINGS_FIELDS: Record<keyof AiSettings | keyof LegacyAiSettings, true> = {
+  provider: true,
+  providers: true,
+  customEndpoints: true,
+  customEndpoint: true,
+  media: true,
+  search: true,
+  readUrl: true,
+  maxOutputTokens: true,
+  meteredAccepted: true,
+  subscriptionOff: true,
+  headlessSubscriptionEnabled: true,
+  headlessSubscriptionConsentVersion: true,
+  subscriptionNoticeSeen: true,
+  subscriptionNoticeVersion: true,
+  pdfSendNoticeSeen: true,
+  internetTools: true,
+  apiKey: true,
+  model: true,
+  baseUrl: true,
+}
+
+/** Every field of a provider config this build reads */
+const KNOWN_PROVIDER_FIELDS: Record<keyof AiProviderConfig, true> = {
+  apiKey: true,
+  model: true,
+  baseUrl: true,
+  cliPath: true,
+  models: true,
+  effort: true,
+  modelEfforts: true,
+}
+
+/** The fields of `stored` this build does not know and `next` does not carry */
+function unknownFieldsOf(
+  stored: unknown,
+  known: Readonly<Record<string, true>>,
+  next: Record<string, unknown>,
+): Record<string, unknown> {
+  if (!isRecord(stored)) return {}
+  return Object.fromEntries(
+    Object.entries(stored).filter(([key]) => !Object.hasOwn(known, key) && !(key in next)),
+  )
+}
+
+/**
+ * `next` with the fields of the settings file that this build does not know put
+ * back, at the top and in each provider config `next` carries. A newer build or
+ * another program wrote them, and a save here must not erase them. They come
+ * from the file as it is on disk (a sealed value stays sealed) and never from a
+ * renderer, whose payload the IPC guard has already reduced to known fields.
+ * Provider configs under an id this build does not know are still dropped.
+ */
+export function withStoredUnknownFields<T>(next: T, stored: unknown): T {
+  if (!isRecord(next) || !isRecord(stored)) return next
+  const merged: Record<string, unknown> = {
+    ...next,
+    ...unknownFieldsOf(stored, KNOWN_SETTINGS_FIELDS, next),
+  }
+  if (isRecord(next.providers) && isRecord(stored.providers)) {
+    const storedProviders = stored.providers
+    merged.providers = Object.fromEntries(
+      Object.entries(next.providers).map(([id, config]) => [
+        id,
+        isRecord(config)
+          ? { ...config, ...unknownFieldsOf(storedProviders[id], KNOWN_PROVIDER_FIELDS, config) }
+          : config,
+      ]),
+    )
+  }
+  return merged as T
+}
+
 /**
  * The read_url slot when it carries a usable token; anything else (absent,
  * not an object, a non-string or blank token) means public pages only.
@@ -730,17 +805,22 @@ function mergeProviderConfigs(
   return merged
 }
 
-/** pasted keys/URLs/model ids often carry stray whitespace, which turns into a 401 with a valid key */
+/**
+ * Each provider config with only the fields this build knows, typed as it types
+ * them: a field a newer build added stays in the file (withStoredUnknownFields)
+ * but never reaches a renderer, whose IPC schema rejects it. Pasted keys, URLs
+ * and model ids often carry stray whitespace, which turns into a 401 with a
+ * valid key, so they are trimmed.
+ */
 function trimConfigs(providers: Record<string, unknown>): AiSettings['providers'] {
   const trimmed: Record<string, unknown> = {}
   for (const [id, config] of Object.entries(providers)) {
     if (!isRecord(config)) continue
-    const { models: rawModels, modelEfforts: rawEfforts, ...rest } = config
-    const models = listedModelsOf(rawModels)
+    const models = listedModelsOf(config.models)
     // a level this build does not know, from a newer build or a hand edit, is never listed
-    const modelEfforts = aiModelEffortsOf(rawEfforts)
+    const modelEfforts = aiModelEffortsOf(config.modelEfforts)
     trimmed[id] = {
-      ...rest,
+      ...(typeof config.effort === 'string' ? { effort: config.effort } : {}),
       apiKey: str(config.apiKey),
       model: str(config.model),
       ...(config.baseUrl !== undefined ? { baseUrl: str(config.baseUrl) } : {}),

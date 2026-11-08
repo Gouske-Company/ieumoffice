@@ -122,7 +122,7 @@ Co jste skryli příkazem **Skrýt výběr před AI**, se neodesílá, ať už p
 
 - **Rychlost.** Odpověď přes Claude Code nebo Codex začne o několik sekund později než odpověď přes klíč API, protože se nejdřív musí spustit program. ChatGPT připojený přímo žádný program nespouští.
 - **Bezplatný tarif ChatGPT.** Zobrazuje se jako Připojeno, ale má malé limity, takže se požadavky zastaví dřív. Řádek využití se u něj nezobrazuje.
-- **Generování obrázků.** V této verzi předplatné obrázky negeneruje, a to v žádném tarifu. K tomu je potřeba klíč poskytovatele obrázků; viz [Modely AI a nastavení](help://ai-models).
+- **Generování obrázků.** Předplatné Codex umí generovat obrázky na účet daného tarifu ChatGPT. Bezplatný tarif nástroj pro obrázky nemá, takže to nejde. Claude, přímo připojený ChatGPT a přihlášení účtované podle využití obrázky negenerují; viz [Modely AI a nastavení](help://ai-models).
 - **Proxy.** Claude Code a Codex nepřebírají nastavení proxy z GenOffice. Používají proxy nastavenou pro tento počítač, například proměnnou prostředí `HTTPS_PROXY`, stejně jako když je spustíte v terminálu. Pokud se nepřipojí v terminálu, nepřipojí se ani odsud.
 - **Příkazy a jiné programy.** Požadavek, který přijde z příkazu `ieumoffice` nebo od připojeného programového agenta, vaše předplatné nepoužije, dokud to nepovolíte. I potom použije Claude Code nebo Codex, nikdy ChatGPT připojený přímo. Viz [Připojení programového agenta](help://mcp).
 - **Režim agenta.** [Režim agenta](help://agent-mode) spouští Claude Code nebo Codex v tomto počítači. ChatGPT připojený přímo agenta spustit nemůže.

@@ -122,7 +122,7 @@ To, co ukryjesz poleceniem **Ukryj zaznaczenie przed AI**, nie jest wysyłane, n
 
 - **Szybkość.** Odpowiedź przez Claude Code lub Codex zaczyna się kilka sekund później niż przez klucz API, bo najpierw musi się uruchomić program. ChatGPT połączony bezpośrednio nie uruchamia żadnego programu.
 - **Darmowy plan ChatGPT.** Jest pokazywany jako Połączono, ale ma małe limity, więc żądania zatrzymują się szybciej. Wiersz zużycia się dla niego nie pojawia.
-- **Generowanie obrazów.** W tej wersji subskrypcja nie generuje obrazów, w żadnym planie. Do tego potrzebny jest klucz dostawcy obrazów; zobacz [Modele AI i ustawienia](help://ai-models).
+- **Generowanie obrazów.** Subskrypcja Codex może generować obrazy w ramach tego planu ChatGPT. Darmowy plan nie ma narzędzia do obrazów, więc nie może. Claude, ChatGPT połączony bezpośrednio i logowanie rozliczane za użycie nie generują obrazów; zobacz [Modele AI i ustawienia](help://ai-models).
 - **Serwery proxy.** Claude Code i Codex nie przejmują ustawień proxy z GenOffice. Korzystają z proxy ustawionego dla tego komputera, na przykład ze zmiennej środowiskowej `HTTPS_PROXY`, tak samo jak po uruchomieniu w terminalu. Jeśli nie mogą się połączyć w terminalu, nie połączą się także stąd.
 - **Polecenia i inne programy.** Żądanie, które przychodzi z polecenia `ieumoffice` albo od podłączonego agenta programistycznego, nie korzysta z subskrypcji, dopóki na to nie pozwolisz. Nawet wtedy korzysta z Claude Code lub Codex, nigdy z ChatGPT połączonego bezpośrednio. Zobacz [Podłączenie z agentem programistycznym](help://mcp).
 - **Tryb agenta.** [Tryb agenta](help://agent-mode) uruchamia Claude Code lub Codex na tym komputerze. ChatGPT połączony bezpośrednio nie może uruchomić agenta.

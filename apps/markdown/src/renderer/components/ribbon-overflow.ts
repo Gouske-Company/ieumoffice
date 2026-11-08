@@ -1,86 +1,110 @@
 import { useLayoutEffect, useRef, useState, type RefObject } from 'react'
 
-/** Widths in CSS px, read from the laid-out ribbon. */
+/**
+ * How the band steps down, in order; inside a rung the trailing entries go first.
+ * `fold`: view tools move behind the More button. `label`: AI entries show their
+ * icon alone. `tight`: groups close up their padding. `style`: the block style
+ * box narrows. `aiFold`: AI presets move behind More.
+ */
+const RUNGS = ['fold', 'label', 'tight', 'style', 'aiFold'] as const
+export type Rung = (typeof RUNGS)[number]
+
+/** per rung, what each entry gives back in CSS px, in row order */
+export type RungSavings = Readonly<Record<Rung, readonly number[]>>
+
+/** per rung, how many entries are stepped down */
+export type RibbonFold = Readonly<Record<Rung, number>>
+
 export interface FoldInput {
-  /** the band's content width with every item inline, every label shown and no More button */
+  /** the band's content width with nothing stepped down and no More button */
   readonly fullWidth: number
-  /** foldable items in row order; the trailing ones fold first */
-  readonly itemWidths: readonly number[]
-  readonly moreWidth: number
-  /** flex gap between items in the foldable row */
-  readonly gap: number
-  /** what each labelled entry gives back as its icon alone, in row order; once every item is folded the trailing ones go first */
-  readonly labelSavings: readonly number[]
+  /** the More button with its gap, which comes in with the first step */
+  readonly moreCost: number
+  readonly savings: RungSavings
   readonly available: number
 }
 
-/**
- * The fewest steps that let the band fit: first trailing items move behind one
- * More button, then trailing entries drop their labels.
- */
-export function foldCount({
-  fullWidth,
-  itemWidths,
-  moreWidth,
-  gap,
-  labelSavings,
-  available,
-}: FoldInput): number {
+/** The fewest steps down the rungs that let the band fit. */
+export function foldCount({ fullWidth, moreCost, savings, available }: FoldInput): number {
   if (fullWidth <= available) return 0
-  const savings = [
-    ...itemWidths.map((w) => w + gap).reverse(),
-    ...labelSavings.map((s) => Math.max(0, s)).reverse(),
-  ]
-  let need = fullWidth + moreWidth + gap
+  const ladder = RUNGS.flatMap((r) => [...savings[r]].reverse().map((s) => Math.max(0, s)))
+  let need = fullWidth + moreCost
   let k = 0
-  while (k < savings.length && need > available) {
-    need -= savings[k]!
+  while (k < ladder.length && need > available) {
+    need -= ladder[k]!
     k++
   }
   return k
+}
+
+/** Which entries of each rung `level` steps down. */
+export function foldAt(level: number, sizes: RibbonFold): RibbonFold {
+  let rest = level
+  const fold = {} as Record<Rung, number>
+  for (const r of RUNGS) {
+    fold[r] = Math.min(rest, sizes[r])
+    rest -= fold[r]
+  }
+  return fold
 }
 
 /** Unfolding asks for this much spare room, so a borderline width cannot flip back and forth. */
 const UNFOLD_SLACK = 8
 /** first-fold estimate for the More button (an icon button); measured once it shows */
 const MORE_WIDTH_GUESS = 32
-/** first estimate for a big button shown as its icon alone; measured once one shows */
-const COMPACT_WIDTH_GUESS = 42
+/** first estimates for a stepped-down entry's width; measured once it shows */
+const SHRUNK_GUESS: Record<'label' | 'style' | 'tight', (before: number) => number> = {
+  label: () => 42,
+  style: () => 72,
+  tight: (before) => before / 2,
+}
 
-export interface RibbonFold {
-  /** trailing items of the row that sit behind the More button */
-  readonly folded: number
-  /** trailing `compactKeys` drawn as their icon alone */
-  readonly compacted: number
+/** the horizontal padding and margins of the band and its direct children */
+function bandSpacing(body: HTMLElement): number {
+  const sides = (el: Element, a: 'padding' | 'margin') => {
+    const s = getComputedStyle(el)
+    return (parseFloat(s[`${a}Left`]) || 0) + (parseFloat(s[`${a}Right`]) || 0)
+  }
+  let total = sides(body, 'padding')
+  for (const el of Array.from(body.children)) total += sides(el, 'padding') + sides(el, 'margin')
+  return total
+}
+
+export interface FoldKeys {
+  /** view tools in row order, the inline ones being the first children of `rowRef` */
+  readonly fold: readonly string[]
+  /** elements tagged `data-fold-key` that can drop their labels */
+  readonly label: readonly string[]
+  /** the element tagged `data-fold-key` whose box can narrow, if shown */
+  readonly style: readonly string[]
+  /** elements tagged `data-fold-key` that can move behind More */
+  readonly aiFold: readonly string[]
 }
 
 /**
  * How far the ribbon steps down to fit its band, as a pure function of the
- * current width (the slides ribbon's responsive collapse, folding items instead
- * of whole groups). First the trailing items of `rowRef` move behind the More
- * button: `rowRef` holds the inline items in order, then the More button
- * (`.rb-more-wrap`) while anything is folded, then any controls that never
- * fold. With all of them folded, the elements tagged `data-fold-key` with
- * `compactKeys` lose their labels, the trailing ones first. Widths are
- * measured as laid out, so `resetKey` (the locale) starts over unfolded.
+ * current width (the slides ribbon's responsive collapse, stepping down entries
+ * instead of whole groups). `rowRef` holds the inline view tools in order, then
+ * the More button (`.rb-more-wrap`) while anything is folded, then any controls
+ * that never fold. Each entry's width is measured as laid out in both of its
+ * states, so `resetKey` (the locale) starts over at the top.
  */
 export function useRibbonFold(
   bodyRef: RefObject<HTMLElement | null>,
   rowRef: RefObject<HTMLElement | null>,
-  keys: readonly string[],
-  compactKeys: readonly string[],
+  keys: FoldKeys,
   resetKey: string,
 ): RibbonFold {
   const [level, setLevel] = useState(0)
-  const widths = useRef(new Map<string, number>())
-  const labelled = useRef(new Map<string, number>())
-  const compact = useRef(new Map<string, number>())
+  /** width per `rung:key`, as laid out before and after the step */
+  const before = useRef(new Map<string, number>())
+  const after = useRef(new Map<string, number>())
   const moreWidth = useRef(MORE_WIDTH_GUESS)
   const measuredFor = useRef(resetKey)
-  const keyList = keys.join('|')
-  const compactList = compactKeys.join('|')
-  const folded = Math.min(level, keys.length)
-  const compacted = Math.min(Math.max(0, level - keys.length), compactKeys.length)
+  const rungKeys: Record<Rung, readonly string[]> = { ...keys, tight: ['band'] }
+  const keyList = RUNGS.map((r) => rungKeys[r].join(',')).join('|')
+  const sizes = Object.fromEntries(RUNGS.map((r) => [r, rungKeys[r].length])) as RibbonFold
+  const fold = foldAt(level, sizes)
 
   useLayoutEffect(() => {
     const body = bodyRef.current
@@ -88,52 +112,65 @@ export function useRibbonFold(
     if (!body || !row) return
     if (measuredFor.current !== resetKey) {
       measuredFor.current = resetKey
-      widths.current.clear()
-      labelled.current.clear()
-      compact.current.clear()
+      before.current.clear()
+      after.current.clear()
       if (level) {
         setLevel(0)
         return
       }
     }
-    const itemKeys = keyList ? keyList.split('|') : []
-    const labelKeys = compactList ? compactList.split('|') : []
-    const inlineCount = itemKeys.length - folded
-    const firstCompact = labelKeys.length - compacted
+    /** whether entry `i` of rung `r` is stepped down, the trailing ones first */
+    const down = (r: Rung, i: number) => i >= sizes[r] - fold[r]
+    const tagged = (k: string) => body.querySelector<HTMLElement>(`[data-fold-key="${k}"]`)
+    const gapOf = (el: HTMLElement | null) =>
+      el?.parentElement ? parseFloat(getComputedStyle(el.parentElement).columnGap) || 0 : 0
+    const record = (id: string, isDown: boolean, width: number) =>
+      (isDown ? after : before).current.set(id, width)
+
     const evaluate = () => {
       // a collapsed ribbon reads 0 everywhere and would poison the width cache
       if (!body.clientWidth) return
       const kids = Array.from(row.children) as HTMLElement[]
-      for (let i = 0; i < inlineCount; i++) {
-        const el = kids[i]
-        if (el) widths.current.set(itemKeys[i]!, el.offsetWidth)
-      }
-      labelKeys.forEach((k, i) => {
-        const el = body.querySelector<HTMLElement>(`[data-fold-key="${k}"]`)
-        if (el) (i < firstCompact ? labelled : compact).current.set(k, el.offsetWidth)
+      rungKeys.fold.forEach((k, i) => {
+        if (!down('fold', i) && kids[i])
+          record(`fold:${k}`, false, kids[i]!.offsetWidth + gapOf(kids[i]!))
       })
+      rungKeys.aiFold.forEach((k, i) => {
+        const el = tagged(k)
+        if (!down('aiFold', i) && el) record(`aiFold:${k}`, false, el.offsetWidth + gapOf(el))
+      })
+      // an entry behind More is not laid out in the band
+      const inBand = (k: string) => !rungKeys.aiFold.some((a, i) => a === k && down('aiFold', i))
+      for (const r of ['label', 'style'] as const) {
+        rungKeys[r].forEach((k, i) => {
+          const el = tagged(k)
+          if (el && inBand(k)) record(`${r}:${k}`, down(r, i), el.offsetWidth)
+        })
+      }
+      record('tight:band', down('tight', 0), bandSpacing(body))
       const more = row.querySelector<HTMLElement>(':scope > .rb-more-wrap')
       if (more) moreWidth.current = more.offsetWidth
       const gap = parseFloat(getComputedStyle(row).columnGap) || 0
-      const spacer = body.querySelector<HTMLElement>(':scope > .rb-spacer')
-      const itemWidths = itemKeys.map((k) => widths.current.get(k) ?? 0)
-      const labelSavings = labelKeys.map(
-        (k) => (labelled.current.get(k) ?? 0) - (compact.current.get(k) ?? COMPACT_WIDTH_GUESS),
-      )
+
+      const saving = (r: Rung, k: string) => {
+        const was = before.current.get(`${r}:${k}`) ?? 0
+        if (r === 'fold' || r === 'aiFold') return was
+        return was - (after.current.get(`${r}:${k}`) ?? SHRUNK_GUESS[r](was))
+      }
+      const savings = Object.fromEntries(
+        RUNGS.map((r) => [r, rungKeys[r].map((k) => saving(r, k))]),
+      ) as Record<Rung, number[]>
+      const moreCost = moreWidth.current + gap
       // the spacer soaks up the slack, so without it scrollWidth is the content
+      const spacer = body.querySelector<HTMLElement>(':scope > .rb-spacer')
       let fullWidth = body.scrollWidth - (spacer?.offsetWidth ?? 0)
-      if (more) fullWidth -= moreWidth.current + gap
-      for (let i = inlineCount; i < itemKeys.length; i++) fullWidth += itemWidths[i]! + gap
-      for (let i = firstCompact; i < labelKeys.length; i++) fullWidth += labelSavings[i]!
-      const fit = (available: number) =>
-        foldCount({
-          fullWidth,
-          itemWidths,
-          moreWidth: moreWidth.current,
-          gap,
-          labelSavings,
-          available,
+      if (more) fullWidth -= moreCost
+      for (const r of RUNGS) {
+        savings[r].forEach((s, i) => {
+          if (down(r, i)) fullWidth += Math.max(0, s)
         })
+      }
+      const fit = (available: number) => foldCount({ fullWidth, moreCost, savings, available })
       const must = fit(body.clientWidth)
       const next =
         must >= level ? must : Math.min(Math.max(fit(body.clientWidth - UNFOLD_SLACK), must), level)
@@ -146,7 +183,7 @@ export function useRibbonFold(
     // groups change width without the band resizing (a disabled state)
     body.querySelectorAll<HTMLElement>(':scope > .ribbon-group').forEach((g) => ro.observe(g))
     return () => ro.disconnect()
-  }, [bodyRef, rowRef, keyList, compactList, resetKey, level, folded, compacted])
+  }, [bodyRef, rowRef, keyList, resetKey, level])
 
-  return { folded, compacted }
+  return fold
 }

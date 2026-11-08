@@ -652,6 +652,19 @@ html.markdown-graph-open .ribbon-tabs {
   scrollbar-width: none;
 }
 
+/* the step after the AI labels: the band and its groups close up their spacing */
+.ribbon-body.tight {
+  padding-inline: 6px;
+}
+
+.ribbon-body.tight > .ribbon-group {
+  padding-inline: 1px;
+}
+
+.ribbon-body.tight > .rb-sep {
+  margin-inline: 3px;
+}
+
 .ribbon-body::-webkit-scrollbar {
   display: none;
 }
@@ -891,6 +904,12 @@ html.markdown-graph-open .ribbon-tabs {
   border-color: var(--color-border-strong);
   color: var(--text-primary);
   font-size: 13px;
+}
+
+/* the step after the spacing: the box clips the style name, its ScreenTip reads it in full */
+.rb-style.gs-dd.narrow {
+  min-width: 0;
+  width: 72px;
 }
 
 /* view font picker: the block-style picker's box */

@@ -12,11 +12,13 @@
  * programs keep them: a `richcontent` element, HTML inside the `TEXT`
  * attribute (FreeMind 0.8), and the note hook of FreeMind 0.7 and 0.8. A table
  * row becomes one line, its cells set apart by " | ". Pictures are not
- * brought: a node whose text is only a picture (in its HTML, or Freeplane's
- * picture hook) is titled with the picture's alt text, else its title, else
- * its file name, and a picture with none of these gets the placeholder the
- * caller hands in. Icons, fonts, colours, edges, clouds, arrow links,
- * attributes, details and links to other nodes are left behind too.
+ * brought: a node whose text is only pictures (in its HTML, or Freeplane's
+ * picture hook) is titled with the first name one of them has: its alt text,
+ * else its title, else its file name. Pictures with none of these get the
+ * placeholder the caller hands in. Control characters in text and names are
+ * left out, and a line break or tab in a name becomes a space. Icons, fonts,
+ * colours, edges, clouds, arrow links, attributes, details and links to other
+ * nodes are left behind too.
  */
 import {
   MAX_TOPIC_DEPTH,
@@ -65,10 +67,15 @@ const BLOCKS = new Set(['p', 'div', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'b
 const CELLS = new Set(['td', 'th'])
 const SKIPPED = new Set(['head', 'style', 'script'])
 
-/** Rich text as plain text, and the name of its first picture ('' when the picture has none). */
+/** Rich text as plain text, and the first name its pictures have ('' when none has one). */
 interface RichText {
   text: string
   picture?: string
+}
+
+/** Text as a reader sees it: white space as one space, other control characters gone. */
+function readable(text: string): string {
+  return text.replace(/(?:\s|\p{Cc})+/gu, (run) => (/\s/.test(run) ? ' ' : ''))
 }
 
 /** The file name a picture's address ends in, '' when it names no file. */
@@ -77,16 +84,20 @@ function fileName(address: string): string {
   const path = address.replace(/[?#][^]*$/, '')
   const file = path.slice(Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\')) + 1)
   try {
-    return decodeURIComponent(file).trim()
+    return readable(decodeURIComponent(file)).trim()
   } catch {
-    return file.trim()
+    return readable(file).trim()
   }
 }
 
 /** A picture's alt text, else its title, else the file name its `src` ends in. */
 function pictureName(img: Element): string {
-  const named = img.getAttribute('alt')?.trim() || img.getAttribute('title')?.trim()
-  return named || fileName(img.getAttribute('src')?.trim() ?? '')
+  const named = (name: string | null): string => readable(name ?? '').trim()
+  return (
+    named(img.getAttribute('alt')) ||
+    named(img.getAttribute('title')) ||
+    fileName(img.getAttribute('src')?.trim() ?? '')
+  )
 }
 
 /**
@@ -125,7 +136,7 @@ function htmlText(content: Node): RichText {
       continue
     }
     if (next.nodeType === Node.TEXT_NODE || next.nodeType === Node.CDATA_SECTION_NODE) {
-      const text = (next.nodeValue ?? '').replace(/\s+/g, ' ')
+      const text = readable(next.nodeValue ?? '')
       if (cellStarts && text.trim()) {
         if (line.trim()) line = `${line.trimEnd()} | `
         cellStarts = false
@@ -137,7 +148,7 @@ function htmlText(content: Node): RichText {
     const name = (next as Element).localName?.toLowerCase() ?? ''
     if (SKIPPED.has(name)) continue
     if (name === 'img') {
-      picture ??= pictureName(next as Element)
+      if (!picture) picture = pictureName(next as Element)
       continue
     }
     if (name === 'tr') pending.push('break', 'row-end')
@@ -213,7 +224,8 @@ function richContent(node: Element, type: 'NODE' | 'NOTE'): RichText | undefined
 function nodeOf(element: Element, depth: number): FreeMindNode {
   const attribute = element.getAttribute('TEXT')
   const read = attribute !== null ? markupText(attribute) : richContent(element, 'NODE')
-  const picture = read?.picture ?? hookPicture(element)
+  const pictures = [read?.picture, hookPicture(element)].filter((name) => name !== undefined)
+  const picture = pictures.find(Boolean) ?? pictures[0]
   const node: FreeMindNode = { text: read?.text || picture || '', children: [] }
   if (!node.text && picture !== undefined) node.picture = true
   const note = richContent(element, 'NOTE')?.text || hookNote(element)

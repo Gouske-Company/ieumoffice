@@ -1,9 +1,10 @@
 // @vitest-environment node
 /**
  * The slides main saves the renderer's AI settings on ai:set-settings, but
- * only the Settings card turns a vendor CLI off or on (decision 0114): the
- * file's switch survives a save from a renderer that read the settings before
- * the switch changed. The subscription service is mocked.
+ * only the Settings card turns a vendor CLI off or on (decision 0114) and only
+ * the main process lists a key provider's models (decision 0087): the file's
+ * switch and lists survive a save from a renderer that read the settings
+ * before they changed. The subscription service is mocked.
  */
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -120,5 +121,31 @@ it('keeps the fields a newer build wrote, and the key sealed, when a renderer sa
   expect(written.internetTools).toBe(false)
   expect(written.futureTop).toEqual({ mode: 'x' })
   expect(written.providers.openai).toMatchObject({ apiKey: codec.seal(key), futureField: 'kept' })
+  expect(readFileSync(settingsFile(), 'utf8')).not.toContain(key)
+})
+
+it("keeps each key provider's live model list when a renderer saves without it", async () => {
+  const key = 'sk-test-plain-key-3456'
+  const codec = {
+    seal: (plain: string) => `sealed:v1:${Buffer.from(plain).toString('base64')}`,
+    open: (sealed: string) => Buffer.from(sealed.slice('sealed:v1:'.length), 'base64').toString(),
+  }
+  setAiSecretCodec(codec)
+  const models = ['gpt-live-a', 'gpt-live-b']
+  const modelEfforts = { 'gpt-live-a': { efforts: ['low', 'high'] } }
+  const file = {
+    futureTop: { mode: 'x' },
+    subscriptionOff: { codex: true },
+    providers: { openai: { apiKey: codec.seal(key), model: 'gpt-live-a', models, modelEfforts } },
+  }
+  const copy = await rendererCopy(file)
+  const { models: _models, modelEfforts: _efforts, ...openai } = copy.providers.openai!
+  const renderer = { ...copy, internetTools: false, providers: { ...copy.providers, openai } }
+
+  const written = (await savedFrom(renderer, file)) as AiSettings & Record<string, unknown>
+  expect(written.internetTools).toBe(false)
+  expect(written.providers.openai).toMatchObject({ apiKey: codec.seal(key), models, modelEfforts })
+  expect(written.subscriptionOff).toEqual({ codex: true })
+  expect(written.futureTop).toEqual({ mode: 'x' })
   expect(readFileSync(settingsFile(), 'utf8')).not.toContain(key)
 })

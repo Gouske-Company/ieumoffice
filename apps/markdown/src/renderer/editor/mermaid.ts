@@ -26,6 +26,10 @@ export function loadMermaid(): Promise<Mermaid> {
       // onto a canvas (docx export) without tainting it
       htmlLabels: false,
       flowchart: { htmlLabels: false },
+      journey: { textPlacement: 'tspan' },
+      // as SVG text a journey label takes its box's fill (white on pale, or the
+      // section colour itself); paint it the dark text colour its HTML label had
+      themeCSS: 'text.task, text.journey-section { fill: #333; }',
       suppressErrorRendering: true,
     })
     return mermaid

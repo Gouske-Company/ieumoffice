@@ -339,12 +339,12 @@ describe('characters that change how text reads', () => {
 
   it('keep the marks right-to-left text needs and the joiners emoji and scripts need', async () => {
     const kept = [
-      'مرحبا‏ 2024',
-      'שלום‏!',
-      'abc‎ def',
-      '👩‍💻 개발',
-      'می‌خواهم',
-      'long​word',
+      'مرحبا\u200F 2024',
+      'שלום\u200F!',
+      'abc\u200E def',
+      '👩\u200D💻 개발',
+      'می\u200Cخواهم',
+      'long\u200Bword',
     ]
     const file = bytes(
       `<map version="1.0.1"><node TEXT="Root">` +

@@ -274,6 +274,24 @@ describe('add_comment / delete_comment', () => {
     )
   })
 
+  it('turns a line break the model escaped twice back into one, but finds the anchor as written', async () => {
+    const { editor, comments } = setup()
+    const access = makeAccess(editor, comments)
+    const exec = await call(editor, access, 'add_comment', {
+      blockIndex: 2,
+      text: 'Closing',
+      comment: String.raw`First point.\nSecond point.`,
+    })
+    expect(exec.isError).toBeFalsy()
+    expect(comments.at(-1)?.text).toBe('First point.\nSecond point.')
+    const missing = await call(editor, access, 'add_comment', {
+      blockIndex: 2,
+      text: String.raw`Closing\nparagraph`,
+      comment: 'x',
+    })
+    expect(missing.isError).toBe(true)
+  })
+
   it('covers the whole block when text is omitted and honours author/initials', async () => {
     const { editor, comments } = setup()
     const access = makeAccess(editor, comments)

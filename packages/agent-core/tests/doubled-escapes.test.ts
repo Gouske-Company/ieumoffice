@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { undoDoubledEscapes, undoDoubledEscapesInList } from '../src/renderer/ai/doubled-escapes'
+import { undoDoubledEscapes, undoDoubledEscapesInList } from '../src/doubled-escapes'
 
 describe('undoDoubledEscapes', () => {
   it('turns escaped line breaks back into line breaks', () => {

@@ -12,7 +12,11 @@
  * - it has no drive path such as `C:\new`.
  * Otherwise the text is returned as it came.
  *
- * A tab becomes a space: the editor refuses control characters in the text it writes.
+ * A tab becomes a space: the HWP editor refuses control characters in the text it writes.
+ *
+ * Apply it only to plain text a tool writes into the document. Text a call looks for must
+ * stay as written (a document may already show `\n`), and HTML, formulas and code use
+ * backslashes of their own (`\nabla`, `\n` in a script).
  */
 export function undoDoubledEscapes(text: string): string {
   if (/[\r\n]/.test(text) || !/\\[nr]/.test(text)) return text

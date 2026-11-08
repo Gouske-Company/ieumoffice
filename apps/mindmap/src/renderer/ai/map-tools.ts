@@ -33,6 +33,7 @@
  * through `text-guard.ts`, so markup in them is shown as typed.
  */
 import type { NodeObj } from 'mind-elixir'
+import { undoDoubledEscapes } from '@genoffice/agent-core/doubled-escapes'
 import {
   ARROW_SHAPES,
   BOUNDARY_SHAPES,
@@ -427,17 +428,24 @@ function textArg(value: unknown): string | null {
   return typeof value === 'string' ? value : null
 }
 
+/** Text the edit writes (a title), with a line break the model escaped twice turned back. */
+function newTextArg(value: unknown): string | null {
+  return typeof value === 'string' ? undoDoubledEscapes(value) : null
+}
+
 function labelsArg(value: unknown): string[] | null {
   if (!Array.isArray(value)) return null
   if (value.some((label) => typeof label !== 'string')) return null
-  return (value as string[]).map(oneLine).filter((label) => label !== '')
+  return (value as string[])
+    .map((label) => oneLine(undoDoubledEscapes(label)))
+    .filter((label) => label !== '')
 }
 
 /** A note value: text, or null (also for an empty text) to remove it. Undefined when it is neither. */
 function noteArg(value: unknown): string | null | undefined {
   if (value === null) return null
   if (typeof value !== 'string') return undefined
-  return value.trim() === '' ? null : value
+  return value.trim() === '' ? null : undoDoubledEscapes(value)
 }
 
 /** A link value: an address, or null to remove it. An error text when it is one the map does not keep. */
@@ -520,7 +528,7 @@ export function applyEditBatch(
       const parent = parentId ? locate(root, parentId) : null
       if (!parent)
         return refused(`there is no topic with id "${String(edit.parentId)}" to add under`)
-      const title = textArg(edit.title)
+      const title = newTextArg(edit.title)
       if (title === null || title.trim() === '') return refused('title must be non-empty text')
       const ref = edit.ref
       if (ref !== undefined) {
@@ -577,7 +585,7 @@ export function applyEditBatch(
       // both ends drawn: the branches they are folded in open, as part of this edit
       for (const end of ends) unfoldAncestors(root, end)
       const id = newXmindId()
-      parts.arrows.push({ id, label: oneLine(textArg(edit.title) ?? ''), from, to })
+      parts.arrows.push({ id, label: oneLine(newTextArg(edit.title) ?? ''), from, to })
       changed.arrows = true
       if (typeof ref === 'string') refs.set(ref, id)
       return result(true, { id })
@@ -646,7 +654,7 @@ export function applyEditBatch(
 
     switch (op) {
       case 'set_title': {
-        const title = textArg(edit.title)
+        const title = newTextArg(edit.title)
         if (title === null || title.trim() === '')
           return refused('title must be non-empty text', id)
         node.topic = title
@@ -1328,7 +1336,8 @@ export async function writeMap(
   input: { outline?: unknown },
   turn: MapTurn | null,
 ): Promise<MapToolResult> {
-  const text = typeof input.outline === 'string' ? withoutReadMarks(input.outline) : ''
+  const text =
+    typeof input.outline === 'string' ? withoutReadMarks(undoDoubledEscapes(input.outline)) : ''
   if (text.trim() === '') return fail('outline must be non-empty text')
   host.flush()
   const session = host.session()

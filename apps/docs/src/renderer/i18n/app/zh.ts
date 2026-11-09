@@ -595,4 +595,9 @@ export const zh = {
   appMergeSourceLoaded: '已加载数据源 {name}（{n} 条记录）',
   appMergeWritten: '已写出 {n} 个文档',
   appMergeNothingToWrite: '没有可写出的文档',
+  appExportingHwp: '正在导出 HWP 文档…',
+  appExportedHwp: '已导出 HWP 文档：{path}',
+  appExportHwpFailed: 'HWP 文档导出失败：{error}',
+  appExportHwpCanceled: '已取消导出 HWP 文档',
+  appExportHwpReadback: '无法将此文档准确写成 .hwp。请尝试另存为 .hwpx。',
 }

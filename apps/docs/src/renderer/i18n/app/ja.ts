@@ -610,4 +610,10 @@ export const ja = {
   appMergeSourceLoaded: '{name}（{n} 件）を読み込みました',
   appMergeWritten: '{n} 個のドキュメントを書き出しました',
   appMergeNothingToWrite: '書き出すものがありません',
+  appExportingHwp: 'HWP 文書をエクスポートしています…',
+  appExportedHwp: 'HWP 文書をエクスポートしました: {path}',
+  appExportHwpFailed: 'HWP 文書のエクスポートに失敗しました: {error}',
+  appExportHwpCanceled: 'HWP 文書のエクスポートをキャンセルしました',
+  appExportHwpReadback:
+    'この文書は .hwp として正確に書き出せませんでした。.hwpx で保存してみてください。',
 } satisfies Record<keyof typeof zh, string>

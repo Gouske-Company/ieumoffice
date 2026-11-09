@@ -575,4 +575,9 @@ export const he = {
   appMergeSourceLoaded: '{name} נטען ({n} רשומות)',
   appMergeWritten: 'נכתבו {n} מסמכים',
   appMergeNothingToWrite: 'אין מה לכתוב',
+  appExportingHwp: 'מייצא מסמך HWP…',
+  appExportedHwp: 'מסמך HWP יוצא: {path}',
+  appExportHwpFailed: 'הייצוא ל-HWP נכשל: {error}',
+  appExportHwpCanceled: 'הייצוא ל-HWP בוטל',
+  appExportHwpReadback: 'לא ניתן היה לכתוב את המסמך הזה במדויק כ-.hwp. נסו לשמור אותו כ-.hwpx.',
 } satisfies Record<keyof typeof zh, string>

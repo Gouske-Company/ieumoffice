@@ -608,4 +608,9 @@ export const ko = {
   appMergeSourceLoaded: '{name}({n}개 레코드)을 불러왔습니다',
   appMergeWritten: '문서 {n}개를 저장했습니다',
   appMergeNothingToWrite: '저장할 문서가 없습니다',
+  appExportingHwp: '한글 문서 내보내는 중…',
+  appExportedHwp: '한글 문서를 내보냈습니다: {path}',
+  appExportHwpFailed: '한글 문서 내보내기 실패: {error}',
+  appExportHwpCanceled: '한글 문서 내보내기를 취소했습니다',
+  appExportHwpReadback: '이 문서는 .hwp로 정확히 쓰지 못했습니다. .hwpx로 저장해 보세요.',
 } satisfies Record<keyof typeof zh, string>

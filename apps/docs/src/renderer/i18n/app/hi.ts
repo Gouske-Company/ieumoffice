@@ -584,4 +584,10 @@ export const hi = {
   appMergeSourceLoaded: '{name} लोड हुई ({n} रिकॉर्ड)',
   appMergeWritten: '{n} दस्तावेज़ लिखे गए',
   appMergeNothingToWrite: 'लिखने के लिए कुछ नहीं है',
+  appExportingHwp: 'HWP दस्तावेज़ निर्यात हो रहा है…',
+  appExportedHwp: 'HWP दस्तावेज़ निर्यात हुआ: {path}',
+  appExportHwpFailed: 'HWP निर्यात विफल: {error}',
+  appExportHwpCanceled: 'HWP निर्यात रद्द किया गया',
+  appExportHwpReadback:
+    'यह दस्तावेज़ .hwp के रूप में ठीक से नहीं लिखा जा सका। इसे .hwpx के रूप में सहेजकर देखें।',
 } satisfies Record<keyof typeof zh, string>

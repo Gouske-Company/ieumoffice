@@ -143,6 +143,11 @@ export interface RecoveryCopyInfo {
    * Shown as the copy's folder and offered as the first Save As. Null otherwise.
    */
   originalPath: string | null
+  /**
+   * For an untitled copy only: formulas an ODS import could not translate and
+   * kept as values (the sheets editor's footer says how many). Null otherwise.
+   */
+  formulasDropped: number | null
 }
 
 /**
@@ -184,6 +189,11 @@ export interface RecoveryWriteOptions {
    * Recorded with every write that gives it; ignored for a file copy.
    */
   originalPath?: string
+  /**
+   * An untitled copy's ODS formula loss (see RecoveryCopyInfo.formulasDropped).
+   * Recorded with every write that gives it; ignored for a file copy.
+   */
+  formulasDropped?: number
 }
 
 export interface RecoveryCopyFilter {
@@ -439,6 +449,8 @@ interface RecoveryCopyMeta {
   state: RecoveryCopyState
   /** untitled copies only, and only when known (absent in older metadata) */
   originalPath?: string
+  /** untitled copies only: an ODS import's dropped formulas (absent when none) */
+  formulasDropped?: number
 }
 
 const STATES: readonly RecoveryCopyState[] = ['undecided', 'later', 'restoreChosen']
@@ -472,6 +484,7 @@ function readMeta(metaPath: string, identity: RecoveryIdentity): RecoveryCopyMet
     runId: meta.runId,
     state: meta.state as RecoveryCopyState,
     ...originalPathField(identity, meta.originalPath),
+    ...formulasDroppedField(identity, meta.formulasDropped),
   }
 }
 
@@ -482,6 +495,19 @@ function originalPathField(
 ): { originalPath?: string } {
   if (!isUntitledIdentity(identity)) return {}
   return typeof originalPath === 'string' && originalPath.length > 0 ? { originalPath } : {}
+}
+
+/** the metadata field for an untitled copy's ODS formula loss (nothing otherwise) */
+function formulasDroppedField(
+  identity: RecoveryIdentity,
+  formulasDropped: unknown,
+): { formulasDropped?: number } {
+  if (!isUntitledIdentity(identity)) return {}
+  return typeof formulasDropped === 'number' &&
+    Number.isInteger(formulasDropped) &&
+    formulasDropped > 0
+    ? { formulasDropped }
+    : {}
 }
 
 /** the identity a metadata file next to `copyName` describes, or null */
@@ -594,6 +620,7 @@ export function createRecoveryStore(options: RecoveryStoreOptions): RecoveryStor
         runId: recoveryRunId(),
         state: 'undecided',
         ...originalPathField(identity, writeOptions.originalPath),
+        ...formulasDroppedField(identity, writeOptions.formulasDropped),
       }
       writeJsonAtomic(metaPathOf(copy), meta)
     }
@@ -700,6 +727,7 @@ export function createRecoveryStore(options: RecoveryStoreOptions): RecoveryStor
       fileChangedAfterCopy,
       originalMissing,
       originalPath: meta?.originalPath ?? null,
+      formulasDropped: meta?.formulasDropped ?? null,
     }
   }
 
@@ -722,6 +750,7 @@ export function createRecoveryStore(options: RecoveryStoreOptions): RecoveryStor
       runId: info.runId,
       state,
       ...originalPathField(identity, info.originalPath),
+      ...formulasDroppedField(identity, info.formulasDropped),
     }
     try {
       writeJsonAtomic(metaPathOf(copy), meta)

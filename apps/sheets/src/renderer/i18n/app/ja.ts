@@ -1614,4 +1614,8 @@ export const ja = {
   appSpellUnavailable: 'このウィンドウではスペルチェックを利用できません。',
   appSpellReplaceAll: 'すべて「{suggestion}」に置換',
   appSpellChangedAll: '「{word}」を {count} か所修正しました。',
+
+  // ── ODS import ──
+  appOdsImportNotice: 'ODS を xlsx のコピーとして開きました。保存すると xlsx ファイルになります。',
+  appOdsFormulasDropped: '数式 {count} 個は値のみ残しました。',
 } satisfies Record<keyof typeof zh, string>

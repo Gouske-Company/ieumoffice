@@ -1467,4 +1467,8 @@ export const zhTW = {
   appSpellUnavailable: '此視窗無法使用拼字檢查。',
   appSpellReplaceAll: '全部取代為「{suggestion}」',
   appSpellChangedAll: '已更正 {count} 處「{word}」。',
+
+  // ── ODS import ──
+  appOdsImportNotice: '已將 ODS 作為 xlsx 副本開啟。儲存時將儲存為 xlsx 檔案。',
+  appOdsFormulasDropped: '有 {count} 個公式僅保留了值。',
 } satisfies Record<keyof typeof zh, string>

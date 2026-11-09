@@ -37,6 +37,7 @@ openoffice/
 │   │   ├── pdf-reading-assist.md  ← PDF 읽기 도우미 계획
 │   │   ├── pdf-tools.md           ← PDF 도구 모음 계획(초안)
 │   │   ├── project-folder.md      ← 프로젝트 폴더(AI 맥락을 폴더 단위로) 계획(확정)
+│   │   ├── skills-v2.md           ← 스킬 고도화(만들기·고치기·나누기·스킬 모음) 계획(방향 확정)
 │   │   └── update-details.md      ← 업데이트 상세 내역 표시 계획(확정)
 │   └── tracking/
 │       ├── status.md              ← 된 것과 남은 것

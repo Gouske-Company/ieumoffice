@@ -160,6 +160,8 @@ export const id = {
     'Anda sudah masuk di browser, tetapi OpenAI tidak menerima koneksi ini, atau jawabannya tidak dapat diperiksa. Pastikan tanggal dan jam PC ini benar, lalu tekan lagi untuk memulai dari awal.',
   chatgptLoginNetworkNote:
     'Proses masuk tidak dapat diselesaikan: OpenAI tidak dapat dihubungi, atau browser tidak terbuka. Periksa koneksi internet (termasuk jaringan kantor, VPN, atau proxy), lalu tekan lagi.',
+  chatgptLoginWorkspacePolicyNote:
+    'Akun ChatGPT ini termasuk ruang kerja yang dikelola perusahaan atau sekolah, dan OpenAI tidak mengizinkan aplikasi memakai paket ChatGPT ruang kerja. Admin ruang kerja tidak punya pengaturan untuk mengizinkan aplikasi ini, jadi masuk lagi tidak akan membantu. Masuk dengan akun ChatGPT pribadi (Go, Plus, atau Pro), atau sambungkan lewat kartu Codex.',
   chatgptLoginNotAllowedNote:
     'Anda tidak mengizinkan aplikasi ini memakai paket ChatGPT Anda, atau browser kembali dari proses masuk dengan kegagalan. Tekan lagi, masuk, lalu izinkan di halaman persetujuan.',
   chatgptSigningInNote:

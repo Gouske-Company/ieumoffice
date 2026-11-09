@@ -166,6 +166,8 @@ export const es = {
     'Iniciaste sesión en el navegador, pero OpenAI no aceptó esta conexión o no se pudo comprobar su respuesta. Comprueba que la fecha y la hora de este PC sean correctas y vuelve a pulsar para empezar de nuevo.',
   chatgptLoginNetworkNote:
     'No se pudo terminar el inicio de sesión: no se pudo contactar con OpenAI o no se abrió ningún navegador. Revisa la conexión a internet (incluida la red de la empresa, una VPN o un proxy) y vuelve a pulsar.',
+  chatgptLoginWorkspacePolicyNote:
+    'Esta cuenta de ChatGPT pertenece a un espacio de trabajo gestionado por una empresa o un centro educativo, y OpenAI no permite que las aplicaciones usen el plan ChatGPT de un espacio de trabajo. El administrador del espacio de trabajo no tiene ningún ajuste para permitir esta aplicación, así que volver a iniciar sesión no servirá. Inicia sesión con una cuenta personal de ChatGPT (Go, Plus o Pro) o conéctate con la tarjeta de Codex.',
   chatgptLoginNotAllowedNote:
     'No permitiste que esta aplicación use tu plan de ChatGPT, o el navegador volvió del inicio de sesión con un error. Vuelve a pulsar, inicia sesión y permítelo en la página de autorización.',
   chatgptSigningInNote:

@@ -159,6 +159,8 @@ export const en = {
     'You signed in in the browser, but OpenAI did not accept this connection, or its answer could not be checked. Make sure the date and time on this PC are right, then press it again to start over.',
   chatgptLoginNetworkNote:
     'The sign-in could not finish: OpenAI could not be reached, or no browser opened. Check the internet connection (including a company network, VPN or proxy), then press it again.',
+  chatgptLoginWorkspacePolicyNote:
+    'This ChatGPT account belongs to a workspace run by a company or school, and OpenAI does not let apps use a workspace’s ChatGPT plan. The workspace admin has no setting to allow it, so signing in again will not help. Sign in with a personal ChatGPT account (Go, Plus, or Pro), or connect through the Codex card instead.',
   chatgptLoginNotAllowedNote:
     'This app was not allowed to use your ChatGPT plan, or the browser came back from the sign-in with a failure. Press it again, sign in, and allow it on the consent page.',
   chatgptSigningInNote:

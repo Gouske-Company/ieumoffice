@@ -167,6 +167,8 @@ export const it = {
     'Hai effettuato l’accesso nel browser, ma OpenAI non ha accettato questo collegamento, oppure non è stato possibile verificarne la risposta. Controlla che data e ora di questo PC siano corrette, poi premi di nuovo per ricominciare.',
   chatgptLoginNetworkNote:
     'Non è stato possibile completare l’accesso: OpenAI non era raggiungibile oppure non si è aperto alcun browser. Controlla la connessione a Internet (compresi rete aziendale, VPN o proxy), poi premi di nuovo.',
+  chatgptLoginWorkspacePolicyNote:
+    'Questo account ChatGPT appartiene a uno spazio di lavoro gestito da un’azienda o una scuola e OpenAI non consente alle app di usare il piano ChatGPT di uno spazio di lavoro. L’amministratore dello spazio di lavoro non ha un’impostazione per consentire questa app, quindi accedere di nuovo non servirà. Accedi con un account ChatGPT personale (Go, Plus o Pro) oppure collegati dalla scheda Codex.',
   chatgptLoginNotAllowedNote:
     'Non hai consentito a questa app di usare il tuo piano ChatGPT, oppure il browser è tornato dall’accesso con un errore. Premi di nuovo, accedi e consenti nella pagina di autorizzazione.',
   chatgptSigningInNote:

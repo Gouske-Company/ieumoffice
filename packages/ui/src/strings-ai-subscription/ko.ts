@@ -154,6 +154,8 @@ export const ko = {
     '브라우저에서는 로그인했지만 OpenAI가 이 연결을 받아 주지 않았거나, 돌아온 답이 확인되지 않았습니다. 이 PC의 날짜와 시각이 맞는지 확인한 뒤 다시 누르면 처음부터 시작합니다.',
   chatgptLoginNetworkNote:
     'OpenAI에 연결하지 못했거나 브라우저를 열지 못해 로그인을 마치지 못했습니다. 인터넷 연결(회사망, VPN, 프록시 포함)을 확인하고 다시 누르세요.',
+  chatgptLoginWorkspacePolicyNote:
+    '이 ChatGPT 계정은 회사나 학교가 관리하는 작업 공간에 속해 있어, OpenAI가 이 앱에서 작업 공간의 ChatGPT 요금제를 쓰는 것을 허용하지 않습니다. 작업 공간 관리자가 이 앱을 허용할 수 있는 설정은 없어서 다시 로그인해도 결과가 같습니다. 개인 ChatGPT 계정(Go, Plus, Pro)으로 로그인하거나, Codex 카드로 연결해 보세요.',
   chatgptLoginNotAllowedNote:
     '이 앱이 ChatGPT 요금제를 쓰도록 허용하지 않았거나, 브라우저가 로그인 실패로 돌아왔습니다. 다시 누르고 로그인한 뒤 허용 화면에서 허용하세요.',
   chatgptSigningInNote:

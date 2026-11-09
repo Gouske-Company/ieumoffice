@@ -143,6 +143,8 @@ export const zhTW = {
     '已在瀏覽器中登入，但 OpenAI 沒有接受這個連線，或傳回的回應沒有通過檢查。請確認這台電腦的日期和時間正確，再按一次重新開始。',
   chatgptLoginNetworkNote:
     '無法連上 OpenAI 或沒能開啟瀏覽器，登入沒有完成。請檢查網路連線（包括公司網路、VPN 或 Proxy），再按一次。',
+  chatgptLoginWorkspacePolicyNote:
+    '此 ChatGPT 帳戶屬於公司或學校管理的工作區，OpenAI 不允許應用程式使用工作區的 ChatGPT 方案。工作區管理員沒有可以允許此應用程式的設定，因此重新登入也不會有幫助。請使用個人 ChatGPT 帳戶（Go、Plus 或 Pro）登入，或改用 Codex 卡片連接。',
   chatgptLoginNotAllowedNote:
     '你沒有允許這個應用程式使用 ChatGPT 方案，或瀏覽器帶著登入失敗回來了。請再按一次，登入後在授權頁面允許。',
   chatgptSigningInNote:

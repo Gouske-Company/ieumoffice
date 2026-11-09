@@ -102,6 +102,22 @@ describe('the ChatGPT card (decision 0081)', () => {
     expect(
       after({ reason: 'denied', step: 'callback-error', oauthError: 'access_denied' }),
     ).toEqual(['chatgptLoginNotAllowedNote', 'loginNote'])
+    // a workspace that does not allow third-party plan use has nothing the user can
+    // allow on the consent page: the card must not send them back there
+    expect(
+      after({
+        reason: 'denied',
+        step: 'callback-error',
+        oauthError: '3p_delegated_access_policy_denied',
+      }),
+    ).toEqual(['chatgptLoginWorkspacePolicyNote', 'loginNote'])
+    expect(
+      after({
+        reason: 'denied',
+        step: 'token-refused',
+        oauthError: '3p_delegated_access_policy_denied',
+      }),
+    ).toEqual(['chatgptLoginWorkspacePolicyNote', 'loginNote'])
     expect(after({ reason: 'timeout' })).toEqual(['chatgptLoginUnfinishedNote', 'loginNote'])
     expect(after()).toEqual(['chatgptLoginUnfinishedNote', 'loginNote'])
     // the button is the same: one more sign-in, from the start

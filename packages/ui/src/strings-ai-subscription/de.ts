@@ -169,6 +169,8 @@ export const de = {
     'Sie haben sich im Browser angemeldet, aber OpenAI hat diese Verbindung nicht angenommen, oder seine Antwort ließ sich nicht prüfen. Prüfen Sie, ob Datum und Uhrzeit dieses PCs stimmen, und drücken Sie dann erneut, um von vorn zu beginnen.',
   chatgptLoginNetworkNote:
     'Die Anmeldung konnte nicht abgeschlossen werden: OpenAI war nicht erreichbar, oder es hat sich kein Browser geöffnet. Prüfen Sie die Internetverbindung (auch Firmennetz, VPN oder Proxy) und drücken Sie dann erneut.',
+  chatgptLoginWorkspacePolicyNote:
+    'Dieses ChatGPT-Konto gehört zu einem Arbeitsbereich, den ein Unternehmen oder eine Schule verwaltet, und OpenAI erlaubt Apps nicht, den ChatGPT-Tarif eines Arbeitsbereichs zu nutzen. Der Administrator des Arbeitsbereichs hat keine Einstellung, mit der er diese App zulassen könnte; eine erneute Anmeldung hilft also nicht. Melden Sie sich mit einem persönlichen ChatGPT-Konto (Go, Plus oder Pro) an oder verbinden Sie sich über die Codex-Karte.',
   chatgptLoginNotAllowedNote:
     'Sie haben dieser App die Nutzung Ihres ChatGPT-Tarifs nicht erlaubt, oder der Browser kam mit einem Fehler von der Anmeldung zurück. Drücken Sie erneut, melden Sie sich an und erlauben Sie es auf der Freigabeseite.',
   chatgptSigningInNote:

@@ -10,6 +10,7 @@
     "./redact-range": "./src/redact-range.ts",
     "./redact-core": "./src/redact-core.ts",
     "./user-skill-names": "./src/user-skill-names.ts",
+    "./skill-editors": "./src/skill-editors.ts",
     "./user-mcp/names": "./src/user-mcp/names.ts",
     "./user-mcp/result": "./src/user-mcp/result.ts",
     "./skill-mcp-refs": "./src/skill-mcp-refs.ts",

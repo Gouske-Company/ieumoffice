@@ -22,6 +22,7 @@ const ENTRY: UserSkillEntry = {
   unreadable: false,
   shadowedBy: undefined,
   owned: true,
+  editors: undefined,
 }
 
 function deps(skill: Partial<UserSkillText>, over: Partial<UserSkillsDeps> = {}): UserSkillsDeps {

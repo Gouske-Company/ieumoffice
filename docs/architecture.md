@@ -289,7 +289,7 @@ PDF 편집기 화면 ── pdfApi.structure.* ──→ 셸 메인(pdf-structur
 
 - 사용자 PC의 **Claude Code**(2.1.248 이상)와 **Codex** 프로그램. 없으면 구독 연결이 "설치되지 않음"이 되고 나머지 기능은 그대로 동작한다.
 - 무료 검색: Parallel의 무료 검색, 실패하면 DuckDuckGo.
-- GitHub 릴리스(`pblsketch/openoffice`): 자동 업데이트와 설치 파일 배포.
+- GitHub 릴리스(`pblsketch/ieumoffice`): 자동 업데이트와 설치 파일 배포.
 - 키 방식 제공자와 키 방식 검색·이미지 서비스, 파일 검색 재정렬 서비스, 마크다운 편집기의 이미지 올리기 대상: 사용자가 설정에 넣은 경우에만.
 - 사용자 MCP 서버(결정 0100): 사람이 등록한 서버에만, AI가 그 도구를 부를 때 닿는다. 내 PC 서버의 실행 환경은 사람이 "받기"를 눌렀을 때만 받는다. Node.js는 `nodejs.org`, uv는 `github.com/astral-sh/uv`의 릴리스, Python은 uv가 자기 목록대로 받는다(python-build-standalone 빌드).
 - 주소로 문서 읽기(`read_url`·`read-url`): 입력한 주소가 그 사이트로 간다. 비공개 GitHub 파일을 읽을 때의 GitHub 읽기 토큰은 `api.github.com`에만 실린다.

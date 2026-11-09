@@ -18,7 +18,7 @@
 let
   version = "0.11.0";
   src = fetchurl {
-    url = "https://github.com/pblsketch/openoffice/releases/download/v${version}/GenOffice-${version}.AppImage";
+    url = "https://github.com/pblsketch/ieumoffice/releases/download/v${version}/GenOffice-${version}.AppImage";
     hash = "sha256-iYKCjYfFFe4YzfezxahhCbwMl+FvkBkogZGSnhxOQWw=";
   };
 in
@@ -60,7 +60,7 @@ appimageTools.wrapType2 {
 
   meta = with lib; {
     description = "AI-native office suite: Word, Excel, PowerPoint, PDF and Markdown in one local app";
-    homepage = "https://github.com/pblsketch/openoffice";
+    homepage = "https://github.com/pblsketch/ieumoffice";
     license = licenses.asl20;
     mainProgram = "genoffice";
     platforms = [ "x86_64-linux" ];

@@ -1,6 +1,6 @@
 # GenOffice のインストール
 
-すべてのバージョンは、GitHub にあるプロジェクトの [Releases ページ](https://github.com/pblsketch/openoffice/releases/latest) で公開されています。Windows 版に加えて、Mac 版と Linux 版もベータとして公開しています。Mac 版と Linux 版は開発者自身が動作を確認しているわけではなく、利用者からの報告で確認しています。
+すべてのバージョンは、GitHub にあるプロジェクトの [Releases ページ](https://github.com/pblsketch/ieumoffice/releases/latest) で公開されています。Windows 版に加えて、Mac 版と Linux 版もベータとして公開しています。Mac 版と Linux 版は開発者自身が動作を確認しているわけではなく、利用者からの報告で確認しています。
 
 ## 自分のマシンに合わせてファイルを選ぶ
 

@@ -1,6 +1,6 @@
 # התקנת GenOffice
 
-כל גרסה מתפרסמת ב[עמוד ההפצות](https://github.com/pblsketch/openoffice/releases/latest) של הפרויקט ב-GitHub. גרסת Windows מתפרסמת יחד עם גרסאות Mac ו-Linux שיוצאות כבטא. המפתח אינו יכול לבדוק את גרסאות Mac ו-Linux בעצמו; הן מאומתות על סמך דיווחים של משתמשים.
+כל גרסה מתפרסמת ב[עמוד ההפצות](https://github.com/pblsketch/ieumoffice/releases/latest) של הפרויקט ב-GitHub. גרסת Windows מתפרסמת יחד עם גרסאות Mac ו-Linux שיוצאות כבטא. המפתח אינו יכול לבדוק את גרסאות Mac ו-Linux בעצמו; הן מאומתות על סמך דיווחים של משתמשים.
 
 ## בחירת הקובץ למחשב שלך
 

@@ -1,6 +1,6 @@
 # Cài đặt GenOffice
 
-Mọi phiên bản đều được công bố trên [trang phát hành (Releases)](https://github.com/pblsketch/openoffice/releases/latest) của dự án trên GitHub. Bản dựng cho Windows được công bố cùng với bản dựng cho Mac và Linux, được phát hành dưới dạng beta. Nhà phát triển không thể trực tiếp thử bản Mac và Linux; chúng được xác nhận qua báo cáo của người dùng.
+Mọi phiên bản đều được công bố trên [trang phát hành (Releases)](https://github.com/pblsketch/ieumoffice/releases/latest) của dự án trên GitHub. Bản dựng cho Windows được công bố cùng với bản dựng cho Mac và Linux, được phát hành dưới dạng beta. Nhà phát triển không thể trực tiếp thử bản Mac và Linux; chúng được xác nhận qua báo cáo của người dùng.
 
 ## Chọn tệp cho máy của bạn
 

@@ -3,7 +3,7 @@
   "productName": "IeumOffice",
   "version": "0.12.11",
   "license": "Apache-2.0",
-  "homepage": "https://github.com/pblsketch/openoffice",
+  "homepage": "https://github.com/pblsketch/ieumoffice",
   "private": true,
   "description": "IeumOffice",
   "main": "out/main/index.js",

@@ -16,7 +16,7 @@
 # shell profile edits, no other program is touched.
 set -eu
 
-REPO=pblsketch/openoffice
+REPO=pblsketch/ieumoffice
 # bumped by the release step together with the published archive
 DEFAULT_VERSION=0.12.11
 NODE_VERSION=22.12.0

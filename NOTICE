@@ -156,7 +156,7 @@ and license. Only the files listed for each skill were taken.
 
 IeumOffice modifications
 
-IeumOffice (https://github.com/pblsketch/openoffice) is a modified version of
+IeumOffice (https://github.com/pblsketch/ieumoffice) is a modified version of
 GenOffice (https://github.com/genspark-ai/genoffice), the work this file's
 opening notice refers to. Files of the original work have been changed, added
 and removed by the IeumOffice contributors; the repository history records

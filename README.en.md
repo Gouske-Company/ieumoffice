@@ -2,8 +2,8 @@
 
 [한국어](README.md) · **English**
 
-[![Total downloads](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fpblsketch%2Fopenoffice%2Fmain%2Fdocs%2Ftracking%2Fgrowth-latest.json&query=%24.totalDownloads&label=total%20downloads)](https://github.com/pblsketch/openoffice/releases)
-[![Stars](https://img.shields.io/github/stars/pblsketch/openoffice?style=social)](https://github.com/pblsketch/openoffice/stargazers)
+[![Total downloads](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fpblsketch%2Fieumoffice%2Fmain%2Fdocs%2Ftracking%2Fgrowth-latest.json&query=%24.totalDownloads&label=total%20downloads)](https://github.com/pblsketch/ieumoffice/releases)
+[![Stars](https://img.shields.io/github/stars/pblsketch/ieumoffice?style=social)](https://github.com/pblsketch/ieumoffice/stargazers)
 
 If IeumOffice helps you, please tap the **star** above. Every star makes it
 easier for the next person to find this program.
@@ -100,7 +100,7 @@ The author's own account, in Korean, is at
 Released for **Windows**, with separate **betas for Macs (Apple Silicon and
 Intel) and 64-bit Linux (x64)**. The developer has not been able to check the
 Mac or Linux builds on those machines; please report problems as
-[issues](https://github.com/pblsketch/openoffice/issues).
+[issues](https://github.com/pblsketch/ieumoffice/issues).
 
 ## Connecting your subscription
 
@@ -231,7 +231,7 @@ ieumoffice open report.docx
 
 - **Agent skill.** **Settings → Integrations** lists the coding agents found
   on the PC and installs the `ieumoffice` skill into the ones you choose. From
-  a terminal: `npx skills add pblsketch/openoffice`.
+  a terminal: `npx skills add pblsketch/ieumoffice`.
 - **MCP server.** `ieumoffice mcp` serves the same commands as Model Context
   Protocol tools. The same settings page shows ready-made snippets, for
   example `claude mcp add --transport stdio ieumoffice -- ieumoffice mcp`.
@@ -257,7 +257,7 @@ IeumOffice can be installed next to GenOffice. It registers only its own names
 ## Download and install
 
 Installers are published on the
-[Releases page](https://github.com/pblsketch/openoffice/releases) as
+[Releases page](https://github.com/pblsketch/ieumoffice/releases) as
 `IeumOffice-Setup-<version>.exe`, for 64-bit Windows 10 and 11. If that page
 is still empty, no release has been published yet; build from source instead.
 
@@ -362,8 +362,8 @@ You need Node 22.12 or newer (npm 10 or newer) and a Rust toolchain with
 `cargo` on the PATH (for the spreadsheet engine).
 
 ```bash
-git clone https://github.com/pblsketch/openoffice.git
-cd openoffice
+git clone https://github.com/pblsketch/ieumoffice.git
+cd ieumoffice
 npm install
 npm run dev      # all editors and the shell, against development servers
 npm run shell    # or: build everything, then run the app
@@ -463,7 +463,7 @@ anywhere. The full list is in [PRIVACY.md](PRIVACY.md).
 ## Contributing and reporting problems
 
 - Bugs and requests:
-  [GitHub Issues](https://github.com/pblsketch/openoffice/issues).
+  [GitHub Issues](https://github.com/pblsketch/ieumoffice/issues).
 - Security problems: report them privately as described in
   [SECURITY.md](SECURITY.md), not as a public issue.
 - Code: see [CONTRIBUTING.md](CONTRIBUTING.md) and the
@@ -534,7 +534,7 @@ it works with and which files it opens.
 ### Official downloads and redistribution
 
 IeumOffice is free. Its only official downloads are the
-[GitHub releases](https://github.com/pblsketch/openoffice/releases) and
+[GitHub releases](https://github.com/pblsketch/ieumoffice/releases) and
 [ieumoffice.com](https://ieumoffice.com); a copy sold for money is not an
 official release.
 

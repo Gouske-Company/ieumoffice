@@ -405,6 +405,11 @@ const numberingKey = (def: NumberingDef): string =>
     ? `${def.abstractNumId}#${def.numId}`
     : def.abstractNumId
 
+/**
+ * Each level text ends with the gap Word puts after the number (its tab or
+ * space): a numbering the engine creates has no text offset, so without the
+ * gap Hangul draws "1.text".
+ */
 function numberingOf(cx: Cx, def: NumberingDef, where: string): NumberingPlan {
   const levelFormats: string[] = []
   const numberFormats: number[] = []
@@ -412,7 +417,7 @@ function numberingOf(cx: Cx, def: NumberingDef, where: string): NumberingPlan {
   for (let ilvl = 0; ilvl <= MAX_LEVEL; ilvl++) {
     const level: NumberingLevel | undefined = def.levels[ilvl]
     if (!level || level.numFmt === 'bullet' || level.numFmt === 'none') {
-      levelFormats.push(`^${ilvl + 1}.`)
+      levelFormats.push(`^${ilvl + 1}. `)
       numberFormats.push(0)
       continue
     }
@@ -420,7 +425,8 @@ function numberingOf(cx: Cx, def: NumberingDef, where: string): NumberingPlan {
     if (shape === undefined || level.isLgl || (ilvl > 0 && level.start !== 1)) {
       cx.ledger.note('numbering', where)
     }
-    levelFormats.push(level.lvlText.replace(/%(\d)/g, '^$1'))
+    const gap = level.suff === 'nothing' ? '' : ' '
+    levelFormats.push(level.lvlText.replace(/%(\d)/g, '^$1') + gap)
     numberFormats.push(shape ?? 0)
   }
   return { levelFormats, numberFormats, start }

@@ -123,15 +123,27 @@ export interface SavedShape {
   after: number
   line: string
   pageBreakBefore: boolean
+  /** the saved number head of a numbered paragraph: its text (^n is the counter) and the gap after it */
+  numberHead: { text: string; textOffset: number } | null
 }
 
 /** the shapes of the section's top-level paragraphs, skipping those inside tables, notes and headers */
 function bodyParaShapes(section: string, header: string): SavedShape[] {
+  const heads = new Map<string, { text: string; textOffset: number }>()
+  for (const numbering of header.match(/<hh:numbering id="\d+"[\s\S]*?<\/hh:numbering>/g) ?? []) {
+    const id = /id="(\d+)"/.exec(numbering)![1]
+    for (const head of numbering.matchAll(
+      /<hh:paraHead [^>]*level="(\d+)"[^>]*textOffset="(\d+)"[^>]*>([^<]*)<\/hh:paraHead>/g,
+    )) {
+      heads.set(`${id}:${Number(head[1]) - 1}`, { text: head[3], textOffset: Number(head[2]) })
+    }
+  }
   const shapes = new Map<string, SavedShape>()
   for (const pr of header.match(/<hh:paraPr id="\d+"[\s\S]*?<\/hh:paraPr>/g) ?? []) {
     const id = /id="(\d+)"/.exec(pr)![1]
     const value = (name: string) =>
       Number(new RegExp(`<hc:${name} value="(-?\\d+)"`).exec(pr)?.[1] ?? 0) / 100
+    const number = /<hh:heading type="NUMBER" idRef="(\d+)" level="(\d+)"/.exec(pr)
     const line = /<hh:lineSpacing type="(\w+)" value="(\d+)"/.exec(pr)
     shapes.set(id, {
       left: value('left'),
@@ -141,6 +153,7 @@ function bodyParaShapes(section: string, header: string): SavedShape[] {
       after: value('next'),
       line: line ? `${line[1]} ${line[2]}` : '',
       pageBreakBefore: /pageBreakBefore="1"/.test(pr),
+      numberHead: number ? (heads.get(`${number[1]}:${number[2]}`) ?? null) : null,
     })
   }
   const out: SavedShape[] = []

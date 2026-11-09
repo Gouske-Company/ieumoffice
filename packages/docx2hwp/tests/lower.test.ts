@@ -108,7 +108,7 @@ describe('lowering the school notice', async () => {
     expect(item.shape).toMatchObject({ marginLeft: 0, indent: -3600 })
     const key = item.shape.list?.kind === 'number' ? item.shape.list.numbering : ''
     expect(plan.numberings.get(key)).toMatchObject({ start: 1 })
-    expect(plan.numberings.get(key)?.levelFormats[0]).toBe('^1.')
+    expect(plan.numberings.get(key)?.levelFormats[0]).toBe('^1. ')
     expect(plan.numberings.get(key)?.numberFormats[0]).toBe(0)
     expect((body[6] as Para).shape.list).toMatchObject({ kind: 'bullet', level: 0 })
   })

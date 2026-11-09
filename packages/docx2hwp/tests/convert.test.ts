@@ -68,6 +68,10 @@ describe.each(['hwpx', 'hwp'] as const)('%s', (format) => {
       expect(head('방학식: 12월 31일')).toBe('Number')
       expect(head('필통')).toBe('Bullet')
       expect(head('그림:')).toBe('None')
+      // Hangul draws "1.방학식" unless the number head leaves a gap before the text
+      const number = back.body[textAt(back, '방학식: 12월 31일')].shape?.numberHead
+      expect(number?.text.startsWith('^1.')).toBe(true)
+      expect(/\s$/.test(number!.text) || number!.textOffset > 0).toBe(true)
     })
 
     it('saves Word paragraph geometry in points', () => {

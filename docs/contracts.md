@@ -40,6 +40,14 @@
 - `convert <file.doc|.dot> --to docx`만 받는다. 앱을 띄우지 않고 `@genoffice/doc2docx`로 바꾼다. `.doc`로 다시 쓰는 길은 없다.
 - 바꾸며 빠지거나 바뀐 것은 파일을 쓰고 `detail.warnings`에 적는다. 암호가 걸린 문서, Word 97보다 오래된 판, 깨진 파일은 종료 코드 3으로 끝나고, `detail.reason`에 `doc2docx`의 이유 코드(`encrypted`, `unsupported_version`, `not_cfb`, `corrupt` 등)가 온다.
 
+**워드 문서를 한글 문서로(`.docx` → `.hwp`·`.hwpx`, 결정 0121).**
+
+- `convert <file.docx> --to hwp|hwpx [--out <경로>] [--force]`(MCP `convert`)는 워드 편집기의 "한글 문서로 내보내기"와 같은 변환기(`@genoffice/docx2hwp`)로 새 한글 문서를 쓴다. 앱을 띄우지 않고 명령 프로세스 안에서 한글 엔진(WebAssembly)을 쓴다. 원본 `.docx`는 바꾸지 않는다.
+- 앱과 달리 쓰기 전에 묻지 않는다. 옮기지 못한 것이 있어도 파일을 쓰고, 항목마다 `warnings[]`로 알린다. 코드는 `hwp_dropped`(빠짐)와 `hwp_changed`(바뀜)다. 같은 목록이 `detail.hwp_report`에 `[{ feature, kind: "dropped" | "changed", count }]`로 온다. 잃은 것이 없으면 빈 목록이다. 순서는 아래 식별자의 순서이고, `count`는 그 기능이 든 개체나 문단의 수다(한 문단에 여러 번 있어도 하나로 센다).
+- `detail.hwp_report`의 `feature` 값은 바뀌지 않는 식별자다. 빠짐: `comment`, `revision`, `equation`, `chart`, `shape`, `textbox`, `object`, `ink`, `watermark`, `hidden_text`, `picture`, `table`, `note`, `page_border`, `para_border`, `line_numbers`, `protection`. 바뀜: `hyperlink`, `section`, `columns`, `header_variant`, `header_content`, `floating_picture`, `nested_table`, `table_layout`, `numbering`, `tab_stop`, `toc`, `field`, `text_effect`, `note_format`, `text_direction`, `plain_paragraph`. ODT의 `detail.odt_report`와는 다른 목록이다.
+- `.hwp`는 엔진이 쓴 파일을 다시 읽어 쪽 수가 같을 때만 쓴다(한글 편집기의 `.hwp` 저장 규칙). 다르면 파일을 쓰지 않고 종료 코드 3, `error: "conversion_failed"`, `detail.reason: "hwp-readback"`, `--to hwpx`로 다시 하라는 `suggestion`으로 답한다.
+- 워드 문서로 읽히지 않는 파일(zip이 아닌 파일, 깨진 파일)은 종료 코드 3, `conversion_failed`, `detail.reason: "not-docx"`다. 엔진이 WebAssembly 메모리를 만들지 못하면 다른 WebAssembly 명령처럼 종료 코드 3, `resource_limit`이다.
+
 **엑셀 외부 연결(`sheet links`).**
 
 - `sheet links <file.xlsx>`는 수식이 `[n]`으로 가리키는 다른 통합 문서 목록을 읽기만 한다. `detail.links[]`의 `index`가 수식의 `[n]`, `source`가 푼 경로, `reachable`이 그 파일이 있는지다.
@@ -222,7 +230,7 @@ draw.io 다이어그램(`.drawio`, `.dio`, `.drawio.svg`, `.drawio.png`)을 읽�
 | `wasm`                                                                                             | `{ available, reason?, limit_bytes? }`. PDF·한글 엔진과 네트워크 명령이 쓰는 WebAssembly 메모리를 지금 만들 수 있는지. 가상 메모리 상한(`ulimit -v`)에 걸리면 `reason: "virtual_memory"`와 그 상한(`limit_bytes`)이 온다 |
 | `settings_path`                                                                                    | 이 답을 읽어 온 설정 파일                                                                                                                                                                                                |
 
-- `wasm.available`이 거짓이면 `pdf read`·`hwp read`·`search`·`read-url`처럼 WebAssembly를 쓰는 명령은 그 환경에서 돌지 않는다. 그때 명령은 크래시 대신 종료 코드 3, `error: "resource_limit"`, `detail.reason: "virtual_memory"`와 `ulimit -v`를 올리라는 `suggestion`으로 답한다. DOCX·XLSX·PPTX·Markdown·HTML·CSV·ODT 문서 작업은 WebAssembly를 쓰지 않는다.
+- `wasm.available`이 거짓이면 `pdf read`·`hwp read`·`search`·`read-url`처럼 WebAssembly를 쓰는 명령은 그 환경에서 돌지 않는다. 그때 명령은 크래시 대신 종료 코드 3, `error: "resource_limit"`, `detail.reason: "virtual_memory"`와 `ulimit -v`를 올리라는 `suggestion`으로 답한다. DOCX·XLSX·PPTX·Markdown·HTML·CSV·ODT 문서 작업은 WebAssembly를 쓰지 않는다. 예외는 워드 문서를 한글 문서로 바꾸는 `convert --to hwp|hwpx`다. 한글 엔진을 쓴다.
 
 - `media_analysis`는 예전 호출자를 위해 남긴 항목이다. `image_analysis`와 같고, 영상만 될 때는 `video_analysis`와 같다.
 - 웹·이미지 검색은 키 제공자를 고르지 않는 한 항상 `available`이고 `route`는 `free`다.

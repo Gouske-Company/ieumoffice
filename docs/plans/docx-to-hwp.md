@@ -35,7 +35,7 @@
 4. **옮기지 못한 것은 저장하기 전에 묻는다.** 이 앱의 ODT 저장(워드 편집기의 형식 바꾸기, HTML·마크다운 편집기의 ODT 내보내기)과 같은 방식이다. 잃은 것이 있으면 "빠지는 것"과 "바뀌는 것"을 나눠 보이고 [저장] [취소]를 묻는다. 없으면 바로 쓴다. 쓴 뒤에는 다른 내보내기처럼 파일을 연다.
 5. **.hwp는 엔진이 스스로 다시 읽어 쪽 수가 같을 때만 쓴다.** 한글 편집기의 .hwp 저장 규칙과 같다. 다르면 .hwpx로 저장해 보라고 알린다. 어느 형식이든 다 쓴 결과를 한 번 다시 열어 본다.
 6. **첫판은 한 구역이다.** 워드의 구역 나눔은 "바뀌는 것"으로 알린다. 다단, 구역마다 다른 용지는 다음 판에서 다룬다.
-7. **터미널 명령어(`ieumoffice convert`)는 이번 범위가 아니다.** 패키지가 CLI에서도 쓸 수 있는 모양이므로 다음에 붙인다. 붙일 때는 `docs/contracts.md`의 WebAssembly 규칙(`resource_limit`)을 따른다.
+7. **터미널 명령어(`ieumoffice convert`)도 같은 패키지로 바꾼다(2026-11-10).** `convert <파일.docx> --to hwp|hwpx`가 앱 없이 명령 프로세스 안에서 돈다. 앱과 달리 묻지 않고 쓰며, 잃은 것은 `warnings[]`(`hwp_dropped`·`hwp_changed`)와 `detail.hwp_report`로 알린다. `.hwp`를 다시 읽지 못하면 `detail.reason: "hwp-readback"`으로 `--to hwpx`를 안내하고, 엔진이 WebAssembly 메모리를 만들지 못하면 `docs/contracts.md`의 규칙대로 `resource_limit`이다.
 
 ## 4. 데이터 흐름
 

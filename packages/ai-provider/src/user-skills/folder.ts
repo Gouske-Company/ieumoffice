@@ -8,8 +8,10 @@ import type { Dirent } from 'node:fs'
 import { lstat, readFile, readdir, realpath, stat } from 'node:fs/promises'
 import { basename, extname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { mcpServersOfSkill } from '@genoffice/agent-core/skill-mcp-refs'
+import { skillEditorsOf } from '@genoffice/agent-core/skill-editors'
 import {
   IEUM_SOURCE_FILE,
+  IEUM_EDITORS_KEY,
   IEUM_TEMPLATE_KEY,
   IEUM_TITLE_KEY,
   MAX_USER_SKILL_BYTES,
@@ -191,6 +193,7 @@ export async function readUserSkillFolder(
       options.source === 'builtin' &&
       (options.agentOnlyNames?.has(name) === true ||
         options.agentOnlyNames?.has(folderName) === true),
+    fileEditors: skillEditorsOf(parsed?.metadata[IEUM_EDITORS_KEY]),
     files: files.length,
     bytes: listed?.bytes ?? 0,
     unreadable,

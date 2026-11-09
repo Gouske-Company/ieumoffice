@@ -369,6 +369,16 @@ describe('one skill folder', () => {
     })
   })
 
+  it('reads the editors the skill is for, ignoring ids it does not know', async () => {
+    const dir = skill(temp(), 'deck', {
+      frontmatter:
+        '---\nname: deck\ndescription: d\nmetadata:\n  ieum-editors: slides future-editor\n---\n',
+    })
+    expect((await readOne(dir, { source: 'app' }))?.fileEditors).toEqual(['slides'])
+    const plain = skill(temp(), 'plain', { frontmatter: '---\nname: plain\ndescription: d\n---\n' })
+    expect((await readOne(plain, { source: 'app' }))?.fileEditors).toBeUndefined()
+  })
+
   it('falls back to the name for the title and notes a template file that is missing', async () => {
     const dir = skill(temp(), 'plain', {
       frontmatter:

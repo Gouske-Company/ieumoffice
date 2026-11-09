@@ -3,6 +3,7 @@
  * rest is the initial state of the skill's source. Every AI window follows the
  * same result. Project skills of the agent window are always on.
  */
+import { skillEditorScope, skillEditorsChoiceOf } from '@genoffice/agent-core/skill-editors'
 import { USER_SKILL_PRIORITY } from './constants'
 import { parseUserSkillId } from './names'
 import type {
@@ -43,10 +44,12 @@ export function normalizeUserSkillSettings(raw: unknown): UserSkillSettings {
       const parsed = parseUserSkillId(id)
       if (!parsed || parsed.source === 'project') continue
       if (!value || typeof value !== 'object' || Array.isArray(value)) continue
-      const { enabled, invoke } = value as Record<string, unknown>
+      const { enabled, invoke, editors } = value as Record<string, unknown>
       const state: UserSkillStateSetting = {}
       if (typeof enabled === 'boolean') state.enabled = enabled
       if (isInvoke(invoke)) state.invoke = invoke
+      const choice = skillEditorsChoiceOf(editors)
+      if (choice) state.editors = choice
       settings.states[id] = state
     }
   }
@@ -73,7 +76,13 @@ export function resolveUserSkillStates(
   return skills.map((skill) => {
     const initial = initialUserSkillState(skill.source)
     if (skill.source === 'project') {
-      return { ...skill, enabled: skill.unreadable === undefined, invoke: 'auto', hidden: false }
+      return {
+        ...skill,
+        enabled: skill.unreadable === undefined,
+        invoke: 'auto',
+        hidden: false,
+        editors: skill.fileEditors,
+      }
     }
     const saved = settings.states[skill.id] ?? {}
     const isHidden = skill.source === 'builtin' && hidden.has(skill.name.toLowerCase())
@@ -82,6 +91,7 @@ export function resolveUserSkillStates(
       enabled: !isHidden && skill.unreadable === undefined && (saved.enabled ?? initial.enabled),
       invoke: saved.invoke ?? initial.invoke,
       hidden: isHidden,
+      editors: skillEditorScope(saved.editors, skill.fileEditors),
     }
   })
 }

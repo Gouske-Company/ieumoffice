@@ -1,3 +1,5 @@
+import type { SkillEditorId, SkillEditorsChoice } from '@genoffice/agent-core/skill-editors'
+
 /**
  * Shapes of the person's skills: where one comes from, what was read from its
  * folder, and its on/off state.
@@ -50,6 +52,8 @@ export interface UserSkill {
   github: boolean
   /** a builtin skill only the agent window uses */
   agentOnly: boolean
+  /** `metadata.ieum-editors`, known ids only; undefined: every editor */
+  fileEditors: SkillEditorId[] | undefined
   files: number
   bytes: number
   unreadable: UserSkillUnreadableReason | undefined
@@ -62,6 +66,8 @@ export type UserSkillInvoke = 'auto' | 'manual'
 export interface UserSkillStateSetting {
   enabled?: boolean
   invoke?: UserSkillInvoke
+  /** where the skill is used, over what its file says (skills the person cannot edit) */
+  editors?: SkillEditorsChoice
 }
 
 /** The `skills` value of the app settings file, after reading */
@@ -78,6 +84,8 @@ export interface ResolvedUserSkill extends UserSkill {
   invoke: UserSkillInvoke
   /** a builtin skill the person hid; it is off */
   hidden: boolean
+  /** the editors the skill is used in (the person's choice, else its file); undefined: every editor */
+  editors: SkillEditorId[] | undefined
 }
 
 /** One entry of `builtin-skills.json` */

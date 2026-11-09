@@ -5,7 +5,7 @@
  * as `metadata`, and top-level lists of scalars (`- item` lines or `[a, b]`).
  * Anything else is kept as written when the app rewrites a file.
  */
-import { IEUM_TEMPLATE_KEY, IEUM_TITLE_KEY } from './constants'
+import { IEUM_EDITORS_KEY, IEUM_TEMPLATE_KEY, IEUM_TITLE_KEY } from './constants'
 
 export interface ParsedSkillMd {
   name: string | undefined
@@ -477,6 +477,11 @@ export interface SkillMdInput {
   title?: string | undefined
   /** `metadata.ieum-template`; left out when undefined */
   template?: string | undefined
+  /**
+   * `metadata.ieum-editors`, editor ids separated by spaces; `null` takes it
+   * out, and undefined keeps what the file has
+   */
+  editors?: string | null | undefined
   body: string
   /** other top-level keys to set, such as `disable-model-invocation` */
   fields?: Record<string, string | boolean> | undefined
@@ -491,6 +496,9 @@ export function renderSkillMd(input: SkillMdInput, base?: string): string {
   const ieum: Array<[string, string]> = []
   if (input.title !== undefined) ieum.push([IEUM_TITLE_KEY, input.title])
   if (input.template !== undefined) ieum.push([IEUM_TEMPLATE_KEY, input.template])
+  if (typeof input.editors === 'string') ieum.push([IEUM_EDITORS_KEY, input.editors])
+  const managed = new Set([IEUM_TITLE_KEY, IEUM_TEMPLATE_KEY])
+  if (input.editors !== undefined) managed.add(IEUM_EDITORS_KEY)
   const fields = new Map<string, string | boolean>([
     ['name', input.name],
     ['description', input.description],
@@ -508,7 +516,7 @@ export function renderSkillMd(input: SkillMdInput, base?: string): string {
     const lines: string[] = [...(map?.lead ?? [])]
     let kept = 0
     for (const entry of map?.entries ?? []) {
-      if (entry.key === IEUM_TITLE_KEY || entry.key === IEUM_TEMPLATE_KEY) {
+      if (managed.has(entry.key)) {
         const value = pending.get(entry.key)
         pending.delete(entry.key)
         if (value === undefined) continue

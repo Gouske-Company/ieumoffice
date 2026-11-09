@@ -57,6 +57,8 @@ export const ms = {
   errRateLimit: 'Had langganan {provider} telah habis digunakan.',
   errRateLimitReset:
     'Had langganan {provider} telah habis digunakan. Had ditetapkan semula pada {time}.',
+  errChatGptAppLimit:
+    'Apl ini telah menghabiskan penggunaan ChatGPT yang boleh digunakannya. Had itu mungkin had seluruh pelan anda atau had yang ditetapkan untuk apl ini. Semak dalam ChatGPT di Tetapan → Penggunaan.',
   errUnsafeTools:
     'Program {provider} bermula dengan alatnya sendiri masih aktif, jadi proses dihentikan demi keselamatan.',
   errMeteredNotAccepted:

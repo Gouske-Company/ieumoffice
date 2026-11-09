@@ -60,6 +60,8 @@ export const de = {
   errRateLimit: 'Das Limit des Abonnements {provider} ist aufgebraucht.',
   errRateLimitReset:
     'Das Limit des Abonnements {provider} ist aufgebraucht. Es wird um {time} zurückgesetzt.',
+  errChatGptAppLimit:
+    'Diese App hat die ChatGPT-Nutzung aufgebraucht, auf die sie zugreifen kann. Das kann das Limit des ganzen Tarifs sein oder ein Limit, das für diese App festgelegt wurde. Prüfen Sie es in ChatGPT unter Einstellungen → Nutzung.',
   errUnsafeTools:
     'Das Programm {provider} wurde mit eigenen aktivierten Tools gestartet; der Lauf wurde aus Sicherheitsgründen gestoppt.',
   errMeteredNotAccepted:

@@ -55,6 +55,8 @@ export const hi = {
   errSignedOut: '{provider} का साइन-इन समाप्त हो गया है। जारी रखने के लिए फिर से साइन इन करें।',
   errRateLimit: '{provider} सदस्यता की सीमा पूरी हो गई है।',
   errRateLimitReset: '{provider} सदस्यता की सीमा पूरी हो गई है। यह {time} पर रीसेट होगी।',
+  errChatGptAppLimit:
+    'यह ऐप ChatGPT का जितना उपयोग कर सकता था, वह पूरा हो गया है। यह आपकी पूरी योजना की सीमा हो सकती है या इस ऐप के लिए तय की गई सीमा। ChatGPT में सेटिंग्स → उपयोग में देखें।',
   errUnsafeTools:
     '{provider} प्रोग्राम अपने टूल चालू रखकर शुरू हुआ, इसलिए सुरक्षा के लिए यह रन रोक दिया गया।',
   errMeteredNotAccepted:

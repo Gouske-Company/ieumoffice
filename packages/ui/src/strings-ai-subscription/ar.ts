@@ -53,6 +53,8 @@ export const ar = {
   errSignedOut: 'انتهت صلاحية تسجيل الدخول إلى {provider}. سجّل الدخول مجددًا للمتابعة.',
   errRateLimit: 'تم استنفاد حد اشتراك {provider}.',
   errRateLimitReset: 'تم استنفاد حد اشتراك {provider}. سيُعاد تعيينه في {time}.',
+  errChatGptAppLimit:
+    'استنفد هذا التطبيق استخدام ChatGPT المتاح له. قد يكون الحد هو حد خطتك كلها أو حدًّا عُيّن لهذا التطبيق. تحقّق من الإعدادات ← الاستخدام في ChatGPT.',
   errUnsafeTools:
     'بدأ برنامج {provider} وأدواته الخاصة مفعَّلة، لذلك أُوقف التشغيل حفاظًا على الأمان.',
   errMeteredNotAccepted:

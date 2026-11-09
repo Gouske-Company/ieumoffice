@@ -736,6 +736,9 @@ export function aiRunErrorText(
     case 'signed-out':
       return aiSubscriptionText(lang, 'errSignedOut', { provider })
     case 'rate-limit':
+      // OpenAI: this error may be a limit set for this app, not the whole
+      // plan, and it does not tell when usage comes back
+      if (cause.provider === 'chatgpt') return aiSubscriptionText(lang, 'errChatGptAppLimit')
       return hasTime
         ? aiSubscriptionText(lang, 'errRateLimitReset', { provider, time })
         : aiSubscriptionText(lang, 'errRateLimit', { provider })

@@ -59,6 +59,8 @@ export const fr = {
   errRateLimit: 'La limite de l’abonnement {provider} est atteinte.',
   errRateLimitReset:
     'La limite de l’abonnement {provider} est atteinte. Réinitialisation à {time}.',
+  errChatGptAppLimit:
+    'Cette application a épuisé l’utilisation de ChatGPT dont elle dispose. Il peut s’agir de la limite de tout votre forfait ou d’une limite fixée pour cette application. Vérifiez dans ChatGPT, sous Paramètres → Utilisation.',
   errUnsafeTools:
     'Le programme {provider} a démarré avec ses propres outils activés ; l’exécution a été arrêtée par sécurité.',
   errMeteredNotAccepted:

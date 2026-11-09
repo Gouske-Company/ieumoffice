@@ -306,6 +306,7 @@ describe('MCP surface over Streamable HTTP (/mcp)', () => {
         'xls',
         'csv',
         'tsv',
+        'ods',
       ])
 
       // the diagram tools take their schema from DIAGRAM_OPS over the wire: an

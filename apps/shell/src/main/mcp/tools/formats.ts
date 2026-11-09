@@ -67,9 +67,9 @@ export const FORMAT_FAMILIES: readonly FormatFamily[] = [
   {
     family: 'xlsx',
     label: 'spreadsheet',
-    // .tsv opens as a converted copy and saves as .xlsx, so it is an open-only
-    // format: it must not appear in editorSave
-    editorOpen: ['xlsx', 'xlsm', 'xls', 'csv', 'tsv'],
+    // .tsv and .ods open as converted copies and save as .xlsx, so they are
+    // open-only formats: they must not appear in editorSave
+    editorOpen: ['xlsx', 'xlsm', 'xls', 'csv', 'tsv', 'ods'],
     // the interactive Save As also offers .xlsm/.csv; the explicit-path save the
     // MCP bridge uses writes .xlsx only (sheets-main.ts forces the extension),
     // so mcp.save stays xlsx until that pipeline is widened

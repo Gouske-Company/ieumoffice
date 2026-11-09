@@ -5552,6 +5552,23 @@ textarea:focus {
   color-scheme: dark;
 }
 
+/* Keep the right-click menu inside the window (issue #390). Univer caps the
+ * menu panel with an inline max-height of the window height minus 8px a side
+ * and scrolls the rest, but its useScrollYOverContainer hook clears that
+ * inline value as soon as the menu closes: the closed popup is display:none,
+ * so the hook measures a 0x0 panel, decides it "fits", and writes
+ * max-height: ''. React never puts it back (the state behind it has not
+ * changed), and on the next open the hook measures again mid-animation, while
+ * the popup is still scaleY(0), so it sees nothing to cap either. From the
+ * second open on, the cell menu - long once our own items are added - is
+ * unbounded; the popup clamps its top to 0 and the bottom runs off the
+ * window. This restores Univer's intended cap regardless of what the hook
+ * last wrote, so the popup's own clamp shifts the menu up to fit and the
+ * panel scrolls. Submenus carry their own cap and are untouched. */
+.univer-popup > section > .univer-overflow-y-auto {
+  max-height: max(120px, calc(100vh - 16px)) !important;
+}
+
 .ai-msg-undelivered {
   margin-top: 6px;
   display: flex;

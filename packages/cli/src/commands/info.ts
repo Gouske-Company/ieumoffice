@@ -5,13 +5,13 @@ import { join } from 'node:path'
 import { parseDocx } from '@genoffice/docx-engine'
 import { protectedCellsOf } from '@genoffice/odt-engine'
 import { openPptx } from '@genoffice/pptx-engine'
-import { flagString } from '../args'
+import { assertOptionValues, flagString } from '../args'
 import { csvInfo } from '../formats/csv'
 import { hwpInfo } from '../formats/hwp'
 import { openOdtBytes } from '../formats/odt'
 import { pdfInfo } from '../formats/pdf'
 import { convertLegacyWorkbook, workbookSummary } from '../formats/xlsx'
-import { extension, readInput, resolveInput, stripBom } from '../fs'
+import { decodeText, extension, readInput, resolveInput, stripBom } from '../fs'
 import type { CommandDef } from '../registry'
 import { CliError, EXIT } from '../result'
 
@@ -24,6 +24,7 @@ export const infoCommand: CommandDef = {
   usage: 'info <file> [--password <pw>]',
   options: [{ name: 'password', value: 'pw', description: 'password for an encrypted PDF' }],
   async run(args, ctx) {
+    assertOptionValues(args, infoCommand.options)
     const path = resolveInput(args.positionals[0], ctx)
     const ext = extension(path)
     const stat = statSync(path)
@@ -180,7 +181,7 @@ function describeCsv(path: string): Description {
 
 function describeText(path: string, ext: string): Description {
   // a UTF-8 BOM is a file marker, not text: it is not a character and does not hide a first heading
-  const text = stripBom(Buffer.from(readInput(path)).toString('utf-8'))
+  const text = stripBom(decodeText(readInput(path)))
   const lines = text.split(/\r\n|\r|\n/)
   const fields: Record<string, unknown> = { lines: lines.length, characters: text.length }
   if (ext === 'md' || ext === 'markdown') fields.headings = countHeadings(lines)
@@ -204,7 +205,7 @@ function countHeadings(lines: readonly string[]): number {
       fence = { char: mark[1]![0]!, length: mark[1]!.length }
       continue
     }
-    if (/^#{1,6}\s/.test(line)) count++
+    if (/^ {0,3}#{1,6}\s/.test(line)) count++
   }
   return count
 }

@@ -81,6 +81,7 @@ Sáu công cụ: **Vẽ, Hình chữ nhật, Hình elip, Mũi tên, Ghi chú**, 
 ## Xuất và in
 
 - **Xuất dưới dạng Word… / PowerPoint… / Excel…** trong menu Tệp, hoặc lấy đúng ba mục đó từ **Chuyển đổi PDF** trên dải ruy-bâng — tất cả đều tại máy, không tải lên. Tệp .pptx ra một slide mỗi trang và tệp .xlsx ra một bảng tính mỗi trang. Mỗi mục đều hỏi lưu ở đâu.
+- **PDF sang HWP** trong **Chuyển đổi PDF** trên ruy-băng chuyển PDF thành tài liệu HWP trong một thẻ HWP mới. Chọn **Nhập** (가져오기) trong cửa sổ nhập PDF mà thẻ hiện ra; tài liệu được tạo trong thẻ đó, và lần lưu đầu tiên sẽ hỏi nơi lưu tệp .hwp hoặc .hwpx. Tệp PDF gốc được giữ nguyên, và việc chuyển đổi chạy trên máy này. Nhập nội dung thành đoạn văn chảy theo trang hay thành hộp văn bản cố định được chọn trong tùy chọn (환경 설정) của thẻ HWP, mục nhập PDF.
 - **In**: qua hộp thoại hệ thống, theo thứ tự trang và góc xoay hiện tại; có thể chọn phạm vi trang.
 
 ## Lưu

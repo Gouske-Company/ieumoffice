@@ -81,6 +81,7 @@ Seis herramientas: **Dibujar, Rectángulo, Elipse, Flecha, Nota**, más **Censur
 ## Exportación e impresión
 
 - **Exportar como Word… / PowerPoint… / Excel…** en el menú Archivo, o los mismos tres desde **Convertir PDF** en la cinta — todo local, sin subir nada. El .pptx sale con una diapositiva por página y el .xlsx con una hoja de cálculo por página. Cada uno pregunta dónde guardarlo.
+- **PDF a HWP**, en **Convertir PDF** de la cinta, convierte el PDF en un documento HWP en una pestaña HWP nueva. Elija **Importar** (가져오기) en la ventana de importación de PDF que muestra la pestaña; el documento se crea en esa pestaña, y el primer guardado pregunta dónde poner el .hwp o el .hwpx. El PDF queda como estaba, y la conversión se hace en este equipo. Si el texto entra como párrafos que fluyen por las páginas o como cuadros de texto fijos se elige en las opciones (환경 설정) de la pestaña HWP, apartado de importación de PDF.
 - **Imprimir**: el orden y las rotaciones actuales a través del cuadro de diálogo del sistema; admite intervalos de páginas.
 
 ## Guardar

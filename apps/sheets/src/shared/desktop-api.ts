@@ -34,6 +34,7 @@ import type {
   AiStreamChunk,
   AiStreamRequest,
 } from '@genoffice/ai-provider'
+import { AI_EFFORTS } from '@genoffice/ai-provider/browser'
 import type { AiToolCapabilities } from '@genoffice/ai-search'
 import type { AiPanelPrefs, FontFamilyInfo } from '@genoffice/ui'
 import type { SubscriptionApi } from './subscription-api'
@@ -2619,6 +2620,13 @@ export type WorkbookConditionalRule = z.infer<typeof conditionalRuleSchema>
 // site, which has every known provider key once merged through
 // resolveAiSettings/defaultAiSettings. ----
 
+// how hard the model thinks (decision 0096): the levels a model takes are the fixed list, and
+// the settings reader drops any other; the chosen level is a plain string in the type
+const aiEffortSchema = z.enum(AI_EFFORTS)
+const aiModelEffortSchema = z
+  .object({ efforts: z.array(aiEffortSchema), defaultEffort: aiEffortSchema.optional() })
+  .strict()
+
 const aiProviderConfigSchema = z
   .object({
     apiKey: z.string(),
@@ -2627,6 +2635,8 @@ const aiProviderConfigSchema = z
     cliPath: z.string().optional(),
     // the vendor's live model list (decision 0087); the main process keeps its own copy on write
     models: z.array(z.string()).optional(),
+    effort: z.string().optional(),
+    modelEfforts: z.record(z.string(), aiModelEffortSchema).optional(),
   })
   .strict()
 
@@ -2652,6 +2662,8 @@ const aiLocalModelProfileSchema = z
     visionSource: aiLocalValueSourceSchema.optional(),
     checkedAt: z.number().int().positive().optional(),
     notes: z.string().max(500).optional(),
+    efforts: z.array(aiEffortSchema).optional(),
+    defaultEffort: aiEffortSchema.optional(),
   })
   .strict()
 
@@ -2666,6 +2678,7 @@ const aiCustomEndpointSchema = z
     kind: z.literal('local').optional(),
     modelProfiles: z.record(z.string().max(256), aiLocalModelProfileSchema).optional(),
     timeoutMs: z.number().int().min(60_000).max(600_000).optional(),
+    effort: z.string().optional(),
   })
   .strict()
 
@@ -2700,11 +2713,18 @@ export const aiSettingsInputSchema = z
     // subscription connection (this object is .strict(): a key missing here
     // would make every save of settings that carry it fail)
     meteredAccepted: z.record(z.string(), z.boolean()).optional(),
+    // decision 0114: only a vendor CLI, and only a literal true, turns one off
+    subscriptionOff: z
+      .object({ 'claude-code': z.literal(true).optional(), codex: z.literal(true).optional() })
+      .strict()
+      .optional(),
     headlessSubscriptionEnabled: z.boolean().optional(),
     headlessSubscriptionConsentVersion: z.number().int().nonnegative().optional(),
     subscriptionNoticeSeen: z.boolean().optional(),
     subscriptionNoticeVersion: z.number().int().nonnegative().optional(),
     pdfSendNoticeSeen: z.number().int().nonnegative().optional(),
+    readUrl: z.object({ githubToken: z.string().optional() }).strict().optional(),
+    internetTools: z.boolean().optional(),
   })
   .strict()
 

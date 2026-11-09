@@ -234,6 +234,11 @@ export const zhTW = {
   aiTplFontsNotice:
     '範本字型已內含於此應用程式。在 PowerPoint 等其他程式開啟時，可能會顯示為其他字型。',
   aiTplOpenFonts: '開啟字型資料夾',
+  aiTplFontsAuto: '字型：由 AI 選擇',
+  aiTplFontsOne: '字型：{font}',
+  aiTplFontsTwo: '字型：標題 {title}，內文 {body}',
+  aiTplFontsTemplate: '字型：使用所選範本的字型',
+  aiTplFontsChange: '變更',
   aiTplDesc_coral: '近黑底色搭配奶油色與橘粉色，標題字大而粗',
   aiTplDesc_blue_professional: '奶油色底搭配鮮明的鈷藍點綴，簡潔俐落的商務風',
   aiTplDesc_monochrome: '象牙色底只用黑字，襯線標題，完全不用色彩',

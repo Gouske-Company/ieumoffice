@@ -22,6 +22,7 @@ Claro / Oscuro / Seguir el sistema. «Seguir el sistema» sigue la apariencia de
 - **Guardar automáticamente todos los documentos** activa el guardado automático de forma predeterminada en todos los editores; todavía puedes desactivarlo para una ventana.
 - **Ubicación de guardado** con un botón **Cambiar** y **App predeterminada para documentos de Office** para reclamar .docx / .xlsx / .pptx para GenOffice.
 - **Formato de guardado de nuevos documentos HWP** decide si se ofrece primero HWP o HWPX al guardar por primera vez un documento nuevo. Los documentos abiertos conservan su propio formato.
+- **Fuentes de diapositivas con IA** define las fuentes que usa la IA en una presentación nueva cuando su solicitud no nombra ninguna. Elija Automático, Sin serifa, Con serifa o Títulos con serifa, y cambie por separado la fuente sin serifa y la fuente con serifa. Una plantilla de diseño elegida usa sus propias fuentes, y las páginas añadidas a una presentación con otras fuentes siguen esa presentación.
 
 GenOffice no recopila ni envía estadísticas de uso, así que no hay ningún interruptor para ello.
 

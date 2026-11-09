@@ -14,12 +14,25 @@ export function diagramLanguage(language: unknown): DiagramLanguage | null {
     : null
 }
 
-export function renderDiagram(language: DiagramLanguage, source: string): Promise<DiagramResult> {
-  return language === WAVEDROM_LANGUAGE ? renderWavedrom(source) : renderMermaid(source)
+/** `width`: the px the picture is shown at, for diagrams that size to their container (gantt) */
+export function renderDiagram(
+  language: DiagramLanguage,
+  source: string,
+  width?: number,
+): Promise<DiagramResult> {
+  return language === WAVEDROM_LANGUAGE ? renderWavedrom(source) : renderMermaid(source, width)
 }
 
-const VIEWBOX_RE =
-  /\bviewBox\s*=\s*["']\s*(-?[\d.]+)[\s,]+(-?[\d.]+)[\s,]+(-?[\d.]+)[\s,]+(-?[\d.]+)\s*["']/
+// an SVG number: mermaid writes tiny offsets in exponent form (9.5367431640625e-7)
+const NUM = String.raw`[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?`
+const VIEWBOX_RE = new RegExp(
+  String.raw`\bviewBox\s*=\s*["']\s*(${NUM})[\s,]+(${NUM})[\s,]+(${NUM})[\s,]+(${NUM})\s*["']`,
+)
+const ROOT_TAG_RE = /<svg\b[^>]*>/
+const sizeAttrRe = (name: string) =>
+  new RegExp(String.raw`\s${name}\s*=\s*["']\s*(${NUM})(?:px)?\s*["']`)
+const WIDTH_ATTR_RE = sizeAttrRe('width')
+const HEIGHT_ATTR_RE = sizeAttrRe('height')
 
 /** Fallback doc width when maxWidthPx is missing or invalid (matches DOCX_MAX_IMAGE_PX) */
 export const DIAGRAM_FALLBACK_MAX_WIDTH_PX = 620
@@ -41,6 +54,16 @@ export function parseSvgViewBox(svg: string): { width: number; height: number } 
     return null
   }
   return { width, height }
+}
+
+/** A diagram's drawing size: its viewBox, else the root's absolute width and height */
+export function diagramSvgSize(svg: string): { width: number; height: number } | null {
+  const viewBox = parseSvgViewBox(svg)
+  if (viewBox) return viewBox
+  const root = ROOT_TAG_RE.exec(svg)?.[0] ?? ''
+  const width = Math.ceil(Number(WIDTH_ATTR_RE.exec(root)?.[1]))
+  const height = Math.ceil(Number(HEIGHT_ATTR_RE.exec(root)?.[1]))
+  return width > 0 && height > 0 ? { width, height } : null
 }
 
 /** Clamp the requested doc width to a positive finite value within a sane cap */
@@ -101,12 +124,11 @@ export function pinSvgIntrinsicSize(svg: string, width: number, height: number):
 
 /**
  * Rasterize a rendered diagram for the docx export.
- * Returns null when it cannot be drawn (missing/invalid viewBox, invalid size,
- * undecodable SVG, or no 2d context); callers fall back to the diagram source
- * as code in that case.
+ * Returns null when it cannot be drawn (no usable size, undecodable SVG, or
+ * no 2d context); callers fall back to the diagram source as code in that case.
  */
 export async function diagramSvgToPng(svg: string, maxWidthPx: number): Promise<NewImage | null> {
-  const parsed = parseSvgViewBox(svg)
+  const parsed = diagramSvgSize(svg)
   if (!parsed) return null
   const raster = computeDiagramRasterSize(parsed.width, parsed.height, maxWidthPx)
   if (!raster) return null

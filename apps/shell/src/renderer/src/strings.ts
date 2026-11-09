@@ -256,6 +256,7 @@ export const strings = {
     setSubInstallFailed: '无法运行安装命令。请按照官方安装说明进行安装。',
     setSubLoginFailed: '无法开始登录。请确认程序已安装后重试。',
     setSubLogoutFailed: '无法退出登录。请稍后再试。',
+    setSubSwitchFailed: '无法保存设置，因此没有任何更改。请稍后再试。',
     setSubLogoutConfirm:
       '将在这台电脑上退出 {program} 的登录。在终端中使用的 {program} 也会一并退出登录。',
     setSubSwitchConfirm:
@@ -833,6 +834,8 @@ export const strings = {
     setSubLoginFailed:
       'The sign-in could not be started. Check that the program is installed, then try again.',
     setSubLogoutFailed: 'The sign-out could not be completed. Try again in a moment.',
+    setSubSwitchFailed:
+      'The setting could not be saved, so nothing changed. Try again in a moment.',
     setSubLogoutConfirm:
       'This signs {program} out on this PC. {program} in a terminal is signed out as well.',
     setSubSwitchConfirm:
@@ -1428,6 +1431,7 @@ export const strings = {
     setSubLoginFailed:
       'Không thể bắt đầu đăng nhập. Hãy kiểm tra xem chương trình đã được cài đặt chưa rồi thử lại.',
     setSubLogoutFailed: 'Không thể đăng xuất. Hãy thử lại sau giây lát.',
+    setSubSwitchFailed: 'Không thể lưu cài đặt nên không có gì thay đổi. Hãy thử lại sau giây lát.',
     setSubLogoutConfirm:
       'Thao tác này đăng xuất {program} trên máy tính này. {program} dùng trong terminal cũng bị đăng xuất theo.',
     setSubSwitchConfirm:
@@ -2035,6 +2039,8 @@ export const strings = {
     setSubLoginFailed:
       'ログインを開始できませんでした。プログラムがインストールされているか確認してから、もう一度お試しください。',
     setSubLogoutFailed: 'ログアウトできませんでした。しばらくしてからもう一度お試しください。',
+    setSubSwitchFailed:
+      '設定を保存できなかったため、何も変わっていません。しばらくしてからもう一度お試しください。',
     setSubLogoutConfirm:
       'この PC の {program} からログアウトします。ターミナルで使っている {program} も一緒にログアウトされます。',
     setSubSwitchConfirm:
@@ -2643,6 +2649,7 @@ export const strings = {
     setSubLoginFailed:
       '로그인을 시작하지 못했습니다. 프로그램이 설치되어 있는지 확인한 뒤 다시 시도하세요.',
     setSubLogoutFailed: '로그아웃하지 못했습니다. 잠시 뒤 다시 시도하세요.',
+    setSubSwitchFailed: '설정을 저장하지 못해 바뀐 것이 없습니다. 잠시 뒤 다시 시도하세요.',
     setSubLogoutConfirm:
       '이 PC의 {program}에서 로그아웃합니다. 터미널에서 쓰는 {program}도 함께 로그아웃됩니다.',
     setSubSwitchConfirm:
@@ -3245,6 +3252,8 @@ export const strings = {
     setSubLoginFailed:
       'La connexion n’a pas pu être lancée. Vérifiez que le programme est installé, puis réessayez.',
     setSubLogoutFailed: 'La déconnexion n’a pas pu aboutir. Réessayez dans un instant.',
+    setSubSwitchFailed:
+      'Le réglage n’a pas pu être enregistré, rien n’a changé. Réessayez dans un instant.',
     setSubLogoutConfirm:
       'Cette action déconnecte {program} sur ce PC. {program} utilisé dans un terminal est déconnecté lui aussi.',
     setSubSwitchConfirm:
@@ -3867,6 +3876,8 @@ export const strings = {
       'Die Anmeldung konnte nicht gestartet werden. Prüfen Sie, ob das Programm installiert ist, und versuchen Sie es erneut.',
     setSubLogoutFailed:
       'Die Abmeldung konnte nicht abgeschlossen werden. Versuchen Sie es gleich noch einmal.',
+    setSubSwitchFailed:
+      'Die Einstellung konnte nicht gespeichert werden, daher hat sich nichts geändert. Versuchen Sie es gleich noch einmal.',
     setSubLogoutConfirm:
       'Damit wird {program} auf diesem PC abgemeldet. Auch {program} im Terminal wird abgemeldet.',
     setSubSwitchConfirm:
@@ -4491,6 +4502,8 @@ export const strings = {
     setSubLoginFailed:
       'No se pudo iniciar el inicio de sesión. Comprueba que el programa esté instalado y vuelve a intentarlo.',
     setSubLogoutFailed: 'No se pudo cerrar la sesión. Inténtalo de nuevo en un momento.',
+    setSubSwitchFailed:
+      'No se pudo guardar el ajuste, así que no cambió nada. Inténtalo de nuevo en un momento.',
     setSubLogoutConfirm:
       'Esto cierra la sesión de {program} en este PC. {program} en una terminal también queda sin sesión.',
     setSubSwitchConfirm:
@@ -5096,6 +5109,8 @@ export const strings = {
     setSubLoginFailed:
       'ไม่สามารถเริ่มการเข้าสู่ระบบได้ โปรดตรวจสอบว่าติดตั้งโปรแกรมแล้ว จากนั้นลองอีกครั้ง',
     setSubLogoutFailed: 'ออกจากระบบไม่สำเร็จ โปรดลองอีกครั้งในอีกสักครู่',
+    setSubSwitchFailed:
+      'บันทึกการตั้งค่าไม่สำเร็จ จึงไม่มีอะไรเปลี่ยนแปลง โปรดลองอีกครั้งในอีกสักครู่',
     setSubLogoutConfirm:
       'การดำเนินการนี้จะออกจากระบบ {program} บนพีซีเครื่องนี้ {program} ที่ใช้ในเทอร์มินัลจะถูกออกจากระบบไปด้วย',
     setSubSwitchConfirm:
@@ -5697,6 +5712,8 @@ export const strings = {
     setSubLoginFailed:
       'Proses masuk tidak dapat dimulai. Pastikan programnya sudah terpasang, lalu coba lagi.',
     setSubLogoutFailed: 'Tidak dapat keluar. Coba lagi sebentar lagi.',
+    setSubSwitchFailed:
+      'Pengaturan tidak dapat disimpan, jadi tidak ada yang berubah. Coba lagi sebentar lagi.',
     setSubLogoutConfirm:
       'Tindakan ini mengeluarkan {program} dari akunnya di PC ini. {program} yang dipakai di terminal ikut keluar.',
     setSubSwitchConfirm:
@@ -6307,6 +6324,8 @@ export const strings = {
     setSubLoginFailed:
       'Не удалось начать вход. Убедитесь, что программа установлена, и повторите попытку.',
     setSubLogoutFailed: 'Не удалось выйти. Повторите попытку чуть позже.',
+    setSubSwitchFailed:
+      'Не удалось сохранить настройку, поэтому ничего не изменилось. Повторите попытку чуть позже.',
     setSubLogoutConfirm:
       'Будет выполнен выход из {program} на этом компьютере. {program} в терминале тоже выйдет из учётной записи.',
     setSubSwitchConfirm:
@@ -6915,6 +6934,7 @@ export const strings = {
     setSubInstallFailed: 'تعذّر تشغيل أمر التثبيت. اتبع دليل التثبيت الرسمي بدلًا من ذلك.',
     setSubLoginFailed: 'تعذّر بدء تسجيل الدخول. تأكد من أن البرنامج مثبّت ثم حاول مجددًا.',
     setSubLogoutFailed: 'تعذّر تسجيل الخروج. حاول مجددًا بعد قليل.',
+    setSubSwitchFailed: 'تعذّر حفظ الإعداد، لذا لم يتغيّر شيء. حاول مجددًا بعد قليل.',
     setSubLogoutConfirm:
       'سيؤدي هذا إلى تسجيل خروج {program} على هذا الحاسوب. وسيُسجَّل خروج {program} المستخدم في الطرفية أيضًا.',
     setSubSwitchConfirm:
@@ -7512,6 +7532,8 @@ export const strings = {
     setSubLoginFailed:
       'Não foi possível iniciar o login. Verifique se o programa está instalado e tente novamente.',
     setSubLogoutFailed: 'Não foi possível sair. Tente novamente em instantes.',
+    setSubSwitchFailed:
+      'Não foi possível salvar a configuração, então nada mudou. Tente novamente em instantes.',
     setSubLogoutConfirm:
       'Isso desconecta o {program} neste PC. O {program} usado em um terminal também é desconectado.',
     setSubSwitchConfirm:
@@ -8117,6 +8139,8 @@ export const strings = {
     setSubLoginFailed:
       'Impossibile avviare l’accesso. Verifica che il programma sia installato, quindi riprova.',
     setSubLogoutFailed: 'Non è stato possibile uscire. Riprova tra qualche istante.',
+    setSubSwitchFailed:
+      'Non è stato possibile salvare l’impostazione, quindi non è cambiato nulla. Riprova tra qualche istante.',
     setSubLogoutConfirm:
       'Questa operazione disconnette {program} su questo PC. Anche {program} usato in un terminale viene disconnesso.',
     setSubSwitchConfirm:
@@ -8722,6 +8746,8 @@ export const strings = {
     setSubLoginFailed:
       'Nie udało się rozpocząć logowania. Sprawdź, czy program jest zainstalowany, i spróbuj ponownie.',
     setSubLogoutFailed: 'Nie udało się wylogować. Spróbuj ponownie za chwilę.',
+    setSubSwitchFailed:
+      'Nie udało się zapisać ustawienia, więc nic się nie zmieniło. Spróbuj ponownie za chwilę.',
     setSubLogoutConfirm:
       'Spowoduje to wylogowanie programu {program} na tym komputerze. Program {program} używany w terminalu również zostanie wylogowany.',
     setSubSwitchConfirm:
@@ -9274,6 +9300,8 @@ export const strings = {
     setSubLoginFailed:
       'Přihlášení se nepodařilo spustit. Zkontrolujte, zda je program nainstalovaný, a zkuste to znovu.',
     setSubLogoutFailed: 'Odhlášení se nepodařilo dokončit. Zkuste to za chvíli znovu.',
+    setSubSwitchFailed:
+      'Nastavení se nepodařilo uložit, takže se nic nezměnilo. Zkuste to za chvíli znovu.',
     setSubLogoutConfirm:
       'Tím se program {program} na tomto počítači odhlásí. Odhlásí se i {program} používaný v terminálu.',
     setSubSwitchConfirm:
@@ -9921,6 +9949,8 @@ export const strings = {
     setSubLoginFailed:
       'Het aanmelden kon niet worden gestart. Controleer of het programma is geïnstalleerd en probeer het opnieuw.',
     setSubLogoutFailed: 'Het afmelden is niet gelukt. Probeer het zo meteen opnieuw.',
+    setSubSwitchFailed:
+      'De instelling kon niet worden opgeslagen, dus er is niets veranderd. Probeer het zo meteen opnieuw.',
     setSubLogoutConfirm:
       'Hiermee wordt {program} op deze pc afgemeld. Ook {program} in een terminal wordt afgemeld.',
     setSubSwitchConfirm:
@@ -10523,6 +10553,8 @@ export const strings = {
     setSubLoginFailed:
       'Log masuk tidak dapat dimulakan. Pastikan program telah dipasang, kemudian cuba lagi.',
     setSubLogoutFailed: 'Tidak dapat log keluar. Cuba lagi sebentar lagi.',
+    setSubSwitchFailed:
+      'Tetapan tidak dapat disimpan, jadi tiada apa-apa yang berubah. Cuba lagi sebentar lagi.',
     setSubLogoutConfirm:
       'Tindakan ini melog keluar {program} pada PC ini. {program} yang digunakan dalam terminal turut dilog keluar.',
     setSubSwitchConfirm:
@@ -11121,6 +11153,7 @@ export const strings = {
       'לא ניתן היה להפעיל את פקודת ההתקנה. פעלו במקום זאת לפי מדריך ההתקנה הרשמי.',
     setSubLoginFailed: 'לא ניתן היה להתחיל את הכניסה. ודאו שהתוכנה מותקנת ונסו שוב.',
     setSubLogoutFailed: 'לא ניתן היה להשלים את היציאה מהחשבון. נסו שוב בעוד רגע.',
+    setSubSwitchFailed: 'לא ניתן היה לשמור את ההגדרה, ולכן שום דבר לא השתנה. נסו שוב בעוד רגע.',
     setSubLogoutConfirm:
       'פעולה זו מנתקת את {program} מהחשבון במחשב הזה. גם {program} שבשימוש במסוף ינותק.',
     setSubSwitchConfirm:
@@ -11705,6 +11738,8 @@ export const strings = {
     setSubLoginFailed:
       'साइन-इन शुरू नहीं हो सका। जाँचें कि प्रोग्राम इंस्टॉल है, फिर दोबारा कोशिश करें।',
     setSubLogoutFailed: 'साइन आउट पूरा नहीं हो सका। थोड़ी देर बाद फिर कोशिश करें।',
+    setSubSwitchFailed:
+      'सेटिंग सहेजी नहीं जा सकी, इसलिए कुछ नहीं बदला। थोड़ी देर बाद फिर कोशिश करें।',
     setSubLogoutConfirm:
       'इससे इस PC पर {program} साइन आउट हो जाएगा। टर्मिनल में इस्तेमाल होने वाला {program} भी साइन आउट हो जाएगा।',
     setSubSwitchConfirm:
@@ -12288,6 +12323,7 @@ export const strings = {
     setSubInstallFailed: '無法執行安裝指令。請依照官方安裝說明進行安裝。',
     setSubLoginFailed: '無法開始登入。請確認程式已安裝後再試一次。',
     setSubLogoutFailed: '無法登出。請稍後再試。',
+    setSubSwitchFailed: '無法儲存設定，因此沒有任何變更。請稍後再試。',
     setSubLogoutConfirm: '將在這台電腦上登出 {program}。在終端機中使用的 {program} 也會一併登出。',
     setSubSwitchConfirm:
       '將在這台電腦上以其他帳戶重新登入 {program}。在終端機中使用的 {program} 的帳戶也會一併變更。',

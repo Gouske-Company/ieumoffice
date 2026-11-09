@@ -246,6 +246,11 @@ export const de = {
   aiTplFontsNotice:
     'Die Schriftarten der Vorlage sind in dieser App enthalten. Andere Programme wie PowerPoint zeigen möglicherweise eine andere Schriftart an.',
   aiTplOpenFonts: 'Schriftartenordner öffnen',
+  aiTplFontsAuto: 'Schriftarten: KI wählt',
+  aiTplFontsOne: 'Schriftarten: {font}',
+  aiTplFontsTwo: 'Schriftarten: Titel {title}, Text {body}',
+  aiTplFontsTemplate: 'Schriftarten: die der gewählten Vorlage',
+  aiTplFontsChange: 'Ändern',
   aiTplDesc_coral:
     'Creme und Lachsorange auf fast schwarzem Grund, mit übergroßen, schmalen Überschriften.',
   aiTplDesc_blue_professional:

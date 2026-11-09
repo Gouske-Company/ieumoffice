@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: pblsketch <239486537+pblsketch@users.noreply.github.com>
-Date: Wed, 4 Nov 2026 00:00:00 +0900
-Subject: [PATCH 15/30] fix(renderer): 쪽 번호를 그릴 쪽을 쪽 번호 위치와 감추기로만 정한다
+Date: Sun, 8 Nov 2026 00:00:00 +0900
+Subject: [PATCH 14/29] fix(renderer): 쪽 번호를 그릴 쪽을 쪽 번호 위치와 감추기로만 정한다
 
 쪽 번호 새로 시작(NewNumber)이 있는 구역에서 첫 발화 앞 쪽의 쪽 번호를 모두
 감추던 규칙(#634)을 없앤다. 225쪽 보고서는 쪽 번호 위치가 1쪽 첫 문단, 새 번호가
@@ -40,10 +40,10 @@ Ported onto devel 7d06d5c70: devel already applies a page number position from i
  2 files changed, 20 insertions(+), 10 deletions(-)
 
 diff --git a/src/document_core/queries/rendering.rs b/src/document_core/queries/rendering.rs
-index ef338246531ec90b0a0ac4145b4c13a374b52870..8aa4d871af5247b90db0ec0f73b985555ba9c7ef 100644
+index 75fcef0969a03682fd5f742e4caa32711b679c65..09af9f9da17ed72926c4d5a59a9112aaeab3dd4f 100644
 --- a/src/document_core/queries/rendering.rs
 +++ b/src/document_core/queries/rendering.rs
-@@ -5855,13 +5855,14 @@ impl DocumentCore {
+@@ -5982,13 +5982,14 @@ impl DocumentCore {
                  storage,
              )?;
  

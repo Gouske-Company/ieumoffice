@@ -22,6 +22,7 @@ Clair / Sombre / Suivre le système. Suivre le système suit l’apparence de l�
 - **Enregistrer automatiquement tous les documents** active l'enregistrement automatique par défaut dans tous les éditeurs ; vous pouvez toujours le désactiver pour une fenêtre.
 - **Emplacement d'enregistrement** avec un bouton **Modifier** et **Application par défaut pour les documents Office** pour attribuer .docx / .xlsx / .pptx à GenOffice.
 - **Format d'enregistrement des nouveaux documents HWP** choisit si HWP ou HWPX est proposé en premier lors du premier enregistrement d'un nouveau document. Les documents ouverts conservent leur propre format.
+- **Polices des diapositives IA** définit les polices que l’IA utilise pour une nouvelle présentation lorsque votre demande n’en nomme aucune. Choisissez Auto, Sans empattement, Avec empattement ou Titres avec empattement, et changez séparément la police sans empattement et la police avec empattement. Un modèle de conception choisi utilise ses propres polices, et les pages ajoutées à une présentation dans d’autres polices suivent cette présentation.
 
 GenOffice ne collecte ni n’envoie de statistiques d’utilisation : il n’y a donc pas d’interrupteur pour cela.
 

@@ -27,6 +27,7 @@ Quy tắc: phần mở rộng được giữ tự động; ký tự không hợp
 
 - **⌘S / ctrl+S** lưu tập tin hiện tại; một tập tin chưa có tiêu đề sẽ hỏi vị trí và tên trước.
 - Ở hầu hết trình soạn thảo, danh sách loại tệp trong hộp thoại Lưu dưới dạng cũng có các định dạng xuất (PDF, hình ảnh, các định dạng tài liệu khác). Chọn một trong số đó chỉ ghi ra một bản sao; tài liệu đang mở và thẻ của nó vẫn gắn với tệp gốc. Ảnh của nhiều trang được tách thành `tên-01.png`, `tên-02.png`, ….
+- **Docs**: danh sách Lưu dưới dạng còn có .hwp và .hwpx (Tệp ▸ Xuất dưới dạng tài liệu HWP… cũng vậy). Nếu có gì không chuyển được, như nhận xét, phương trình hay hộp văn bản, bạn sẽ được báo trước khi ghi tệp.
 - **Lưu dưới dạng** ghi một tập tin mới và để nguyên tệp gốc; các lần sửa sau đó nhắm vào tập tin mới.
 - Mỗi lần lưu đều là nguyên tử (tập tin tạm + đổi tên); thoát giữa chừng lúc đang ghi không làm hỏng tệp.
 - Tự động lưu tuân theo công tắc của từng trình soạn thảo; tài liệu mới chưa có tệp riêng chỉ bắt đầu sau lần lưu đầu tiên (xem [Bắt đầu nhanh](help://getting-started)).

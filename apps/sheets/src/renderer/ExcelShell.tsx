@@ -1157,7 +1157,7 @@ export function ExcelShell({
                   .xlsx. A document fact, so it stays beside the shared status
                   chip, in its own value that command messages never clear. */}
               {odsNoticeText && (
-                <span className="status-flag" role="status" title={odsNoticeText}>
+                <span className="status-flag status-ods" role="status" title={odsNoticeText}>
                   {odsNoticeText}
                 </span>
               )}

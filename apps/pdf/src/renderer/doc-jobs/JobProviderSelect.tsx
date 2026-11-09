@@ -1,19 +1,24 @@
 /**
  * The provider row of a document job's pre-start confirmation (translation,
- * AI page reading, AI highlights, long-document overview). The model chip
- * beside it lists only the providers that are connected now; this list also
- * names the subscriptions that are not, so a person can switch to Claude or
- * Codex from the confirmation and connect it there: the dialog's connect card
- * follows the stored choice.
+ * AI page reading, AI highlights). The model chip beside it lists only the
+ * providers that are connected now; this list also names the subscriptions
+ * that are not, so a person can switch to Claude, ChatGPT or Codex from the
+ * confirmation and connect it there: the dialog's connect card follows the
+ * stored choice. A program turned off in this app (decision 0114) is listed
+ * as off and cannot be picked here; Settings turns it back on.
  *
  * The choice is the user's and is saved in the settings ("AI to use"), like
- * the chip's; the route is still `selectAiProvider`'s answer for it. Changing
- * the provider keeps the model each provider was set to.
+ * the chip's; the route is still `selectAiProvider`'s answer for it. Key
+ * providers are listed only once their key is filled in, and only picking one
+ * selects it: "automatic" never runs on a key. Changing the provider keeps the
+ * model each provider was set to.
  */
 import type { ReactElement } from 'react'
 import {
   AI_SUBSCRIPTION_PROVIDERS,
   subscriptionConnection,
+  subscriptionOffIn,
+  subscriptionStateOf,
   type AiSettings,
   type AiSubscriptionStatuses,
 } from '@genoffice/ai-provider/browser'
@@ -36,15 +41,18 @@ export interface JobProviderOption {
   readonly selection: Omit<AiProviderPickerSelection, 'model'>
   /** a subscription whose program is not connected now */
   readonly notConnected: boolean
+  /** a program turned off in this app: shown, not offered */
+  readonly off: boolean
 }
 
 const optionValue = (s: { provider: string; endpoint?: string | undefined }): string =>
   s.provider === 'custom' && s.endpoint ? `custom:${s.endpoint}` : s.provider
 
 /**
- * What the row offers: "automatic" (with what it runs on), both subscriptions
- * whether connected or not, then the key providers and servers that are filled
- * in. A stored choice that is none of these is listed too, so the row shows it.
+ * What the row offers: "automatic" (with what it runs on), every subscription
+ * whether connected or not (one turned off in this app marked so, and not
+ * offered), then the key providers and servers that are filled in. A stored
+ * choice that is none of these is listed too, so the row shows it.
  */
 export function jobProviderOptions(
   settings: AiSettings,
@@ -63,23 +71,34 @@ export function jobProviderOptions(
       : aiSubscriptionText(lang, 'pickerAuto'),
     selection: { provider: 'auto' },
     notConnected: false,
+    off: false,
   })
   for (const id of AI_SUBSCRIPTION_PROVIDERS) {
-    const status = statuses[id]
-    const connection = subscriptionConnection(settings, status)
     const name = aiProviderDisplayName(id)
+    if (subscriptionOffIn(settings, id)) {
+      options.push({
+        value: id,
+        label: `${name} · ${aiSubscriptionText(lang, 'cardOff')}`,
+        selection: { provider: id },
+        notConnected: false,
+        off: true,
+      })
+      continue
+    }
+    const connection = subscriptionConnection(settings, statuses[id])
     // while the program is being checked, its state is not known yet: no "not connected"
-    const known = !!status && status.state !== 'checking'
+    const unknown = subscriptionStateOf(statuses, id) === 'checking'
     options.push({
       value: id,
       label:
         connection === 'metered'
           ? `${name} · ${aiSubscriptionText(lang, 'pickerPaid')}`
-          : !connection && known
+          : !connection && !unknown
             ? notConnected(name)
             : name,
       selection: { provider: id },
-      notConnected: !connection && known,
+      notConnected: !connection && !unknown,
+      off: false,
     })
   }
   for (const g of groups) {
@@ -89,6 +108,7 @@ export function jobProviderOptions(
       label: g.label,
       selection: { provider: g.id, endpoint: g.endpoint },
       notConnected: false,
+      off: false,
     })
   }
   const value = optionValue(current)
@@ -99,6 +119,7 @@ export function jobProviderOptions(
       label: notConnected(name),
       selection: { provider: current.provider, endpoint: current.endpoint },
       notConnected: true,
+      off: false,
     })
   }
   return { options, value }
@@ -140,7 +161,7 @@ export function JobProviderSelect({
   const { options, value } = jobProviderOptions(settings, statuses, lang, notConnected)
   const choose = (next: string) => {
     const option = options.find((o) => o.value === next)
-    if (!option || next === value) return
+    if (!option || option.off || next === value) return
     onSaved(withJobProvider(settings, option.selection))
     // written onto what is stored now, so a change another window saved since is kept
     void changeStoredAiSettings(
@@ -161,7 +182,14 @@ export function JobProviderSelect({
         onChange={(e) => choose(e.target.value)}
       >
         {options.map((o) => (
-          <option key={o.value} value={o.value} data-not-connected={o.notConnected || undefined}>
+          <option
+            key={o.value}
+            value={o.value}
+            // the stored choice stays readable even when it is off; it is not offered otherwise
+            disabled={o.off && o.value !== value}
+            data-not-connected={o.notConnected || undefined}
+            data-off={o.off || undefined}
+          >
             {o.label}
           </option>
         ))}

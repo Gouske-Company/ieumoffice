@@ -7,9 +7,10 @@ import {
   realpathSync,
   statSync,
   unlinkSync,
+  watch,
   writeFileSync,
 } from 'node:fs'
-import { randomUUID } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import { copyFile, readFile, stat, writeFile } from 'node:fs/promises'
 import { tmpdir, userInfo } from 'node:os'
 import { basename, dirname, join, resolve } from 'node:path'
@@ -92,6 +93,7 @@ import type {
   SignaturePosition,
 } from '../shared/ipc'
 import { writePdfAtomically } from './atomic-write'
+import { watchDiskFile, type DiskWatch, type DiskWatchDeps } from './disk-watch'
 import {
   copyPdfToPath,
   cropPagesBytes,
@@ -807,6 +809,97 @@ async function conflictStopsSave(
     })) === 'cancel'
   )
 }
+
+// ── Disk-change notice (issue #405): each view watches the file it shows and
+// hears when another program changed, removed or renamed it. The app's own
+// writes hold the path as "being written" and then move the view's baseline.
+const diskWatchByWc = new Map<number, DiskWatch>()
+const ownWritesInFlight = new Map<string, number>()
+
+const diskWatchDeps: DiskWatchDeps = {
+  watchDir: (dir, onEvent) => {
+    try {
+      const watcher = watch(dir, { persistent: false }, (_event, filename) =>
+        onEvent(typeof filename === 'string' ? filename : null),
+      )
+      // the folder went away or the platform gave up: no more notices for this view
+      watcher.on('error', () => watcher.close())
+      return watcher
+    } catch {
+      return null
+    }
+  },
+  stat: async (path) => {
+    try {
+      const info = await stat(path)
+      return info.isFile() ? { mtimeMs: info.mtimeMs, size: info.size } : null
+    } catch {
+      return null
+    }
+  },
+  read: async (path) => {
+    try {
+      return new Uint8Array(await readFile(path))
+    } catch {
+      return null
+    }
+  },
+  // the same digest as recordDiskState, so a baseline and a check compare
+  hash: (bytes) => createHash('sha256').update(bytes).digest('hex'),
+  setTimer: (fn, ms) => setTimeout(fn, ms),
+  clearTimer: (handle) => clearTimeout(handle as ReturnType<typeof setTimeout>),
+  ownWriteInFlight: (path) => (ownWritesInFlight.get(path) ?? 0) > 0,
+  settleMs: 400,
+  caseInsensitive: process.platform === 'win32' || process.platform === 'darwin',
+}
+
+/** The view (re)loaded `path`: watch it against the bytes it just read */
+function watchViewFile(contents: WebContents, path: string): void {
+  const wcId = contents.id
+  const baseline = docDiskStates.get(wcId)?.get(path) ?? null
+  const current = diskWatchByWc.get(wcId)
+  if (current?.path === path) {
+    current.rebase(baseline)
+    return
+  }
+  current?.close()
+  diskWatchByWc.set(
+    wcId,
+    watchDiskFile(
+      path,
+      baseline,
+      (kind) => {
+        if (!contents.isDestroyed()) contents.send(PDF_CHANNELS.diskFileChanged, { path, kind })
+      },
+      diskWatchDeps,
+    ),
+  )
+}
+
+function stopViewWatch(wcId: number): void {
+  diskWatchByWc.get(wcId)?.close()
+  diskWatchByWc.delete(wcId)
+}
+
+/**
+ * Write `path` as this view: other views' watchers wait while it is written,
+ * and on success this view's record and watcher move to the written bytes, so
+ * its own save never reads as another program's change.
+ */
+async function writeOwnFile<T>(wcId: number, path: string, write: () => Promise<T>): Promise<T> {
+  ownWritesInFlight.set(path, (ownWritesInFlight.get(path) ?? 0) + 1)
+  try {
+    const result = await write()
+    await rememberDiskState(wcId, path)
+    const watcher = diskWatchByWc.get(wcId)
+    if (watcher?.path === path) watcher.rebase(docDiskStates.get(wcId)?.get(path) ?? null)
+    return result
+  } finally {
+    const left = (ownWritesInFlight.get(path) ?? 1) - 1
+    if (left > 0) ownWritesInFlight.set(path, left)
+    else ownWritesInFlight.delete(path)
+  }
+}
 /** A derived copy (redacted or certificate-signed) becomes this tab's document */
 let pdfRedactionSavedHook: ((wc: WebContents, path: string) => void) | null = null
 
@@ -1114,6 +1207,11 @@ export function pdfFileRenamed(contents: WebContents, oldPath: string, newPath: 
   if (states && recorded) {
     states.delete(oldPath)
     states.set(newPath, recorded)
+  }
+  // the old name is gone because the app moved it: watch the new one, no notice
+  if (diskWatchByWc.get(wcId)?.path === oldPath && !contents.isDestroyed()) {
+    stopViewWatch(wcId)
+    watchViewFile(contents, newPath)
   }
   if (!contents.isDestroyed()) contents.send(PDF_CHANNELS.fileRenamed, newPath)
 }
@@ -1503,6 +1601,21 @@ function registerPdfIpc(): void {
       : buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
   })
 
+  // the view has read its file: hear when another program changes it (untitled
+  // working copies live in the app's temp folder and need no watch)
+  ipcMain.handle(PDF_CHANNELS.watchDiskFile, (e, path: unknown): boolean => {
+    if (!pdfPathGranted(e.sender.id, path) || untitledCopyPdfPaths.has(path)) return false
+    watchViewFile(e.sender, path)
+    return true
+  })
+
+  // the person chose to reload from disk: a restored copy stops standing in for the file
+  ipcMain.handle(PDF_CHANNELS.discardForDiskReload, (e, path: unknown): boolean => {
+    if (!pdfPathGranted(e.sender.id, path)) return false
+    recovery.discardedForDisk(e.sender.id, path)
+    return true
+  })
+
   // pdf.js has already accepted `password` for these bytes on the render side;
   // a failure here therefore means the standard handler refused it
   ipcMain.handle(PDF_CHANNELS.decryptPdf, async (_e, bytes: unknown, password: unknown) => {
@@ -1647,11 +1760,15 @@ function registerPdfIpc(): void {
     // a view restored from a recovery copy saves from the copy's bytes, not the file
     const restoredSource = recovery.viewBytes(e.sender.id, path)
     try {
-      const { skippedTextEdits, skippedTextInserts, skippedImageEdits } = restoredSource
-        ? await savePdfBytesToPath(restoredSource, target, request)
-        : await savePdfToPath(path, target, request)
-      // Refresh the record for the written bytes
-      await rememberDiskState(e.sender.id, target)
+      // Refresh the record for the written bytes (writeOwnFile does, watcher included)
+      const { skippedTextEdits, skippedTextInserts, skippedImageEdits } = await writeOwnFile(
+        e.sender.id,
+        target,
+        () =>
+          restoredSource
+            ? savePdfBytesToPath(restoredSource, target, request)
+            : savePdfToPath(path, target, request),
+      )
       // a save in place changed the document's hash: its note link follows (spec 5.4)
       if (target === path && request.redactions === undefined) void noteLinks.afterSave(path)
       // the person saved this blank: it now has a saved path (its untitled name may stay)
@@ -2094,7 +2211,7 @@ function registerPdfIpc(): void {
           new Uint8Array(await readFile(other)),
           typeof afterPageIndex === 'number' ? afterPageIndex : -1,
         )
-        await writePdfAtomically(path, merged)
+        await writeOwnFile(e.sender.id, path, () => writePdfAtomically(path, merged))
         return { ok: true, insertedCount: count }
       } catch (err) {
         return { ok: false, error: err instanceof Error ? err.message : String(err) }
@@ -2212,7 +2329,7 @@ function registerPdfIpc(): void {
           new Uint8Array(await readFile(path)),
           typeof afterPageIndex === 'number' ? afterPageIndex : -1,
         )
-        await writePdfAtomically(path, bytes)
+        await writeOwnFile(e.sender.id, path, () => writePdfAtomically(path, bytes))
         return { ok: true }
       } catch (err) {
         return { ok: false, error: err instanceof Error ? err.message : String(err) }
@@ -2340,7 +2457,7 @@ function registerPdfIpc(): void {
           new Uint8Array(await readFile(other)),
           pages,
         )
-        await writePdfAtomically(path, merged)
+        await writeOwnFile(e.sender.id, path, () => writePdfAtomically(path, merged))
         return { ok: true, removed, inserted }
       } catch (err) {
         return { ok: false, error: err instanceof Error ? err.message : String(err) }
@@ -2360,7 +2477,7 @@ function registerPdfIpc(): void {
       }
       try {
         const bytes = await setPageSizeBytes(new Uint8Array(await readFile(path)), width, height)
-        await writePdfAtomically(path, bytes)
+        await writeOwnFile(e.sender.id, path, () => writePdfAtomically(path, bytes))
         return { ok: true }
       } catch (err) {
         return { ok: false, error: err instanceof Error ? err.message : String(err) }
@@ -2408,7 +2525,7 @@ function registerPdfIpc(): void {
       }
       try {
         const bytes = await cropPagesBytes(new Uint8Array(await readFile(path)), pages, rect)
-        await writePdfAtomically(path, bytes)
+        await writeOwnFile(e.sender.id, path, () => writePdfAtomically(path, bytes))
         return { ok: true }
       } catch (err) {
         return { ok: false, error: err instanceof Error ? err.message : String(err) }
@@ -2773,6 +2890,7 @@ function grantAndTrack(wc: WebContents, openPath?: string | null): void {
     allowedByWc.delete(wcId)
     dirtyByWc.delete(wcId)
     docDiskStates.delete(wcId)
+    stopViewWatch(wcId)
     certEntriesByWc.delete(wcId)
     saveAsTargetByWc.delete(wcId)
     imageTargetByWc.delete(wcId)
@@ -2786,6 +2904,8 @@ function grantAndTrack(wc: WebContents, openPath?: string | null): void {
   // close guard must not still think the tab is dirty.
   wc.on('did-start-loading', () => {
     dirtyByWc.delete(wcId)
+    // the remounted renderer watches again once it has read its file
+    stopViewWatch(wcId)
   })
 }
 

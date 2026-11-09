@@ -17,6 +17,7 @@ import { splitPaneBridge } from '@genoffice/electron-utils/split-pane-bridge'
 import { AI_CHANNELS, PDF_CHANNELS } from '../shared/ipc'
 import type {
   PdfApi,
+  PdfDiskFileChange,
   PdfNoteResult,
   PdfRecoveryCopyResult,
   PdfStoreApi,
@@ -297,6 +298,17 @@ const api: PdfApi = {
     ipcRenderer.on(PDF_CHANNELS.fileRenamed, listener)
     return () => ipcRenderer.removeListener(PDF_CHANNELS.fileRenamed, listener)
   },
+  watchDiskFile: (path) =>
+    (ipcRenderer.invoke(PDF_CHANNELS.watchDiskFile, path) as Promise<boolean>).catch(() => false),
+  onDiskFileChanged: (handler) => {
+    const listener = (_e: Electron.IpcRendererEvent, change: PdfDiskFileChange) => handler(change)
+    ipcRenderer.on(PDF_CHANNELS.diskFileChanged, listener)
+    return () => ipcRenderer.removeListener(PDF_CHANNELS.diskFileChanged, listener)
+  },
+  discardForDiskReload: (path) =>
+    (ipcRenderer.invoke(PDF_CHANNELS.discardForDiskReload, path) as Promise<boolean>).catch(
+      () => false,
+    ),
   // crash recovery; the standalone app may lack the store: a failed call is "nothing"
   recoveryState: (path) =>
     (ipcRenderer.invoke(PDF_CHANNELS.recoveryState, path) as Promise<{ unsaved: boolean }>).catch(

@@ -112,6 +112,10 @@ export const PDF_CHANNELS = {
   autoSaveDefaultChanged: 'app:auto-save-default-changed',
   printRequest: 'pdf:print-request',
   fileRenamed: 'pdf:file-renamed',
+  // another program changed the open file (issue #405): watch it, notice, reload
+  watchDiskFile: 'pdf:watch-disk-file',
+  diskFileChanged: 'pdf:disk-file-changed',
+  discardForDiskReload: 'pdf:discard-for-disk-reload',
   // crash recovery: copies of unsaved edits in the app data folder (never the file itself)
   recoveryState: 'pdf:recovery-state',
   recoveryWriteCopy: 'pdf:recovery-write-copy',
@@ -1638,6 +1642,12 @@ export type ReadUrlResult =
   | { ok: false; error: string; errorCode: string }
 
 /** API exposed by preload to the renderer (window.pdfApi) */
+/** Another program changed the open file (`unchanged` clears an earlier notice) */
+export interface PdfDiskFileChange {
+  path: string
+  kind: 'changed' | 'missing' | 'unchanged'
+}
+
 export interface PdfApi {
   /** Take the pdf path pending for this view (queued at tab creation); null if none */
   consumePending(): Promise<string | null>
@@ -1844,6 +1854,12 @@ export interface PdfApi {
   onPrintRequest(handler: () => void): () => void
   /** The file was renamed or moved from the shell (home Folders / Files pane); the viewer follows the new path */
   onFileRenamed(handler: (newPath: string) => void): () => void
+  /** Watch the file this view just read; another program's change arrives via onDiskFileChanged */
+  watchDiskFile?(path: string): Promise<boolean>
+  /** The watched file changed, went missing, or is back to what the view shows */
+  onDiskFileChanged?(handler: (change: PdfDiskFileChange) => void): () => void
+  /** Before reloading from disk: drop the restored recovery copy that stands in for the file */
+  discardForDiskReload?(path: string): Promise<boolean>
   /** Whether the view shows `path` from a recovery copy not saved since (the tab starts with unsaved changes) */
   recoveryState?(path: string): Promise<{ unsaved: boolean }>
   /** Write the recovery copy: what a save of these edits would write, into the app data folder only */

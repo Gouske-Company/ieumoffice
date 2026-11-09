@@ -37,6 +37,8 @@ export const vi = {
   arConfirmSends: 'Hình ảnh trang sẽ được gửi đến AI này.',
   arConfirmNothing: 'Tất cả các trang đã chọn đều đã được đọc. Không có gì để gửi.',
   arChecking: 'Đang kiểm tra kết nối AI…',
+  arProviderLabel: 'Nhà cung cấp',
+  arProviderNotConnected: '{provider} (chưa kết nối)',
   arVisionProvider:
     '{provider} không đọc được hình ảnh nên không thể bắt đầu đọc trang bằng AI. Hãy chọn một AI đọc được hình ảnh trong Cài đặt.',
   arVisionModel:

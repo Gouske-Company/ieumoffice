@@ -35,6 +35,8 @@ export const zh = {
   arConfirmSends: '页面图像将发送给此 AI。',
   arConfirmNothing: '所选页面均已识读，没有需要发送的页面。',
   arChecking: '正在检查 AI 连接…',
+  arProviderLabel: '提供方',
+  arProviderNotConnected: '{provider}（未连接）',
   arVisionProvider:
     '{provider} 无法读取图像，因此不能开始 AI 识读页面。请在设置中选择能读取图像的 AI。',
   arVisionModel:

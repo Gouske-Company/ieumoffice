@@ -37,6 +37,8 @@ export const hi = {
   arConfirmSends: 'पेजों की छवियाँ इस AI को भेजी जाती हैं।',
   arConfirmNothing: 'चुने गए सभी पेज पहले ही पढ़े जा चुके हैं। भेजने के लिए कुछ नहीं है।',
   arChecking: 'AI कनेक्शन जाँचा जा रहा है…',
+  arProviderLabel: 'प्रदाता',
+  arProviderNotConnected: '{provider} (कनेक्ट नहीं)',
   arVisionProvider:
     '{provider} छवियाँ नहीं पढ़ सकता, इसलिए AI से पेज पढ़ना शुरू नहीं हो सकता। सेटिंग्स में ऐसा AI चुनें जो छवियाँ पढ़ सके।',
   arVisionModel:

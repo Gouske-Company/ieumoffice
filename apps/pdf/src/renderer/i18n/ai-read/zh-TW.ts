@@ -36,6 +36,8 @@ export const zhTW = {
   arConfirmSends: '頁面影像將傳送給此 AI。',
   arConfirmNothing: '所選頁面皆已識讀，沒有需要傳送的頁面。',
   arChecking: '正在檢查 AI 連線…',
+  arProviderLabel: '提供者',
+  arProviderNotConnected: '{provider}（未連線）',
   arVisionProvider:
     '{provider} 無法讀取影像，因此無法開始 AI 識讀頁面。請在設定中選擇能讀取影像的 AI。',
   arVisionModel:

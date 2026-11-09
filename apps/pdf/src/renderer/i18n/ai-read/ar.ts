@@ -37,6 +37,8 @@ export const ar = {
   arConfirmSends: 'تُرسل صور الصفحات إلى هذا الذكاء الاصطناعي.',
   arConfirmNothing: 'كل الصفحات المختارة مقروءة سابقًا. لا يوجد ما يُرسل.',
   arChecking: 'جارٍ التحقق من اتصال الذكاء الاصطناعي…',
+  arProviderLabel: 'المزوّد',
+  arProviderNotConnected: '{provider} (غير متصل)',
   arVisionProvider:
     'لا يستطيع {provider} قراءة الصور، لذا لا يمكن بدء قراءة الصفحات بالذكاء الاصطناعي. اختر من الإعدادات ذكاءً اصطناعيًا يقرأ الصور.',
   arVisionModel:

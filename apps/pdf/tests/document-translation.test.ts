@@ -669,6 +669,52 @@ describe('translation window: confirmation', () => {
     expect(bridge.api.aiStream).not.toHaveBeenCalled()
   })
 
+  it('switches the provider on the confirmation, to one not connected yet too', async () => {
+    const base = normalizeAiSettings({})
+    const m = await mount({
+      settings: {
+        provider: 'auto',
+        providers: { ...base.providers, codex: { apiKey: '', model: 'gpt-x' } },
+      },
+      statuses: statusesOf('ready', 'signed-out'),
+    })
+    await openToConfirm(m)
+    const select = () => q(m.el, '[data-field="provider"]') as HTMLSelectElement | null
+    await until(() => select() !== null, 'the provider list')
+    expect(q(m.el, '.pdf-job-provider > span')?.textContent).toBe('Provider')
+    expect(select()!.value).toBe('auto')
+    const label = (value: string) =>
+      [...select()!.options].find((option) => option.value === value)?.textContent
+    expect(label('auto')).toContain('Claude')
+    expect(label('claude-code')).toBe('Claude')
+    expect(label('codex')).toBe(t('arProviderNotConnected', { provider: 'Codex' }))
+
+    const choose = async (value: string) => {
+      await act(async () => {
+        select()!.value = value
+        select()!.dispatchEvent(new Event('change', { bubbles: true }))
+      })
+      await settle()
+    }
+    // a subscription not connected: chosen and saved; the connect card asks for it
+    await choose('codex')
+    const written = bridge.api.setAiSettings.mock.calls.at(-1)?.[0] as AiSettings
+    expect(written.provider).toBe('codex')
+    expect(written.providers.codex?.model).toBe('gpt-x')
+    expect(q(m.el, '[data-route="ready"]')).toBeNull()
+    expect(q(m.el, '.ai-sub-prompt')).not.toBeNull()
+    expect(disabled(m.el, '[data-action="start"]')).toBe(true)
+    expect(select()!.value).toBe('codex')
+
+    await choose('claude-code')
+    expect((bridge.api.setAiSettings.mock.calls.at(-1)?.[0] as AiSettings).provider).toBe(
+      'claude-code',
+    )
+    expect(q(m.el, '[data-route="ready"]')?.getAttribute('data-provider')).toBe('claude-code')
+    expect(disabled(m.el, '[data-action="start"]')).toBe(false)
+    expect(bridge.api.aiStream).not.toHaveBeenCalled()
+  })
+
   it('warns when the stored translation was made with another provider or model', async () => {
     const channels = fakeChannels({
       stored: { lang: 'de', provider: 'codex', model: 'gpt-x', blocks: 1 },

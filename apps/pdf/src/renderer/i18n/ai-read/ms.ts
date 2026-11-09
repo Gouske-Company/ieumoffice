@@ -38,6 +38,8 @@ export const ms = {
   arConfirmSends: 'Imej halaman dihantar kepada AI ini.',
   arConfirmNothing: 'Semua halaman yang dipilih sudah dibaca. Tiada apa-apa untuk dihantar.',
   arChecking: 'Menyemak sambungan AI…',
+  arProviderLabel: 'Penyedia',
+  arProviderNotConnected: '{provider} (tidak disambungkan)',
   arVisionProvider:
     '{provider} tidak dapat membaca imej, jadi bacaan halaman dengan AI tidak dapat dimulakan. Pilih AI yang boleh membaca imej dalam Tetapan.',
   arVisionModel:

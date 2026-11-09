@@ -36,6 +36,8 @@ export const th = {
   arConfirmSends: 'ภาพของหน้าจะถูกส่งไปยัง AI นี้',
   arConfirmNothing: 'หน้าที่เลือกทั้งหมดอ่านไว้แล้ว ไม่มีอะไรต้องส่ง',
   arChecking: 'กำลังตรวจสอบการเชื่อมต่อ AI…',
+  arProviderLabel: 'ผู้ให้บริการ',
+  arProviderNotConnected: '{provider} (ยังไม่เชื่อมต่อ)',
   arVisionProvider:
     '{provider} อ่านภาพไม่ได้ จึงเริ่มให้ AI อ่านหน้าไม่ได้ โปรดเลือก AI ที่อ่านภาพได้ในการตั้งค่า',
   arVisionModel:

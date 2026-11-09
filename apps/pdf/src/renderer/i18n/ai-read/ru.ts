@@ -37,6 +37,8 @@ export const ru = {
   arConfirmSends: 'Изображения страниц отправляются этому ИИ.',
   arConfirmNothing: 'Все выбранные страницы уже прочитаны. Отправлять нечего.',
   arChecking: 'Проверка подключения к ИИ…',
+  arProviderLabel: 'Поставщик',
+  arProviderNotConnected: '{provider} (не подключено)',
   arVisionProvider:
     '{provider} не читает изображения, поэтому чтение страниц с помощью ИИ нельзя начать. Выберите в настройках ИИ, который читает изображения.',
   arVisionModel:

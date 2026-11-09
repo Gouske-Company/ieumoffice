@@ -44,6 +44,7 @@ import { useModalDialog } from '../modal-dialog'
 import { parsePageRange } from '../convert/page-range'
 import { useSubscriptionConnection } from '../ai/useSubscriptionConnection'
 import { createIpcJobStore } from '../doc-jobs/ipc-store'
+import { JobProviderSelect } from '../doc-jobs/JobProviderSelect'
 import { documentJobRoute, routeLabel, sameRoute, type DocumentJobRoute } from '../doc-jobs/route'
 
 export type ReadyRoute = Extract<DocumentJobRoute, { state: 'ready' }>
@@ -484,11 +485,22 @@ function AiReadConfirm({
         )}
         {route.state === 'checking' && <li data-route="checking">{t('arChecking')}</li>}
         {route.state === 'ready' && (
-          <>
-            <li data-route="ready" data-provider={route.provider}>
-              {t('arConfirmProvider', { provider: routeLabel(route) })}
-            </li>
-            <li className="pdf-ai-read-ai" data-model-picker>
+          <li data-route="ready" data-provider={route.provider}>
+            {t('arConfirmProvider', { provider: routeLabel(route) })}
+          </li>
+        )}
+        {route.state !== 'checking' && settings && (
+          <li className="pdf-ai-read-ai" data-model-picker>
+            <JobProviderSelect
+              bridge={SETTINGS_BRIDGE}
+              settings={settings}
+              statuses={connection.statuses}
+              lang={lang}
+              label={t('arProviderLabel')}
+              notConnected={(provider) => t('arProviderNotConnected', { provider })}
+              onSaved={setSettings}
+            />
+            {route.state === 'ready' && (
               <AiModelPicker
                 bridge={SETTINGS_BRIDGE}
                 lang={lang}
@@ -496,7 +508,11 @@ function AiReadConfirm({
                 showLabel
                 onRefreshSubscriptions={connection.refresh}
               />
-            </li>
+            )}
+          </li>
+        )}
+        {route.state === 'ready' && (
+          <>
             <li>{t('arConfirmSends')}</li>
             {route.paid && (
               <li className="pdf-ai-read-paid" data-paid>

@@ -38,6 +38,8 @@ export const id = {
   arConfirmSends: 'Gambar halaman dikirim ke AI ini.',
   arConfirmNothing: 'Semua halaman yang dipilih sudah dibaca. Tidak ada yang perlu dikirim.',
   arChecking: 'Memeriksa koneksi AI…',
+  arProviderLabel: 'Penyedia',
+  arProviderNotConnected: '{provider} (belum terhubung)',
   arVisionProvider:
     '{provider} tidak dapat membaca gambar, jadi pembacaan halaman dengan AI tidak dapat dimulai. Pilih AI yang dapat membaca gambar di Pengaturan.',
   arVisionModel:

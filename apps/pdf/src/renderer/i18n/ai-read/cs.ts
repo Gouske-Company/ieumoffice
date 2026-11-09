@@ -37,6 +37,8 @@ export const cs = {
   arConfirmSends: 'Obrázky stránek se pošlou této AI.',
   arConfirmNothing: 'Všechny vybrané stránky už jsou přečtené. Není co poslat.',
   arChecking: 'Kontroluje se připojení k AI…',
+  arProviderLabel: 'Poskytovatel',
+  arProviderNotConnected: '{provider} (nepřipojeno)',
   arVisionProvider:
     '{provider} neumí číst obrázky, takže čtení stránek pomocí AI nelze spustit. V Nastavení zvolte AI, která čte obrázky.',
   arVisionModel:

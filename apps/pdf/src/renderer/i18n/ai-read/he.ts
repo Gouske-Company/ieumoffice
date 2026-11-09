@@ -37,6 +37,8 @@ export const he = {
   arConfirmSends: 'תמונות העמודים נשלחות לבינה מלאכותית זו.',
   arConfirmNothing: 'כל העמודים שנבחרו כבר נקראו. אין מה לשלוח.',
   arChecking: 'בודק את החיבור לבינה המלאכותית…',
+  arProviderLabel: 'ספק',
+  arProviderNotConnected: '{provider} (לא מחובר)',
   arVisionProvider:
     '{provider} אינו יכול לקרוא תמונות, ולכן לא ניתן להתחיל קריאת עמודים בבינה מלאכותית. בחרו בהגדרות בינה מלאכותית שקוראת תמונות.',
   arVisionModel:

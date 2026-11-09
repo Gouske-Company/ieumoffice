@@ -38,6 +38,8 @@ export const nl = {
   arConfirmSends: 'De paginabeelden worden naar deze AI gestuurd.',
   arConfirmNothing: 'Alle gekozen pagina’s zijn al gelezen. Er valt niets te versturen.',
   arChecking: 'AI-verbinding wordt gecontroleerd…',
+  arProviderLabel: 'Aanbieder',
+  arProviderNotConnected: '{provider} (niet verbonden)',
   arVisionProvider:
     '{provider} kan geen afbeeldingen lezen, dus pagina’s lezen met AI kan niet starten. Kies in Instellingen een AI die afbeeldingen leest.',
   arVisionModel:

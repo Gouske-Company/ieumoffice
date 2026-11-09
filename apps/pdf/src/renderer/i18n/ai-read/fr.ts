@@ -37,6 +37,8 @@ export const fr = {
   arConfirmSends: 'Les images des pages sont envoyées à cette IA.',
   arConfirmNothing: "Toutes les pages choisies ont déjà été lues. Il n'y a rien à envoyer.",
   arChecking: "Vérification de la connexion à l'IA…",
+  arProviderLabel: 'Fournisseur',
+  arProviderNotConnected: '{provider} (non connecté)',
   arVisionProvider:
     '{provider} ne lit pas les images : la lecture IA des pages ne peut pas démarrer. Choisissez dans les Paramètres une IA qui lit les images.',
   arVisionModel:

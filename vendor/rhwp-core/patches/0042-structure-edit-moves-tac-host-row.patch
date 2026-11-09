@@ -1,0 +1,267 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: pblsketch <239486537+pblsketch@users.noreply.github.com>
+Date: Sun, 8 Nov 2026 00:00:00 +0900
+Subject: [PATCH 30/30] fix(edit): 줄·칸 넣기·지우기로 높이가 바뀐 글자처럼 취급 표의 저장 줄을 맞춘다
+
+글자처럼 취급 표에 줄을 넣거나 지우면 표 높이(sz)는 새 행 합으로 바뀌는데, 표가
+놓인 저장 줄(lh·th)과 뒤 문단의 vpos는 옛 높이로 남았다. 쪽 나누기 뒤의 저장 줄
+맞추기(sync_tac_host_rows)는 "저장 줄 높이 = 지금 표 높이 + 바깥 여백"일 때만 그 줄을 표의
+것으로 보는데, 구조 편집은 표 높이를 먼저 바꾸므로 그 조건이 깨져 건너뛰었다.
+그래서 편집 중 쪽 나누기는 한 쪽을 꽉 채운 표 뒤의 문단을 그 쪽 아래로 넘친 채
+두고, 저장해 다시 열면 그 문단을 다음 쪽으로 넘겨 쪽 수가 달라졌다(학교
+가정통신문: 마지막 표 '기타' 행 위에 행 하나 → 편집 중 2쪽, 다시 열면 3쪽, HWP 저장
+검증 exportHwpVerify 가 recovered=false 로 거절).
+
+- 구조 편집(줄·칸 넣기·지우기) 앞의 표 높이를 기억하고, 편집 뒤 그 높이로 저장
+  줄을 표의 것인지 보고 같은 차이만큼 줄 높이·기준선·뒤 줄과 뒤 문단 vpos를 옮긴다.
+  칸 글이 자란 경우의 맞추기와 같은 함수(move_tac_host_row)를 쓴다.
+- 칸(열) 넣기는 표 높이를 바꾸지 않아 저장 줄도 그대로다.
+- 줄을 지우면 같은 만큼 되돌아간다.
+---
+ .../commands/border_paint_structure.rs             |  15 ++
+ src/document_core/tac_host_rows.rs                 | 175 ++++++++++++++++++++-
+ 2 files changed, 187 insertions(+), 3 deletions(-)
+
+diff --git a/src/document_core/commands/border_paint_structure.rs b/src/document_core/commands/border_paint_structure.rs
+index c019b42b9cd0e56978d5ae117a6f838938ecd0c8..8ebb9cbf57ffeb088b2e61dcf4d35ab6a779a0c2 100644
+--- a/src/document_core/commands/border_paint_structure.rs
++++ b/src/document_core/commands/border_paint_structure.rs
+@@ -969,6 +969,21 @@ impl DocumentCore {
+         pi: usize,
+         ti: usize,
+         edit: StructureEdit,
++    ) -> Result<(u16, u16), HwpError> {
++        let declared_before = self.tac_table_height(si, pi, ti);
++        let counts = self.apply_table_structure_edit(si, pi, ti, edit)?;
++        if let Some(declared_before) = declared_before {
++            self.sync_tac_host_row_after_structure_edit(si, pi, ti, declared_before);
++        }
++        Ok(counts)
++    }
++
++    fn apply_table_structure_edit(
++        &mut self,
++        si: usize,
++        pi: usize,
++        ti: usize,
++        edit: StructureEdit,
+     ) -> Result<(u16, u16), HwpError> {
+         if let Some(mut prepared) = prepare(&self.document, si, pi, ti)? {
+             let Control::Table(table) = &mut prepared.parent.controls[ti] else {
+diff --git a/src/document_core/tac_host_rows.rs b/src/document_core/tac_host_rows.rs
+index b4e16cb21ad6a87b4f79b48dcf3f6f800d2504b1..e00dff230a9f05c1e69c535cdd125a53a1d393ae 100644
+--- a/src/document_core/tac_host_rows.rs
++++ b/src/document_core/tac_host_rows.rs
+@@ -131,12 +131,68 @@ impl DocumentCore {
+         }
+     }
+ 
++    /// 글자처럼 취급 표(캡션 없음)의 지금 표 높이. 그 밖의 컨트롤은 None.
++    pub(crate) fn tac_table_height(
++        &self,
++        section_idx: usize,
++        para_idx: usize,
++        control_idx: usize,
++    ) -> Option<i64> {
++        let para = self
++            .document
++            .sections
++            .get(section_idx)?
++            .paragraphs
++            .get(para_idx)?;
++        match para.controls.get(control_idx)? {
++            Control::Table(table) if table.common.treat_as_char && table.caption.is_none() => {
++                Some(i64::from(table.common.height))
++            }
++            _ => None,
++        }
++    }
++
++    /// 줄·칸 넣기·지우기가 표 높이를 `declared_before`에서 지금 높이로 다시 정한 뒤, 그 표가
++    /// 놓인 저장 줄과 뒤 문단의 vpos를 같은 차이만큼 맞춘다. 구조 편집은 표 높이를 먼저 바꾸므로
++    /// 쪽 나누기 뒤의 맞추기(옛 줄 높이 = 지금 표 높이)로는 잡히지 않는다. 저장 줄이 옛 높이로
++    /// 남으면 편집 중 쪽 나누기는 뒤 문단을 넘치는 쪽에 두고, 저장해 다시 열면 다음 쪽으로 넘겨
++    /// 쪽 수가 달라진다.
++    pub(crate) fn sync_tac_host_row_after_structure_edit(
++        &mut self,
++        section_idx: usize,
++        para_idx: usize,
++        control_idx: usize,
++        declared_before: i64,
++    ) -> bool {
++        let Some(content) = self.tac_table_height(section_idx, para_idx, control_idx) else {
++            return false;
++        };
++        self.move_tac_host_row(section_idx, para_idx, control_idx, declared_before, content)
++    }
++
+     fn sync_tac_host_row(
+         &mut self,
+         section_idx: usize,
+         para_idx: usize,
+         control_idx: usize,
+         measured_px: f64,
++    ) -> bool {
++        let Some(declared) = self.tac_table_height(section_idx, para_idx, control_idx) else {
++            return false;
++        };
++        let content = i64::from(px_to_hwpunit(measured_px, self.dpi));
++        self.move_tac_host_row(section_idx, para_idx, control_idx, declared, content)
++    }
++
++    /// 저장 줄이 `declared` 높이의 표를 담고 있으면 그 줄을 `content` 높이로 바꾸고, 뒤 줄과
++    /// 뒤 문단의 vpos를 그 차이만큼 옮긴다. 표 높이도 `content`로 맞춘다.
++    fn move_tac_host_row(
++        &mut self,
++        section_idx: usize,
++        para_idx: usize,
++        control_idx: usize,
++        declared: i64,
++        content: i64,
+     ) -> bool {
+         let Some(para) = self
+             .document
+@@ -149,7 +205,11 @@ impl DocumentCore {
+         let Some(Control::Table(table)) = para.controls.get(control_idx) else {
+             return false;
+         };
+-        if !table.common.treat_as_char || table.caption.is_some() || table.common.height == 0 {
++        if !table.common.treat_as_char
++            || table.caption.is_some()
++            || table.common.height == 0
++            || declared <= 0
++        {
+             return false;
+         }
+         // 표 외곽 상자 전체가 그 줄의 글자 높이일 때만 표가 그 저장 줄을 소유한다.
+@@ -159,7 +219,6 @@ impl DocumentCore {
+         let Some(seg) = para.line_segs.get(row) else {
+             return false;
+         };
+-        let declared = i64::from(table.common.height);
+         let old_band =
+             declared + i64::from(table.outer_margin_top) + i64::from(table.outer_margin_bottom);
+         if seg.tag & LineSeg::TAG_IMPLEMENTATION_PROPERTY != 0
+@@ -167,7 +226,6 @@ impl DocumentCore {
+         {
+             return false;
+         }
+-        let content = i64::from(px_to_hwpunit(measured_px, self.dpi));
+         let delta = content - declared;
+         if delta.abs() <= ROUNDING_HU || content <= 0 {
+             return false;
+@@ -274,3 +332,114 @@ fn shift_source_positions(para: &mut Paragraph, from: usize, delta: i32) {
+         }
+     }
+ }
++
++#[cfg(test)]
++mod tests {
++    use crate::document_core::DocumentCore;
++    use crate::model::control::Control;
++
++    /// A treat-as-char table of `rows`×2 in paragraph 0 and four short paragraphs after it,
++    /// saved as HWP and opened again: the stored rows hold the table, as in a file Hangul wrote.
++    fn saved_page_of_table(rows: u16) -> DocumentCore {
++        let mut doc = DocumentCore::new_empty();
++        doc.create_blank_document_native().expect("blank document");
++        doc.insert_text_native(0, 0, 0, "x").expect("type");
++        doc.split_paragraph_native(0, 0, 1, None).expect("split");
++        for para in 1..4 {
++            doc.split_paragraph_native(0, para, 0, None).expect("split");
++        }
++        doc.delete_text_native(0, 0, 0, 1).expect("delete");
++        for para in 1..=4 {
++            doc.insert_text_native(0, para, 0, &format!("closing line {para}"))
++                .expect("type");
++        }
++        doc.create_table_ex_native(0, 0, 0, rows, 2, true, None, None)
++            .expect("table");
++        DocumentCore::from_bytes(&doc.export_hwp_native().expect("save")).expect("reopen")
++    }
++
++    fn table_control(doc: &DocumentCore) -> usize {
++        doc.document().sections[0].paragraphs[0]
++            .controls
++            .iter()
++            .position(|control| matches!(control, Control::Table(_)))
++            .expect("table")
++    }
++
++    /// The host row's text height is the table's outer height, as Hangul stores it.
++    fn host_row_holds_table(doc: &DocumentCore, control: usize) {
++        let para = &doc.document().sections[0].paragraphs[0];
++        let Some(Control::Table(table)) = para.controls.get(control) else {
++            panic!("table");
++        };
++        let band = i64::from(table.common.height)
++            + i64::from(table.outer_margin_top)
++            + i64::from(table.outer_margin_bottom);
++        let row = crate::renderer::layout::control_line_seg_index(para, control).expect("row");
++        assert_eq!(i64::from(para.line_segs[row].text_height), band, "host row height");
++    }
++
++    fn verified_pages(doc: &DocumentCore) -> (u32, u32) {
++        let verify = doc.serialize_hwp_with_verify().expect("verify");
++        (verify.page_count_before, verify.page_count_after)
++    }
++
++    #[test]
++    fn inserted_row_grows_the_stored_host_row_and_pushes_the_next_page() {
++        // 45 rows fill the first page with the closing lines; one more row pushes the last
++        // closing line over (a school newsletter, 2026-11-09: the edited view kept it on the
++        // full page below its bottom, the saved file put it on the next page and the HWP save
++        // check refused the file)
++        let mut doc = saved_page_of_table(45);
++        let control = table_control(&doc);
++        assert_eq!(doc.page_count(), 1, "the saved page holds everything");
++        host_row_holds_table(&doc, control);
++        let following = doc.document().sections[0].paragraphs[1].line_segs[0].vertical_pos;
++        let height = |doc: &DocumentCore| match &doc.document().sections[0].paragraphs[0].controls
++            [control]
++        {
++            Control::Table(table) => i64::from(table.common.height),
++            _ => unreachable!(),
++        };
++        let before = height(&doc);
++
++        doc.insert_table_row_native(0, 0, control, 0, true)
++            .expect("insert a row");
++        let grown = height(&doc) - before;
++        assert!(grown > 0, "the table grows by the row");
++        host_row_holds_table(&doc, control);
++        assert_eq!(
++            i64::from(doc.document().sections[0].paragraphs[1].line_segs[0].vertical_pos),
++            i64::from(following) + grown,
++            "the next paragraph moves down by the row"
++        );
++        assert_eq!(verified_pages(&doc), (2, 2), "edited and reopened pages agree");
++
++        doc.delete_table_row_native(0, 0, control, 1)
++            .expect("delete the row");
++        assert_eq!(height(&doc), before, "the table is back");
++        host_row_holds_table(&doc, control);
++        assert_eq!(
++            doc.document().sections[0].paragraphs[1].line_segs[0].vertical_pos,
++            following,
++            "the next paragraph is back"
++        );
++        assert_eq!(verified_pages(&doc), (1, 1), "back on one page");
++    }
++
++    #[test]
++    fn inserted_column_keeps_the_host_row() {
++        let mut doc = saved_page_of_table(45);
++        let control = table_control(&doc);
++        let rows = doc.document().sections[0].paragraphs[0].line_segs.clone();
++        doc.insert_table_column_native(0, 0, control, 0, true)
++            .expect("insert a column");
++        let after = &doc.document().sections[0].paragraphs[0].line_segs;
++        assert_eq!(after.len(), rows.len());
++        for (a, b) in after.iter().zip(rows.iter()) {
++            assert_eq!(a.text_height, b.text_height, "a column leaves the row height");
++            assert_eq!(a.vertical_pos, b.vertical_pos);
++        }
++        assert_eq!(verified_pages(&doc), (1, 1));
++    }
++}

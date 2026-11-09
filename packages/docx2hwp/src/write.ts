@@ -33,8 +33,12 @@ const SECTION = 0
  */
 export const SECTION_CHUNK = 100
 
-/** the engine's seven font slots; Hangul, Hanja and Japanese take the East Asian face */
-const EAST_ASIAN_SLOTS: ReadonlySet<number> = new Set([0, 2, 3])
+/**
+ * The engine's seven font slots: Hangul, Latin, Hanja, Japanese, other, symbol, user.
+ * Hangul, Hanja, Japanese and symbol take the East Asian face: Word draws the
+ * ambiguous-width symbols of a Korean document (○, ※) with its East Asian font.
+ */
+const EAST_ASIAN_SLOTS: ReadonlySet<number> = new Set([0, 2, 3, 5])
 const FONT_SLOTS = [0, 1, 2, 3, 4, 5, 6] as const
 
 const LINE_TYPE = { percent: 'Percent', fixed: 'Fixed', atLeast: 'Minimum' } as const

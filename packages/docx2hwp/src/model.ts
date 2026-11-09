@@ -99,9 +99,9 @@ export type Inline =
   | { readonly kind: 'pageBreak' }
 
 export interface CharShape {
-  /** for the Hangul, Hanja and Japanese slots */
+  /** for the Hangul, Hanja, Japanese and symbol slots */
   readonly eastAsiaFace: string
-  /** for the Latin, other, symbol and user slots */
+  /** for the Latin, other and user slots */
   readonly latinFace: string
   readonly size: HwpUnit
   readonly bold: boolean

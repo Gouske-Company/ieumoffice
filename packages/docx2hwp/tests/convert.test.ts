@@ -102,14 +102,15 @@ describe.each(['hwpx', 'hwp'] as const)('%s', (format) => {
       expect(at('취소선')).toMatchObject({ strikethrough: true })
       expect(at('첨자')).toMatchObject({ superscript: true })
       expect(at('맑은')).toMatchObject({ fontFamily: '맑은 고딕', fontSize: 1400 })
-      // a Latin-only heading face stays off the Hangul slot
+      // a Latin-only heading face stays off the Hangul slot; the symbol slot
+      // follows the East Asian face, as Word draws ○ in a Korean document
       expect(back.charAt(0, 0).fontFamilies).toEqual([
         '함초롬바탕',
         'Calibri',
         '함초롬바탕',
         '함초롬바탕',
         'Calibri',
-        'Calibri',
+        '함초롬바탕',
         'Calibri',
       ])
     })

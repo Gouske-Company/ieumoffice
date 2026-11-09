@@ -98,4 +98,7 @@ export const vi = {
   errCode: 'Nếu vẫn tiếp tục xảy ra, hãy ghi kèm mã này khi gửi ý kiến: {code}',
   documentsUnprotected:
     'Tài liệu mở sau khi phiên bắt đầu ({n}) không được bảo vệ bởi cơ chế chống ghi của chương trình. Dừng và bắt đầu lại phiên để bảo vệ chúng.',
+  connOff: 'Đã tắt trong ứng dụng này. Bạn có thể dùng lại trong Cài đặt → AI.',
+  errOffInApp:
+    'Chương trình này đang tắt trong ứng dụng này nên không gửi thêm gì nữa. Bạn có thể dùng lại trong Cài đặt → AI.',
 } satisfies Record<keyof typeof zh, string>

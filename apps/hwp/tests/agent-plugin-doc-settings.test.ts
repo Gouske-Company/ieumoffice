@@ -103,10 +103,15 @@ describe('note settings', () => {
       const again = new HwpDocument(bytes)
       expect(JSON.parse(again.getFootnoteShape(0))).toMatchObject({
         numberFormat: 'circledDigit',
-        suffixChar: '',
         numberCodeSuperscript: true,
       })
     }
+    // HWPX keeps the emptied suffix. rhwp v0.9.0 reads an empty HWP5 suffix back as
+    // Hangul's default `)` (#6872 marks only HWPX decorations as the source's own;
+    // docs/tracking/findings.md)
+    expect(JSON.parse(new HwpDocument(doc().exportHwpx()).getFootnoteShape(0))).toMatchObject({
+      suffixChar: '',
+    })
   })
 
   it('turns the separator line off and on again', () => {
@@ -249,6 +254,36 @@ describe('the formatting of a document', () => {
     const again = plugin.formatting()
     if (!again.ok) throw new Error('not read')
     expect(again.looks[0].id).toBe(first.looks[0].id)
+  })
+
+  it('says which look each body paragraph has, so one indented unlike the rest stands out', () => {
+    const { plugin } = open()
+    // three of the four paragraphs indented 20 pt, the second left at the margin
+    for (const text of ['보고서 제목', '위원회는 권고를', '맺음말']) {
+      expect(plugin.formatParagraph(text, null, { marginLeft: 20 })).toMatchObject({ ok: true })
+    }
+    const formatting = plugin.formatting()
+    if (!formatting.ok) throw new Error('not read')
+    const indented = formatting.looks.find((look) => look.paragraphs === 3)!
+    const apart = formatting.looks.find((look) => look.paragraphs === 1)!
+    expect(indented.marginLeft).toBe(20)
+    expect(apart.marginLeft).toBe(0)
+
+    const listed = plugin.paragraphLooks()
+    expect(listed).toEqual({
+      count: 4,
+      paragraphs: [
+        { paragraph: 1, look: indented.id, text: '보고서 제목' },
+        { paragraph: 2, look: apart.id, text: '국가인권위원회는 조사를 마쳤다.' },
+        { paragraph: 3, look: indented.id, text: '위원회는 권고를 냈다.' },
+        { paragraph: 4, look: indented.id, text: '맺음말.' },
+      ],
+    })
+    expect(plugin.paragraphLooks(3)).toMatchObject({
+      count: 4,
+      paragraphs: [{ paragraph: 3 }, { paragraph: 4 }],
+    })
+    expect(plugin.paragraphLooks(9)).toEqual({ count: 4, paragraphs: [] })
   })
 
   it('formats every paragraph of one look in one undo step', () => {

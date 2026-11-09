@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { existsSync, rmSync, statSync } from 'node:fs'
-import { mkdtemp, readFile, realpath, rm } from 'node:fs/promises'
-import { homedir, tmpdir } from 'node:os'
+import { readFile, realpath, rm } from 'node:fs/promises'
+import { homedir } from 'node:os'
 import { dirname, isAbsolute, join, parse, relative, resolve, sep } from 'node:path'
 import type {
   AgentCodexWebSearch,
@@ -24,7 +24,7 @@ import type {
   AiSubscriptionProviderId,
   AiSubscriptionStatus,
 } from '@genoffice/ai-provider'
-import { subscriptionConnection } from '@genoffice/ai-provider'
+import { subscriptionConnection, subscriptionOffIn } from '@genoffice/ai-provider'
 import {
   AGENT_RUN_ERROR_KINDS,
   type AgentPrepareStep,
@@ -35,6 +35,7 @@ import {
 import { errorReason } from '../crash-log'
 import { cutAt } from '../projects/context'
 import { agentSessionSkillsOf } from './agent-skills'
+import { makeAgentSessionFolder } from './agent-session-folders'
 import type { AgentMcpRelays, AgentRelayAnswer, AgentRelayAsk } from './agent-mcp-relay'
 
 /**
@@ -79,6 +80,9 @@ export type AgentStartResult =
       failure: AgentStartFailure
       cause?: string | undefined
     }
+
+/** the window closed, or the app quit, before the session was running */
+const STOPPED_WHILE_STARTING: AgentStartResult = { ok: false, failure: { reason: 'stopped' } }
 
 class AgentPrepareError extends Error {
   readonly step: AgentPrepareStep
@@ -389,8 +393,10 @@ export async function agentInstructionsAndCuts(
 interface LiveSession {
   id: string
   ownerId: number
+  provider: AgentStartRequest['provider']
   session: AgentSession | undefined
-  sessionDir: string
+  /** undefined until the session folder is made */
+  sessionDir: string | undefined
   appMcp?: { stop(): Promise<void> } | undefined
   /** the relays of the person's MCP servers (user MCP spec 9) */
   relays?: AgentMcpRelays | undefined
@@ -426,26 +432,33 @@ export function createAgentManager(deps: AgentManagerDeps): AgentManager {
   const protectedPaths = agentProtectedPaths(homeDir, deps.userData)
   const live = new Map<string, LiveSession>()
 
-  const cleanup = (entry: LiveSession, { quitting = false } = {}): void => {
-    if (!live.has(entry.id)) return
-    live.delete(entry.id)
-    void entry.appMcp?.stop().catch(() => undefined)
+  /** session folders being removed; one still here when the app quits is removed before it exits */
+  const removing = new Set<string>()
+  // the folder is the program's working directory: Windows refuses to remove it until the ended
+  // process is gone, which can take a moment
+  const removeOptions = { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }
+
+  /** let go of what the session holds now; a part let go of once is not stopped again */
+  const release = (entry: LiveSession): void => {
+    const { appMcp, relays, sessionDir } = entry
+    entry.appMcp = undefined
+    entry.relays = undefined
+    entry.sessionDir = undefined
+    void appMcp?.stop().catch(() => undefined)
     // a question still waiting is a refusal; the relays and their calls end with the session
     for (const settle of [...entry.relayAsks.values()]) settle({ allow: false })
-    void entry.relays?.stop().catch(() => undefined)
-    // the folder is the program's working directory: Windows refuses to remove it until the
-    // ended process is gone, which can take a moment
-    const options = { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }
-    if (!quitting) {
-      void rm(entry.sessionDir, options).catch(() => undefined)
-      return
-    }
-    // the app is going away and would not wait for an asynchronous removal
-    try {
-      rmSync(entry.sessionDir, options)
-    } catch {
-      // left for the system's temporary-file cleanup
-    }
+    void relays?.stop().catch(() => undefined)
+    if (sessionDir === undefined) return
+    removing.add(sessionDir)
+    void rm(sessionDir, removeOptions).then(
+      () => removing.delete(sessionDir),
+      () => undefined,
+    )
+  }
+
+  const cleanup = (entry: LiveSession): void => {
+    if (!live.delete(entry.id)) return
+    release(entry)
   }
 
   const own = (ownerId: number, sessionId: string): LiveSession | undefined => {
@@ -485,6 +498,15 @@ export function createAgentManager(deps: AgentManagerDeps): AgentManager {
         })
       })
 
+  /** turned off in this app (decision 0114), by the setting or by the status the window saw */
+  const offInApp = (provider: AiSubscriptionProviderId): boolean =>
+    subscriptionOffIn(deps.aiSettings(), provider) || deps.statuses()[provider]?.state === 'off'
+  const OFF_IN_APP_MESSAGE = 'The program is turned off in this app'
+  const offInAppFailure = (): AgentStartResult => ({
+    ok: false,
+    failure: { reason: 'run-error', kind: 'off-in-app' },
+  })
+
   return {
     async start(ownerId, request) {
       const projectRoot = resolve(request.projectRoot)
@@ -496,18 +518,13 @@ export function createAgentManager(deps: AgentManagerDeps): AgentManager {
       if (!connection) return { ok: false, failure: { reason: 'not-connected' } }
 
       const id = randomUUID()
-      let sessionDir: string
-      try {
-        sessionDir = await prepared('session-folder', () => mkdtemp(join(tmpdir(), 'ieum-agent-')))
-      } catch (error) {
-        return agentStartFailed(error)
-      }
       const openAtStart = deps.openDocuments()
       const entry: LiveSession = {
         id,
         ownerId,
+        provider: request.provider,
         session: undefined,
-        sessionDir,
+        sessionDir: undefined,
         projectRoot,
         protectedDocuments: new Set(
           openAtStart.map((path) => comparablePath(path, path, platform)),
@@ -515,13 +532,25 @@ export function createAgentManager(deps: AgentManagerDeps): AgentManager {
         warnedDocuments: new Set(),
         relayAsks: new Map(),
       }
+      // live while it is prepared: its window closing or the app quitting stops it here too
       live.set(id, entry)
+      /** stopped meanwhile: what came after the stop, a program the runner gave included, ends */
+      const stopped = (): boolean => {
+        if (live.has(id)) return false
+        entry.session?.stop()
+        release(entry)
+        return true
+      }
       try {
+        const sessionDir = await prepared('session-folder', () => makeAgentSessionFolder())
+        entry.sessionDir = sessionDir
+        if (stopped()) return STOPPED_WHILE_STARTING
         const startAppMcp = deps.startAppMcp
         const appMcp = startAppMcp
           ? await prepared('app-tools', () => startAppMcp(projectRoot, { ownerId, sessionId: id }))
           : undefined
         entry.appMcp = appMcp
+        if (stopped()) return STOPPED_WHILE_STARTING
         // the person's MCP servers as they are set now: a change applies to the next session
         const startRelays = deps.startRelays
         const relays = startRelays
@@ -533,6 +562,7 @@ export function createAgentManager(deps: AgentManagerDeps): AgentManager {
             )
           : undefined
         entry.relays = relays
+        if (stopped()) return STOPPED_WHILE_STARTING
         const relayList = relays?.relays ?? []
         // the skills as they are now: a change made during the session applies to the next one
         const buildSkills = deps.buildSkills
@@ -551,6 +581,7 @@ export function createAgentManager(deps: AgentManagerDeps): AgentManager {
             relayList.map((relay) => relay.name),
           ),
         )
+        if (stopped()) return STOPPED_WHILE_STARTING
         const options: AgentSessionOptions = {
           projectRoot,
           mode: request.mode,
@@ -569,6 +600,12 @@ export function createAgentManager(deps: AgentManagerDeps): AgentManager {
           deps.emit(ownerId, id, event)
           if (event.type === 'ended') cleanup(entry)
         }
+        // the servers, relays and skills above can take seconds: turned off meanwhile, the
+        // program is not started
+        if (offInApp(request.provider)) {
+          cleanup(entry)
+          return offInAppFailure()
+        }
         entry.session =
           request.provider === 'claude-code'
             ? await deps.runners.claude(options, onEvent)
@@ -581,6 +618,13 @@ export function createAgentManager(deps: AgentManagerDeps): AgentManager {
                 },
                 onEvent,
               )
+        if (stopped()) return STOPPED_WHILE_STARTING
+        // turned off while the runner prepared its files and found the program: it ends now
+        if (offInApp(request.provider)) {
+          entry.session.stop()
+          cleanup(entry)
+          return offInAppFailure()
+        }
         return {
           ok: true,
           sessionId: id,
@@ -602,6 +646,17 @@ export function createAgentManager(deps: AgentManagerDeps): AgentManager {
     async send(ownerId, sessionId, text) {
       const entry = own(ownerId, sessionId)
       if (!entry?.session) throw new Error('No such agent session')
+      // turned off in this app since the session started: the program is sent nothing more
+      if (offInApp(entry.provider)) {
+        deps.emit(ownerId, sessionId, {
+          type: 'error',
+          kind: 'off-in-app',
+          message: OFF_IN_APP_MESSAGE,
+        })
+        entry.session.stop()
+        cleanup(entry)
+        return
+      }
       // documents opened since the session started were not in its program-level rules
       const current = deps.openDocuments()
       const added: string[] = []
@@ -656,7 +711,17 @@ export function createAgentManager(deps: AgentManagerDeps): AgentManager {
     stopAll() {
       for (const entry of [...live.values()]) {
         entry.session?.stop()
-        cleanup(entry, { quitting: true })
+        cleanup(entry)
+      }
+      // the app exits without waiting for an asynchronous removal, such as that of a session
+      // whose window the quit has just closed
+      for (const dir of removing) {
+        try {
+          rmSync(dir, removeOptions)
+        } catch {
+          // left for the next start's sweep (`sweepAgentSessionFolders`)
+        }
+        removing.delete(dir)
       }
     },
 

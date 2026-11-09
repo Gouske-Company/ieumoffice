@@ -95,6 +95,17 @@ describe('set_header_footer tool', () => {
     expect(writes[1]).toEqual({ kind: 'header', view: 'first', text: 'Cover' })
   })
 
+  it('turns a line break the model escaped twice back into one, and leaves a path alone', () => {
+    const editor = createEditor()
+    const { access, writes } = makeAccess(emptyState())
+    run(editor, { kind: 'header', text: String.raw`이음중학교\n2026학년도` }, access)
+    expect(writes[0]?.text).toBe('이음중학교\n2026학년도')
+    run(editor, { kind: 'footer', text: String.raw`C:\new 자료` }, access)
+    expect(writes[1]?.text).toBe(String.raw`C:\new 자료`)
+    run(editor, { kind: 'footer', text: '첫 줄\n둘째 줄' }, access)
+    expect(writes[2]?.text).toBe('첫 줄\n둘째 줄')
+  })
+
   it('validates input and surfaces access errors', () => {
     const editor = createEditor()
     const { access } = makeAccess(emptyState())

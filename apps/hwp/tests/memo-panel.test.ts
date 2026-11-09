@@ -136,6 +136,15 @@ describe('card text', () => {
     expect(shown).toBeTruthy()
     expect(shown).not.toBe('2024-01-02T03:04:00Z')
   })
+
+  it('shows a memo time as the wall time the file wrote, its Z notwithstanding', () => {
+    // the engine (as Hancom) writes the local time followed by Z
+    const format = new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeStyle: 'short' })
+    expect(memoDateText('2024-01-02T03:04:00Z', 'en')).toBe(
+      format.format(new Date(2024, 0, 2, 3, 4)),
+    )
+    expect(memoDateText('2024-01-02T03:04Z', 'en')).toBe(format.format(new Date(2024, 0, 2, 3, 4)))
+  })
 })
 
 describe('where a new memo would go', () => {

@@ -62,6 +62,7 @@ const BRANCH = core.rhwp.branch
 const PINNED_COMMITS = {
   'v0.8.7': '1a76570e833917d15817415a53c09ad61ab3203f',
   'devel-7d06d5c70': '7d06d5c706f1d89f1662e739abf2b1b25d2a98e4',
+  'v0.9.0': 'c9095c5f67632e6721e800ccc7fb43ea49d26682',
 }
 /**
  * Only what the build reads. The repository also carries gigabytes of sample

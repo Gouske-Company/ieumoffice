@@ -96,4 +96,7 @@ export const en = {
   errCode: 'If this keeps happening, include this code when you send feedback: {code}',
   documentsUnprotected:
     'Documents opened after the session started ({n}) are outside the program’s own write protection. Stop and start the session again to protect them.',
+  connOff: 'Turned off in this app. Turn it back on under Settings → AI.',
+  errOffInApp:
+    'This program is turned off in this app, so nothing more was sent. Turn it back on under Settings → AI.',
 } satisfies Record<keyof typeof zh, string>

@@ -1089,6 +1089,43 @@ describe('write_map', () => {
     const bare = await rigOf({ ...plainSheet(), rootTopic: topic(IDS.root, 'Only') })
     expect(blankNewMapSheet(bare.host)).toBeNull()
   })
+
+  it('reads an outline whose line breaks the model escaped twice', async () => {
+    const r = await rigOf(richSheet())
+    const out = await writeMap(r.host, { outline: OUTLINE.split('\n').join(String.raw`\n`) }, null)
+    expect(out.isError).toBeFalsy()
+    const written = r.sheet(2)
+    expect(written.title).toBe('Trip')
+    expect(written.rootTopic.title).toBe('Summer trip')
+    expect(titles(written.rootTopic)).toEqual(['Where', 'When'])
+  })
+})
+
+describe('a line break the model escaped twice in edit_map', () => {
+  it('is turned back in the titles and labels the edit writes', async () => {
+    const r = await rigOf(richSheet())
+    await editMap(
+      r.host,
+      {
+        edits: [
+          {
+            op: 'add',
+            parentId: IDS.c,
+            title: String.raw`첫 줄\n둘째 줄`,
+            labels: [String.raw`가\n나`],
+          },
+          { op: 'set_title', id: IDS.a1, title: String.raw`C:\new 폴더` },
+        ],
+      },
+      null,
+    )
+    const [a, , c] = attached(r.sheet(1).rootTopic)
+    expect(attached(c!)[0]!.title).toBe('첫 줄\n둘째 줄')
+    // a label is one line: the line break it meant becomes a space
+    expect(attached(c!)[0]!.labels).toEqual(['가 나'])
+    // a drive path keeps its backslash
+    expect(attached(a!)[0]!.title).toBe(String.raw`C:\new 폴더`)
+  })
 })
 
 describe('one AI turn', () => {

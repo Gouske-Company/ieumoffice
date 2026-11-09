@@ -3,9 +3,9 @@
  * Such a file names a provider that no longer exists in its selection slots
  * and carries a switch that was removed. Every slot holding an unknown id
  * (a removed one is simply unknown now) falls to its default, fields this
- * build does not know are left out so the next save no longer writes them,
- * and nothing here throws: an old file must never greet the user with an
- * error.
+ * build does not know are left out of what the app works with (the settings
+ * writers keep them in the file, see withStoredUnknownFields), and nothing
+ * here throws: an old file must never greet the user with an error.
  *
  * Unknown ids are treated the way the IPC guard (ai-settings-guard.ts) treats
  * them on save: a provider config under an unknown id is dropped. The guard

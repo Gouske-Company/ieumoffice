@@ -11,6 +11,7 @@
     "./clipboard-picture": "./src/clipboard-picture.ts",
     "./ai-subscription-login-window": "./src/ai-subscription-login-window.ts",
     "./template-fonts": "./src/template-fonts.ts",
+    "./slides-ai-fonts": "./src/slides-ai-fonts.ts",
     "./tokens.css": "./src/tokens.css",
     "./screentip.css": "./src/screentip.css",
     "./color-picker.css": "./src/color-picker.css",

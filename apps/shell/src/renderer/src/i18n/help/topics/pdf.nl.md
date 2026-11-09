@@ -81,6 +81,7 @@ Zes gereedschappen: **inkt, rechthoek, ellips, pijl, notitie**, plus de **zwartm
 ## Exporteren en afdrukken
 
 - **Exporteren als Word… / PowerPoint… / Excel…** in het menu Bestand, of dezelfde drie via **PDF converteren** in het lintmenu — alles lokaal, geen upload. De .pptx komt eruit met één dia per pagina en de .xlsx met één werkblad per pagina. Elk ervan vraagt waar het opgeslagen moet worden.
+- **PDF naar HWP** onder **PDF converteren** op het lint maakt van de PDF een HWP-document in een nieuw HWP-tabblad. Kies **Importeren** (가져오기) in het PDF-importvenster dat het tabblad toont; het document ontstaat in dat tabblad, en bij de eerste keer opslaan wordt gevraagd waar het .hwp- of .hwpx-bestand moet komen. De PDF zelf blijft zoals hij was, en de conversie gebeurt op deze pc. Of de tekst binnenkomt als alinea's die over de pagina's lopen of als vaste tekstvakken, kiest u in de opties (환경 설정) van het HWP-tabblad, onder PDF-import.
 - **Afdrukken**: huidige volgorde en draaiingen via het systeemvenster; paginabereiken worden ondersteund.
 
 ## Opslaan

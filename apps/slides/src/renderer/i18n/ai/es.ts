@@ -245,6 +245,11 @@ export const es = {
   aiTplFontsNotice:
     'Las fuentes de la plantilla vienen incluidas en esta aplicación. Otros programas, como PowerPoint, pueden mostrar una fuente distinta.',
   aiTplOpenFonts: 'Abrir carpeta de fuentes',
+  aiTplFontsAuto: 'Fuentes: elige la IA',
+  aiTplFontsOne: 'Fuentes: {font}',
+  aiTplFontsTwo: 'Fuentes: títulos {title}, texto {body}',
+  aiTplFontsTemplate: 'Fuentes: las de la plantilla elegida',
+  aiTplFontsChange: 'Cambiar',
   aiTplDesc_coral:
     'Crema y rosa anaranjado sobre un fondo casi negro, con titulares enormes y estrechos.',
   aiTplDesc_blue_professional:

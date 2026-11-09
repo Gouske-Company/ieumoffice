@@ -14,6 +14,7 @@ export const RUN_ERROR: Record<AgentRunErrorKind, AgentStringKey> = {
   'metered-not-accepted': 'errMetered',
   'needs-update': 'errNeedsUpdate',
   'not-installed': 'errNotInstalled',
+  'off-in-app': 'errOffInApp',
 }
 
 export function runErrorKey(kind: string | undefined): AgentStringKey {
@@ -54,6 +55,9 @@ export function agentStartErrorView(failure: AgentStartFailure): StartErrorView 
       return problemView(failure.problem, code)
     case 'prepare-failed':
       return { key: 'errPrepareFailed', code }
+    // the window that asked is closing; nothing for the person to report
+    case 'stopped':
+      return { key: 'errGeneric' }
     case 'invalid-request':
     case 'unknown':
       return { key: 'errGeneric', code }

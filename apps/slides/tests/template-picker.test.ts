@@ -75,6 +75,9 @@ const PICKER_CALLS = new Set([
   'privateFontFaces',
   'privateFontData',
   'onLanguageChanged',
+  // the default fonts line: reads Settings › General, and its "Change" opens Settings
+  'getAiDefaultFonts',
+  'openFontSettings',
 ])
 
 interface Fake {
@@ -332,6 +335,57 @@ describe('template gallery', () => {
     )
     await click(button)
     expect(fake.api.openTemplateFontsFolder).toHaveBeenCalledTimes(1)
+  })
+
+  describe('the default fonts line (Settings › General)', () => {
+    const fontsLine = (root: ParentNode) =>
+      root.querySelector<HTMLElement>('[data-testid="ai-tpl-default-fonts"]')
+
+    const withFonts = (fonts: { mode: string; sans: string; serif: string }) => {
+      fake.api.getAiDefaultFonts = vi.fn(async () => fonts)
+      fake.api.openFontSettings = vi.fn(async () => undefined)
+    }
+
+    it('names the one family, the title and body families, or the AI', async () => {
+      withFonts({ mode: 'sans', sans: 'Pretendard', serif: 'Noto Serif KR' })
+      let root = mount(createElement(TemplateGallery, { state: freshState() }))
+      await flush()
+      expect(fontsLine(root)?.textContent).toContain(
+        str('en', 'aiTplFontsOne', { font: 'Pretendard' }),
+      )
+      expect(fake.api.getAiDefaultFonts).toHaveBeenCalledWith('en')
+
+      withFonts({ mode: 'serifTitle', sans: 'Pretendard', serif: 'Batang' })
+      root = mount(createElement(TemplateGallery, { state: freshState() }))
+      await flush()
+      expect(fontsLine(root)?.textContent).toContain(
+        str('en', 'aiTplFontsTwo', { title: 'Batang', body: 'Pretendard' }),
+      )
+
+      withFonts({ mode: 'auto', sans: 'Pretendard', serif: 'Batang' })
+      root = mount(createElement(TemplateGallery, { state: freshState() }))
+      await flush()
+      expect(fontsLine(root)?.textContent).toContain(str('en', 'aiTplFontsAuto'))
+    })
+
+    it('says the template decides once one is chosen, and "Change" opens Settings', async () => {
+      withFonts({ mode: 'sans', sans: 'Pretendard', serif: 'Noto Serif KR' })
+      const root = mount(createElement(TemplateGallery, { state: freshState() }))
+      await flush()
+      await click(builtinCards(root)[0])
+      expect(fontsLine(root)?.textContent).toContain(str('en', 'aiTplFontsTemplate'))
+      const change = [...fontsLine(root)!.querySelectorAll('button')].find(
+        (b) => b.textContent === str('en', 'aiTplFontsChange'),
+      )
+      await click(change)
+      expect(fake.api.openFontSettings).toHaveBeenCalledTimes(1)
+    })
+
+    it('is not shown where the main process does not answer', async () => {
+      const root = mount(createElement(TemplateGallery, { state: freshState() }))
+      await flush()
+      expect(fontsLine(root)).toBeNull()
+    })
   })
 })
 

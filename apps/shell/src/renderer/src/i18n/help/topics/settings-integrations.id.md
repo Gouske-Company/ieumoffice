@@ -22,6 +22,7 @@ Terang / Gelap / Ikuti Sistem. Mode Ikuti Sistem mengikuti tampilan sistem opera
 - **Simpan otomatis semua dokumen** menyalakan AutoSave secara default di setiap editor; Anda tetap bisa mematikannya untuk satu jendela.
 - **Lokasi penyimpanan** dengan tombol **Ubah**, dan **Aplikasi default untuk dokumen Office** untuk mengambil alih .docx / .xlsx / .pptx bagi GenOffice.
 - **Format penyimpanan dokumen HWP baru** memilih apakah HWP atau HWPX yang ditawarkan lebih dulu saat menyimpan dokumen baru pertama kali. Dokumen yang dibuka tetap memakai formatnya sendiri.
+- **Font slide AI** menentukan font yang dipakai AI untuk presentasi baru saat permintaan Anda tidak menyebut font. Pilih Otomatis, Sans serif, Serif, atau Judul serif, lalu ganti font sans serif dan font serif secara terpisah. Templat desain yang dipilih memakai fontnya sendiri, dan halaman yang ditambahkan ke presentasi dengan font lain mengikuti presentasi itu.
 
 GenOffice tidak mengumpulkan atau mengirim statistik penggunaan, jadi tidak ada sakelar untuk itu.
 

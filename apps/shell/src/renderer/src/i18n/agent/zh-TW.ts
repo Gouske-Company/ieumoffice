@@ -89,4 +89,6 @@ export const zhTW = {
   errCode: '如果問題持續發生，請在傳送意見時附上此代碼：{code}',
   documentsUnprotected:
     '工作階段開始後開啟的 {n} 個文件不受該程式自身寫入保護的限制。若要保護它們，請停止工作階段並重新開始。',
+  connOff: '已在本應用程式中關閉。可以在「設定 → AI」中重新使用。',
+  errOffInApp: '此程式已在本應用程式中關閉，因此不再傳送。可以在「設定 → AI」中重新使用。',
 } satisfies Record<keyof typeof zh, string>

@@ -10,6 +10,7 @@ import type {
 } from '../../shared/ipc'
 import { t } from '../i18n/locale'
 import { MIND_MAP_LIMITS, MIND_MAP_TOOL, parseMindMapTree } from '@genoffice/agent-core/mind-map'
+import { undoDoubledEscapes } from '@genoffice/agent-core/doubled-escapes'
 import { executeOps, opNames } from './ops'
 import { odtGuardRefusalText, odtToolRefusal, startOdtToolCall } from './odt-tools'
 import { clipExcerpt, repliesOf, resolveCommentAnchor } from './comment-ops'
@@ -1303,6 +1304,30 @@ async function insertImageBytes(
   }
 }
 
+/**
+ * The plain-text argument each tool writes as new text, where a line break starts a new
+ * paragraph or line. The text a call looks for (a comment's anchor `text`, `afterText`,
+ * `find`) and HTML arguments are left out: see `undoDoubledEscapes`.
+ */
+const NEW_PLAIN_TEXT: Readonly<Record<string, string>> = {
+  add_comment: 'comment',
+  reply_comment: 'text',
+  insert_footnote: 'text',
+  insert_endnote: 'text',
+  edit_note: 'replace',
+  set_header_footer: 'text',
+  insert_text_box: 'text',
+}
+
+/** The call with a line break the model escaped twice turned back into one. */
+function withDoubledEscapesUndone(call: AgentToolCall): AgentToolCall {
+  const key = NEW_PLAIN_TEXT[call.name]
+  const value = key ? call.input[key] : undefined
+  if (!key || typeof value !== 'string') return call
+  const text = undoDoubledEscapes(value)
+  return text === value ? call : { ...call, input: { ...call.input, [key]: text } }
+}
+
 export function executeTool(
   editor: Editor,
   call: AgentToolCall,
@@ -1325,7 +1350,7 @@ export function executeTool(
   startOdtToolCall()
   const result = executeToolUnguarded(
     editor,
-    call,
+    withDoubledEscapesUndone(call),
     numIds,
     track,
     signal,

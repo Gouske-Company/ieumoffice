@@ -22,6 +22,7 @@ Claro / Escuro / Seguir o Sistema. O modo Seguir o Sistema acompanha o aspeto do
 - **Salvar automaticamente todos os documentos** ativa a gravação automática por predefinição em todos os editores; continua a poder desativá-la para uma janela.
 - **Local de salvamento** com o botão **Alterar** e **App padrão para documentos do Office** para reservar .docx / .xlsx / .pptx ao GenOffice.
 - **Formato de salvamento de novos documentos HWP** escolhe se HWP ou HWPX é oferecido primeiro no primeiro salvamento de um documento novo. Os documentos abertos mantêm o próprio formato.
+- **Fontes dos slides com IA** define as fontes que a IA usa numa apresentação nova quando o seu pedido não indica nenhuma. Escolha Automático, Sem serifa, Com serifa ou Títulos com serifa, e mude separadamente a fonte sem serifa e a fonte com serifa. Um modelo de design escolhido usa as próprias fontes, e as páginas acrescentadas a uma apresentação com outras fontes seguem essa apresentação.
 
 O GenOffice não recolhe nem envia estatísticas de utilização, por isso não há nenhum interruptor para isso.
 

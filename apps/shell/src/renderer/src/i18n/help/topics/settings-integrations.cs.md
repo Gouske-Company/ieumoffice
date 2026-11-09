@@ -22,6 +22,7 @@ Světlý / Tmavý / Podle systému. Volba Podle systému sleduje vzhled operačn
 - **Automaticky ukládat všechny dokumenty** zapne ve výchozím stavu automatické ukládání v každém editoru; pro jedno okno ho můžete i nadále vypnout.
 - **Umístění pro ukládání** s tlačítkem **Změnit** a **Výchozí aplikace pro dokumenty Office**, aby GenOffice přebíral .docx / .xlsx / .pptx.
 - **Formát ukládání nových dokumentů HWP** určuje, zda se při prvním uložení nového dokumentu nabídne nejprve HWP, nebo HWPX. Otevřené dokumenty si zachovávají svůj formát.
+- **Písma snímků s AI** určuje písma, která AI použije v nové prezentaci, když žádost žádné neuvádí. Vyberte Automaticky, Bezpatkové, Patkové nebo Patkové nadpisy a zvlášť změňte bezpatkové a patkové písmo. Zvolená šablona návrhu používá vlastní písma a stránky přidané do prezentace v jiných písmech se řídí touto prezentací.
 
 GenOffice neshromažďuje ani neodesílá statistiky používání, takže pro ně není žádný přepínač.
 

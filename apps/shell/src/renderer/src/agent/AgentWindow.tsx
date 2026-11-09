@@ -85,6 +85,7 @@ const CONNECTION_NOTE: Partial<Record<AgentConnection, AgentStringKey>> = {
   unavailable: 'connUnavailable',
   'metered-accepted': 'connMetered',
   blocked: 'providerBlocked',
+  off: 'connOff',
 }
 const ACTION_LABEL: Record<
   Exclude<AgentActionView['kind'], 'web-search' | 'web-fetch' | 'mcp-tool'>,
@@ -253,6 +254,12 @@ export function AgentWindow() {
     textareaRef: inputRef,
   })
 
+  // a program turned off or on in Settings while the window is open shows as such at once
+  useEffect(
+    () => api.onStatusesChanged(() => void api.getInit().then((value) => setInit(value))),
+    [api],
+  )
+
   // the connection check may still be running when the window opens; ask again until it settles
   const checking = init ? Object.values(init.connections).includes('checking') : false
   useEffect(() => {
@@ -329,6 +336,13 @@ export function AgentWindow() {
     setStarting(false)
     if (!result.ok) {
       setStartError(agentStartErrorView(result.failure))
+      // the main process refuses a program turned off since the window last looked as not
+      // connected: look again, so the choice and the message say it is off in this app
+      if (result.failure.reason === 'not-connected') {
+        const fresh = await api.getInit()
+        setInit(fresh)
+        if (fresh.connections[prefs.provider] === 'off') setStartError({ key: 'errOffInApp' })
+      }
       return
     }
     sessionRef.current = result.sessionId

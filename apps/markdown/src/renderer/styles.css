@@ -295,6 +295,19 @@ html[data-doc-theme='light'] .doc-page {
   word-wrap: break-word;
 }
 
+/* the reader's view font (editor-font.ts) beats a paper theme's face; code,
+   math and diagrams set their own and keep them */
+html[data-md-font] .doc-page .doc-editor,
+html[data-md-font] .doc-page .doc-editor :is(h1, h2, h3, h4, h5, h6) {
+  font-family:
+    var(--md-editor-font),
+    'Segoe UI',
+    -apple-system,
+    BlinkMacSystemFont,
+    var(--ui-cjk),
+    sans-serif;
+}
+
 .doc-editor > *:first-child {
   margin-top: 0;
 }
@@ -639,6 +652,19 @@ html.markdown-graph-open .ribbon-tabs {
   scrollbar-width: none;
 }
 
+/* the step after the AI labels: the band and its groups close up their spacing */
+.ribbon-body.tight {
+  padding-inline: 6px;
+}
+
+.ribbon-body.tight > .ribbon-group {
+  padding-inline: 1px;
+}
+
+.ribbon-body.tight > .rb-sep {
+  margin-inline: 3px;
+}
+
 .ribbon-body::-webkit-scrollbar {
   display: none;
 }
@@ -831,6 +857,15 @@ html.markdown-graph-open .ribbon-tabs {
   background: var(--hover);
 }
 
+/* a band too narrow even with the view tools folded shows the entry's icon
+   alone. The label is clipped, not removed: it keeps its line, so the icon
+   sits level with its labelled neighbours, and it still names the button. */
+.rb-big.ai-entry.compact > :not(.rb-big-icon) {
+  width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
 /* neutral gray open state, same control across docs/sheets/slides ribbons */
 .rb-big.ai-entry.active {
   background: var(--active-bg);
@@ -869,6 +904,52 @@ html.markdown-graph-open .ribbon-tabs {
   border-color: var(--color-border-strong);
   color: var(--text-primary);
   font-size: 13px;
+}
+
+/* the step after the spacing: the box clips the style name, its ScreenTip reads it in full */
+.rb-style.gs-dd.narrow {
+  min-width: 0;
+  width: 72px;
+}
+
+/* view font picker: the block-style picker's box */
+.rb-font.gs-dd {
+  width: 112px;
+}
+
+.rb-font .gs-dd-btn {
+  height: 28px;
+  padding: 0 7px;
+  border-color: var(--color-border-strong);
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+/* More: the view tools that no longer fit the band, in a floating row under
+   the button (the slides ribbon's collapsed-group flyout). Fixed + anchored so
+   the ribbon-body clip cannot cut it off; it opens leftward from the window edge. */
+.rb-more-wrap {
+  position: relative;
+  display: inline-flex;
+  anchor-name: --rb-more-anchor;
+  anchor-scope: --rb-more-anchor;
+}
+
+.rb-more-pop {
+  position: fixed;
+  position-anchor: --rb-more-anchor;
+  top: calc(anchor(bottom) + 6px);
+  right: anchor(right);
+  position-try-fallbacks: flip-inline;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 8px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px var(--md-shadow-color);
 }
 
 /* Anchor for the link popover, which is position: fixed so it escapes the
@@ -2618,6 +2699,10 @@ html.markdown-graph-open .ribbon-tabs {
   background: var(--md-diagram-bg);
   text-align: center;
   cursor: text;
+  /* a diagram wider than the column keeps its natural size and scrolls; the
+     scrollbar follows the paper, which stays white under the dark UI */
+  overflow-x: auto;
+  color-scheme: light;
 }
 
 .md-diagram:not(.md-diagram-collapsed) .md-diagram-preview {
@@ -2630,7 +2715,6 @@ html.markdown-graph-open .ribbon-tabs {
 }
 
 .md-diagram-preview svg {
-  max-width: 100%;
   height: auto;
 }
 
@@ -3648,12 +3732,18 @@ div.tiptap-mathematics-render {
 
 .md-theme-wrap {
   position: relative;
+  anchor-name: --md-theme-anchor;
+  anchor-scope: --md-theme-anchor;
 }
 
+/* fixed + anchored like .rb-link-pop: the ribbon body clips both axes, so an
+   absolute menu below the band was cut off at the band's bottom edge */
 .md-theme-menu {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
+  position: fixed;
+  position-anchor: --md-theme-anchor;
+  top: calc(anchor(bottom) + 6px);
+  left: anchor(left);
+  position-try-fallbacks: flip-inline;
   z-index: 30;
   min-width: 190px;
   padding: 5px;

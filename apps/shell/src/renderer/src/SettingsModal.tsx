@@ -58,6 +58,7 @@ import { IntegrationsPane, skillUpdateDue } from './IntegrationsPane'
 import { AiSection, SubscriptionSummary } from './SettingsAiSection'
 import { HomeKindsField } from './SettingsHomeKinds'
 import { QuickLookField } from './SettingsQuickLook'
+import { SlidesFontsField } from './SettingsSlidesFonts'
 import { ResultStoreField } from './SettingsResultStore'
 import { useSubscriptionConnection } from './subscription-client'
 import { SkillsPane } from './skills/SkillsPane'
@@ -962,6 +963,8 @@ type TestedBlock = Capability | 'rerank'
 export interface SettingsTarget {
   section: SectionId
   block?: TestedBlock
+  /** a General field to scroll to (the slides gallery's "Change" beside the default fonts) */
+  field?: 'slidesAiFonts'
 }
 type TestResult = { ok: boolean; error?: string }
 
@@ -2077,6 +2080,7 @@ export function SettingsModal({
                     }}
                   />
                 </div>
+                <SlidesFontsField focus={target?.field === 'slidesAiFonts'} />
                 <div className="set-field">
                   <div className="set-field-text">
                     <div className="set-field-stack">

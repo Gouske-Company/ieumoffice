@@ -104,4 +104,7 @@ export const de = {
     'Wenn das wiederholt passiert, geben Sie diesen Code an, wenn Sie Feedback senden: {code}',
   documentsUnprotected:
     'Nach dem Sitzungsstart geöffnete Dokumente ({n}) stehen nicht unter dem Schreibschutz des Programms. Beenden und starten Sie die Sitzung erneut, um sie zu schützen.',
+  connOff: 'In dieser App ausgeschaltet. Unter Einstellungen → KI können Sie es wieder verwenden.',
+  errOffInApp:
+    'Dieses Programm ist in dieser App ausgeschaltet, daher wurde nichts mehr gesendet. Unter Einstellungen → KI können Sie es wieder verwenden.',
 } satisfies Record<keyof typeof zh, string>

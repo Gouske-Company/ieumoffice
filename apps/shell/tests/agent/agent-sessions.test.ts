@@ -2,7 +2,15 @@
  * Agent sessions in the shell (decision 0032): which folders may be a project,
  * what a session starts with, who may drive it, and what the window is shown.
  */
-import { existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -22,6 +30,7 @@ import {
   openableProjectFile,
   projectFolderProblem,
 } from '../../src/main/agent/agent-sessions'
+import { sweepAgentSessionFolders } from '../../src/main/agent/agent-session-folders'
 import {
   AGENT_RECENT_LIMIT,
   normalizeAgentPrefs,
@@ -486,6 +495,71 @@ describe('starting a session', () => {
   })
 })
 
+describe('a program turned off in this app (decision 0114)', () => {
+  it('starts no session on it, whatever its status says', async () => {
+    const { m, project, claude } = manager({
+      settings: { subscriptionOff: { 'claude-code': true } },
+    })
+    expect(
+      await m.start(1, { provider: 'claude-code', projectRoot: project, mode: 'ask-commands' }),
+    ).toEqual({ ok: false, failure: { reason: 'not-connected' } })
+    expect(claude).not.toHaveBeenCalled()
+  })
+
+  it('starts no program when it is turned off while the session is being prepared', async () => {
+    const settings: Partial<AiSettings> = {}
+    const { m, project, claude, mcpStop, startAppMcp } = manager({ settings })
+    startAppMcp.mockImplementationOnce(async () => {
+      settings.subscriptionOff = { 'claude-code': true }
+      return { url: 'http://127.0.0.1:5/mcp', token: 't', stop: mcpStop }
+    })
+    expect(
+      await m.start(1, { provider: 'claude-code', projectRoot: project, mode: 'ask-commands' }),
+    ).toEqual({ ok: false, failure: { reason: 'run-error', kind: 'off-in-app' } })
+    expect(claude).not.toHaveBeenCalled()
+    expect(mcpStop).toHaveBeenCalledTimes(1)
+  })
+
+  it('ends a program turned off while its runner was starting it', async () => {
+    const settings: Partial<AiSettings> = {}
+    const { m, project, claude, session, mcpStop } = manager({ settings })
+    claude.mockImplementationOnce(async () => {
+      settings.subscriptionOff = { 'claude-code': true }
+      return session
+    })
+    expect(
+      await m.start(1, { provider: 'claude-code', projectRoot: project, mode: 'ask-commands' }),
+    ).toEqual({ ok: false, failure: { reason: 'run-error', kind: 'off-in-app' } })
+    expect(session.stopped).toBe(1)
+    expect(mcpStop).toHaveBeenCalledTimes(1)
+  })
+
+  it('sends nothing more once it is turned off, and ends the session', async () => {
+    const settings: Partial<AiSettings> = {}
+    const { m, project, session, emitted } = manager({ settings })
+    const result = await m.start(1, {
+      provider: 'claude-code',
+      projectRoot: project,
+      mode: 'ask-commands',
+    })
+    if (!result.ok) throw new Error('did not start')
+    await m.send(1, result.sessionId, 'one')
+    settings.subscriptionOff = { 'claude-code': true }
+    await m.send(1, result.sessionId, 'two')
+    expect(session.sent).toEqual(['one'])
+    expect(session.stopped).toBe(1)
+    expect(emitted.map(([, , event]) => event)).toContainEqual(
+      expect.objectContaining({ type: 'error', kind: 'off-in-app' }),
+    )
+    await expect(m.send(1, result.sessionId, 'three')).rejects.toThrow()
+  })
+
+  it('shows it as off in the window, apart from a program that is not connected', () => {
+    const off = { provider: 'codex', state: 'off', meteredAccepted: false } as AiSubscriptionStatus
+    expect(agentConnections({ codex: off }, {}).codex).toBe('off')
+  })
+})
+
 describe('driving a session', () => {
   it('lets only its window send, answer and stop', async () => {
     const { m, project, session } = manager()
@@ -578,6 +652,157 @@ describe('driving a session', () => {
     m.stopAll()
     expect(existsSync(sessionDir)).toBe(false)
   })
+
+  it('removes the session folder when its window closes', async () => {
+    const { m, project, claude } = manager()
+    await m.start(3, { provider: 'claude-code', projectRoot: project, mode: 'ask-commands' })
+    const { sessionDir } = claude.mock.calls[0]![0]
+    m.stopOwner(3)
+    await vi.waitFor(() => expect(existsSync(sessionDir)).toBe(false))
+  })
+
+  it('removes the folder of a session whose window closed as the app quits', async () => {
+    const { m, project, claude, session } = manager()
+    await m.start(3, { provider: 'claude-code', projectRoot: project, mode: 'ask-commands' })
+    const { sessionDir } = claude.mock.calls[0]![0]
+    // quitting closes the agent window first, then the app's quit hook runs, with no wait between
+    m.stopOwner(3)
+    m.stopAll()
+    expect(existsSync(sessionDir), 'gone when the quit hook returns').toBe(false)
+    expect(session.stopped, 'the program is stopped once').toBe(1)
+  })
+
+  it('leaves a session folder another start keeps while this app runs, and removes once it is gone', async () => {
+    const tmp = temp()
+    for (const name of ['TMP', 'TEMP', 'TMPDIR']) vi.stubEnv(name, tmp)
+    try {
+      const { m, project, claude } = manager()
+      await m.start(3, { provider: 'claude-code', projectRoot: project, mode: 'ask-commands' })
+      const { sessionDir } = claude.mock.calls[0]![0]
+      await sweepAgentSessionFolders({ parent: tmp })
+      expect(existsSync(sessionDir), 'kept while its app runs').toBe(true)
+      // the app ended without quitting: its process is gone and its folder is still there
+      await sweepAgentSessionFolders({ parent: tmp, alive: () => false })
+      expect(existsSync(sessionDir), 'removed once its app is gone').toBe(false)
+    } finally {
+      vi.unstubAllEnvs()
+    }
+  })
+})
+
+describe('a window that closes, or an app that quits, while the session is being prepared', () => {
+  const STEPS = ['folder', 'app-mcp', 'relays', 'skills', 'runner'] as const
+  type Step = (typeof STEPS)[number]
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  /** a manager whose start waits at `pauseAt` until the test lets it go on */
+  function preparing(pauseAt: Step) {
+    const home = temp()
+    const project = join(home, 'Project')
+    mkdirSync(project)
+    // the session folders of this manager, and only its, land here
+    const tmp = join(home, 'tmp')
+    mkdirSync(tmp)
+    for (const name of ['TMP', 'TEMP', 'TMPDIR']) vi.stubEnv(name, tmp)
+    let goOn!: () => void
+    const paused = new Promise<void>((resolve) => {
+      goOn = resolve
+    })
+    let reached!: () => void
+    const atPause = new Promise<void>((resolve) => {
+      reached = resolve
+    })
+    const step = async (name: Step): Promise<void> => {
+      if (name !== pauseAt) return
+      reached()
+      await paused
+    }
+    const session = fakeSession()
+    const claude = vi.fn(async () => {
+      await step('runner')
+      return session
+    })
+    const mcpStop = vi.fn(async () => undefined)
+    const startAppMcp = vi.fn(async () => {
+      await step('app-mcp')
+      return { url: 'http://127.0.0.1:5/mcp', token: 't', stop: mcpStop }
+    })
+    const relaysStop = vi.fn(async () => undefined)
+    const startRelays = vi.fn(async () => {
+      await step('relays')
+      return { relays: [], keepResultsInside: [], stop: relaysStop }
+    })
+    const m = createAgentManager({
+      runners: { claude, codex: vi.fn() },
+      statuses: () => ({ 'claude-code': ready('claude-code') }),
+      aiSettings: () => normalizeAiSettings({ providers: {} }),
+      openDocuments: () => [],
+      userData: join(home, 'AppData', 'IeumOffice'),
+      homeDir: home,
+      language: () => 'ko',
+      startAppMcp,
+      startRelays,
+      buildSkills: async () => {
+        await step('skills')
+        return undefined
+      },
+      emit: () => undefined,
+    })
+    managers.push(m)
+    const start = () =>
+      m.start(1, { provider: 'claude-code', projectRoot: project, mode: 'ask-commands' })
+    return {
+      m,
+      tmp,
+      session,
+      claude,
+      startAppMcp,
+      mcpStop,
+      startRelays,
+      relaysStop,
+      start,
+      atPause,
+      goOn,
+    }
+  }
+
+  for (const pauseAt of STEPS) {
+    for (const how of ['the window closes', 'the app quits'] as const) {
+      it(`leaves nothing running when ${how} at step "${pauseAt}"`, async () => {
+        const p = preparing(pauseAt)
+        const started = p.start()
+        // the session folder is made before the first step the test can hold
+        if (pauseAt !== 'folder') await p.atPause
+        if (how === 'the window closes') p.m.stopOwner(1)
+        else p.m.stopAll()
+        p.goOn()
+
+        const result = await started
+        const reached = (step: Step): boolean => STEPS.indexOf(pauseAt) >= STEPS.indexOf(step)
+        if (pauseAt === 'runner') expect(p.session.stopped, 'the program it got ends').toBe(1)
+        else expect(p.claude, 'no program is started').not.toHaveBeenCalled()
+        expect(result).toEqual({ ok: false, failure: { reason: 'stopped' } })
+        expect(p.startAppMcp).toHaveBeenCalledTimes(reached('app-mcp') ? 1 : 0)
+        expect(p.mcpStop, 'the app MCP server is closed once').toHaveBeenCalledTimes(
+          reached('app-mcp') ? 1 : 0,
+        )
+        expect(p.startRelays).toHaveBeenCalledTimes(reached('relays') ? 1 : 0)
+        expect(p.relaysStop, 'the relays are closed once').toHaveBeenCalledTimes(
+          reached('relays') ? 1 : 0,
+        )
+        await vi.waitFor(() =>
+          expect(readdirSync(p.tmp), 'the session folder is removed').toEqual([]),
+        )
+
+        // nothing of it is left for the app's quit to end
+        p.m.stopAll()
+        expect(p.session.stopped).toBe(pauseAt === 'runner' ? 1 : 0)
+        expect(p.mcpStop).toHaveBeenCalledTimes(reached('app-mcp') ? 1 : 0)
+      })
+    }
+  }
 })
 
 describe('what the window is shown', () => {

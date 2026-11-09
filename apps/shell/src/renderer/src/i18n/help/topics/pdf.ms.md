@@ -83,6 +83,7 @@ Enam alat disediakan: **dakwat, segi empat, elips, anak panah, dan nota**, serta
 ## Eksport dan cetakan
 
 - **Eksport sebagai Word… / PowerPoint… / Excel…** dalam menu Fail, atau ketiga-tiganya daripada **Tukar PDF** pada reben — semuanya setempat, tiada muat naik. Fail .pptx keluar dengan satu slaid bagi setiap halaman dan fail .xlsx dengan satu lembar kerja bagi setiap halaman. Setiap satu akan bertanya di mana untuk disimpan.
+- **PDF kepada HWP** di bawah **Tukar PDF** pada reben menukar PDF kepada dokumen HWP dalam tab HWP baharu. Pilih **Import** (가져오기) dalam tetingkap import PDF yang dipaparkan tab; dokumen dibuat dalam tab itu, dan simpanan pertama bertanya tempat untuk fail .hwp atau .hwpx. PDF asal kekal seperti sedia ada, dan penukaran berjalan pada PC ini. Sama ada teks masuk sebagai perenggan yang mengalir mengikut halaman atau sebagai kotak teks tetap dipilih dalam pilihan (환경 설정) tab HWP, bahagian import PDF.
 - **Cetak** menggunakan susunan halaman dan putaran semasa melalui dialog sistem, dan julat halaman disokong.
 
 ## Simpanan

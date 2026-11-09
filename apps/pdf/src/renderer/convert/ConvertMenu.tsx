@@ -68,6 +68,9 @@ export function ConvertMenu({
           <button role="menuitem" onClick={choose(() => onConvert('pptx'))}>
             {t('convertToPpt')}
           </button>
+          <button role="menuitem" onClick={choose(() => onConvert('hwp'))}>
+            {t('convertToHwp')}
+          </button>
           <button role="menuitem" onClick={choose(() => onReflow('md'))}>
             {t('cvToMarkdown')}
           </button>

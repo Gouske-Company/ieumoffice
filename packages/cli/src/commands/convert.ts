@@ -2,7 +2,7 @@ import { mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from '
 import { tmpdir } from 'node:os'
 import { basename, dirname, extname, isAbsolute, join, resolve as resolvePath } from 'node:path'
 import { PdfLoadError } from '@genoffice/pdf2docx'
-import { flagBool, flagString, type ParsedArgs } from '../args'
+import { assertOptionValues, flagBool, flagString, type ParsedArgs } from '../args'
 import { csvToXlsx, sheetNameFromStem } from '../formats/csv'
 import { convertLegacyDoc } from '../formats/legacy-doc'
 import { convertPdf, type PdfTarget } from '../formats/pdf'
@@ -28,7 +28,15 @@ import {
   openDiagramInput,
   planDiagramConvert,
 } from '../formats/diagram'
-import { extension, readInput, resolveInput, resolveOutput, writeOutput } from '../fs'
+import {
+  decodeText,
+  extension,
+  readInput,
+  resolveInput,
+  resolveOutput,
+  stripBom,
+  writeOutput,
+} from '../fs'
 import { assertNotEmptyPackage } from '../limits'
 import type { CommandContext, CommandDef } from '../registry'
 import { CliError, EXIT } from '../result'
@@ -52,7 +60,8 @@ const NODE_ROUTES: Record<string, readonly string[]> = {
 /**
  * Conversions the GenOffice binary runs for us in its hidden headless-export
  * mode: anything that needs an app renderer (page layout for pdf, the Word
- * editor's HTML export, html2docx). Mirrors HEADLESS_TARGETS in the shell.
+ * editor's HTML export, html2docx, the Hangul editor's pages). Mirrors
+ * HEADLESS_TARGETS in the shell.
  */
 const APP_ROUTES: Record<string, readonly AppExportTarget[]> = {
   pdf: ['html'],
@@ -66,6 +75,8 @@ const APP_ROUTES: Record<string, readonly AppExportTarget[]> = {
   pptx: ['pdf'],
   html: ['pdf', 'docx'],
   htm: ['pdf', 'docx'],
+  hwp: ['pdf'],
+  hwpx: ['pdf'],
 }
 
 /**
@@ -144,6 +155,7 @@ export const convertCommand: CommandDef = {
     },
   ],
   async run(args, ctx) {
+    assertOptionValues(args, convertCommand.options)
     const input = resolveInput(args.positionals[0], ctx)
     if (isDiagramPath(input)) return convertDiagramFile(input, args, ctx)
     const from = extension(input)
@@ -232,7 +244,7 @@ async function run(
     return { bytes: r.bytes, detail: { pages: r.pages, warnings: r.warnings } }
   }
   if (from === 'md' || from === 'markdown') {
-    const text = Buffer.from(readInput(input)).toString('utf-8')
+    const text = stripBom(decodeText(readInput(input)))
     const title = basename(input, extname(input))
     if (to === 'html') {
       return { bytes: Buffer.from(await markdownToHtml(text, title), 'utf-8'), detail: { title } }
@@ -357,7 +369,7 @@ async function runOdt(
   const detail: Record<string, unknown> = {}
   if (from === 'docx') docx = readInput(input)
   else if (from === 'md' || from === 'markdown') {
-    const text = Buffer.from(readInput(input)).toString('utf-8')
+    const text = stripBom(decodeText(readInput(input)))
     docx = await markdownToDocx(text, { file: input, ctx })
   } else {
     docx = await withTempDocx(output, stem, null, async (path) => {

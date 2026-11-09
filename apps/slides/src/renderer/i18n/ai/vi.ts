@@ -242,6 +242,11 @@ export const vi = {
   aiTplFontsNotice:
     'Phông chữ của mẫu có sẵn trong ứng dụng này. Các chương trình khác như PowerPoint có thể hiển thị phông chữ khác.',
   aiTplOpenFonts: 'Mở thư mục phông chữ',
+  aiTplFontsAuto: 'Phông chữ: AI chọn',
+  aiTplFontsOne: 'Phông chữ: {font}',
+  aiTplFontsTwo: 'Phông chữ: tiêu đề {title}, nội dung {body}',
+  aiTplFontsTemplate: 'Phông chữ: của mẫu đã chọn',
+  aiTplFontsChange: 'Đổi',
   aiTplDesc_coral: 'Màu kem và hồng cam trên nền gần như đen, tiêu đề cỡ lớn, nét đậm và hẹp.',
   aiTplDesc_blue_professional:
     'Nền kem với điểm nhấn xanh cô-ban rực rỡ. Gọn gàng, hiện đại, nghiêm túc.',

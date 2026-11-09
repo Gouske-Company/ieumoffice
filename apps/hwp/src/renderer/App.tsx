@@ -95,6 +95,8 @@ const detailOf = (error: unknown) => (error instanceof Error ? error.message : S
  */
 const isBridgeTimeout = (error: unknown) =>
   error instanceof Error && error.message.startsWith('Request timeout')
+/** The user closed the editor's PDF import dialog (a PDF opened to be converted, decision 0116). */
+const isPdfImportCancelled = (error: unknown) => detailOf(error).includes('PDF_IMPORT_CANCELLED')
 
 function savePortOf(editor: RhwpEditor): SaveEditorPort {
   const agent = createAgentBridge(() => editor)
@@ -276,6 +278,10 @@ export default function App() {
         if (disposed) return
         if (editor && isBridgeTimeout(error)) return
         setPhase('failed')
+        if (editor && isPdfImportCancelled(error)) {
+          setNotice({ tone: 'info', key: 'pdfImportCancelled', sticky: true })
+          return
+        }
         setNotice({
           tone: 'error',
           key: editor ? 'openFailed' : 'editorFailed',
@@ -805,6 +811,31 @@ export default function App() {
   useEffect(() => {
     pdfCopyRef.current = exportPdf
   }, [exportPdf])
+
+  // Headless export mode (--headless-export): this view lives in a hidden window whose
+  // only job is the File menu's PDF export to the path the command line gave, then a
+  // report so the main process can exit. A document that did not open is reported, not
+  // exported as a blank page.
+  const headlessStartedRef = useRef(false)
+  useEffect(() => {
+    if (phase !== 'ready' && phase !== 'failed') return
+    if (headlessStartedRef.current) return
+    headlessStartedRef.current = true
+    void (async () => {
+      const outPath = await window.hwpApi.consumeHeadlessExport().catch(() => null)
+      if (!outPath) return
+      if (phase === 'failed') {
+        window.hwpApi.headlessExportDone({ ok: false, error: 'the input document did not open' })
+        return
+      }
+      const result = await runPrint('pdf', undefined, outPath)
+      window.hwpApi.headlessExportDone(
+        result.ok && !result.canceled
+          ? { ok: true }
+          : { ok: false, error: result.ok ? 'the PDF export was canceled' : result.error },
+      )
+    })()
+  }, [phase, runPrint])
 
   // PDF still exports without a preview; the preview's PDF button uses runPrint directly.
   useEffect(

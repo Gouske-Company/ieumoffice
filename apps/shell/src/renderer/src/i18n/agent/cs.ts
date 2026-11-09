@@ -95,4 +95,7 @@ export const cs = {
   errCode: 'Pokud se to opakuje, uveďte při odeslání zpětné vazby tento kód: {code}',
   documentsUnprotected:
     'Dokumenty otevřené po spuštění relace ({n}) nejsou chráněny vlastní ochranou programu proti zápisu. Zastavte a znovu spusťte relaci, abyste je ochránili.',
+  connOff: 'V této aplikaci vypnuto. Znovu ho můžete zapnout v Nastavení → AI.',
+  errOffInApp:
+    'Tento program je v této aplikaci vypnutý, proto se už nic neodeslalo. Znovu ho můžete zapnout v Nastavení → AI.',
 } satisfies Record<keyof typeof zh, string>

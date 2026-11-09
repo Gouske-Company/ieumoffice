@@ -99,4 +99,7 @@ export const it = {
   errCode: 'Se continua a succedere, indica questo codice quando invii un feedback: {code}',
   documentsUnprotected:
     'I documenti aperti dopo l’avvio della sessione ({n}) non sono coperti dalla protezione in scrittura del programma. Interrompi e riavvia la sessione per proteggerli.',
+  connOff: 'Disattivato in questa app. Puoi riattivarlo da Impostazioni → IA.',
+  errOffInApp:
+    'Questo programma è disattivato in questa app, quindi non è stato inviato altro. Puoi riattivarlo da Impostazioni → IA.',
 } satisfies Record<keyof typeof zh, string>

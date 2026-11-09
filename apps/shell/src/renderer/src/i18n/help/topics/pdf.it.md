@@ -81,6 +81,7 @@ Sei strumenti: **inchiostro, rettangolo, ellisse, freccia, nota**, più il **riq
 ## Esportazione e stampa
 
 - **Esporta come Word… / PowerPoint… / Excel…** nel menu File, oppure le stesse tre da **Converti PDF** nella barra multifunzione — tutto in locale, senza caricamenti. Il .pptx esce con una diapositiva per pagina e il .xlsx con un foglio di lavoro per pagina. Ognuno chiede dove salvare.
+- **PDF in HWP**, in **Converti PDF** sulla barra multifunzione, trasforma il PDF in un documento HWP in una nuova scheda HWP. Scegli **Importa** (가져오기) nella finestra di importazione PDF mostrata dalla scheda; il documento viene creato in quella scheda e il primo salvataggio chiede dove mettere il file .hwp o .hwpx. Il PDF resta com'era e la conversione avviene su questo PC. Se il testo entra come paragrafi che scorrono tra le pagine o come caselle di testo fisse si sceglie nelle opzioni (환경 설정) della scheda HWP, alla voce importazione PDF.
 - **Stampa**: ordine e rotazioni correnti tramite la finestra di sistema; sono supportati gli intervalli di pagine.
 
 ## Salvataggio

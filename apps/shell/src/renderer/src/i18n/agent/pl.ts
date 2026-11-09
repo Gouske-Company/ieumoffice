@@ -98,4 +98,7 @@ export const pl = {
   errCode: 'Jeśli to się powtarza, podaj ten kod, wysyłając opinię: {code}',
   documentsUnprotected:
     'Dokumenty otwarte po rozpoczęciu sesji ({n}) nie są objęte ochroną zapisu programu. Zatrzymaj i uruchom sesję ponownie, aby je chronić.',
+  connOff: 'Wyłączone w tej aplikacji. Możesz ponownie z niego korzystać w Ustawienia → AI.',
+  errOffInApp:
+    'Ten program jest wyłączony w tej aplikacji, więc nic więcej nie zostało wysłane. Możesz ponownie z niego korzystać w Ustawienia → AI.',
 } satisfies Record<keyof typeof zh, string>

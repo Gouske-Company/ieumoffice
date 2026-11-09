@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: pblsketch <239486537+pblsketch@users.noreply.github.com>
-Date: Wed, 4 Nov 2026 00:00:00 +0900
-Subject: [PATCH 11/30] fix(table): 첫 줄도 담지 못하는 저장 셀 높이는 첫 문단 위 여백을 품게 하고, 표 속성은 넘어온 테두리·배경만 바꾸며, 표만 든 쪽 첫 문단의 앞 간격은 쪽 원점이 아니고, 작게 적힌 표 뒤 흐름은 바깥 상자 끝에서 잇는다
+Date: Sun, 8 Nov 2026 00:00:00 +0900
+Subject: [PATCH 10/29] fix(table): 첫 줄도 담지 못하는 저장 셀 높이는 첫 문단 위 여백을 품게 하고, 표 속성은 넘어온 테두리·배경만 바꾸며, 표만 든 쪽 첫 문단의 앞 간격은 쪽 원점이 아니고, 작게 적힌 표 뒤 흐름은 바깥 상자 끝에서 잇는다
 
 Ported onto devel 7d06d5c70: four parts, three ported.
 (1) Devel now measures a stored first paragraph with `cell_paragraph_spacing::paragraph_before().occupied_before()`, which already covers the stored vpos (the 700HU case). Only the remainder for cells whose declared height misses the first line is added: `cell_first_para_missing_lead` at the two measure_table_impl sites, and in table_layout.rs on content height, first-line start and `upper_clip_line_reservation`. Devel removed `hwpx_reset_first_lead`, so that guard is gone.
@@ -22,10 +22,10 @@ Ported onto devel 7d06d5c70: four parts, three ported.
  10 files changed, 282 insertions(+), 24 deletions(-)
 
 diff --git a/src/document_core/commands/table_ops.rs b/src/document_core/commands/table_ops.rs
-index f8a530d578d866e7c109bc1ea0dc5d76f08645e4..5612f8f803eb46e1826a61ee987ffae04f5b2128 100644
+index 687bb44e07ac6d3d7937430b264b0d5b210c4a27..3024acbcc131a50f0ccf7c906f0565c74671d80d 100644
 --- a/src/document_core/commands/table_ops.rs
 +++ b/src/document_core/commands/table_ops.rs
-@@ -3310,8 +3310,8 @@ impl DocumentCore {
+@@ -3409,8 +3409,8 @@ impl DocumentCore {
                  caption_changed = true;
              }
          }
@@ -36,7 +36,7 @@ index f8a530d578d866e7c109bc1ea0dc5d76f08645e4..5612f8f803eb46e1826a61ee987ffae0
          let has_border_fill_change = json.contains("\"borderLeft\"")
              || json.contains("\"fillType\"")
              || json.contains("\"diagonalLine\"")
-@@ -3321,11 +3321,66 @@ impl DocumentCore {
+@@ -3420,11 +3420,66 @@ impl DocumentCore {
              || json.contains("\"diagonalColor\"")
              || json.contains("\"centerLine\"");
          if has_border_fill_change {
@@ -108,10 +108,10 @@ index f8a530d578d866e7c109bc1ea0dc5d76f08645e4..5612f8f803eb46e1826a61ee987ffae0
          }
  
 diff --git a/src/renderer/height_measurer.rs b/src/renderer/height_measurer.rs
-index 4419f213e3138ee91ef3dba932f827c97f3b55b1..421ed8a1c09de46ea5de5b92bdd96ab68b6aa859 100644
+index ce22ff867ceee0aeed1c8a8207cd486a7bc9486a..021c719b726a060f30d0cde0132b1ee4839ba317 100644
 --- a/src/renderer/height_measurer.rs
 +++ b/src/renderer/height_measurer.rs
-@@ -3980,9 +3980,28 @@ let body_height=match nested_body_heights
+@@ -3995,9 +3995,28 @@ let body_height=match nested_body_heights
                              } else { 0.0 };
                              let para_style = styles.para_styles.get(p.para_shape_id as usize);
                              let is_last_para = pidx + 1 == cell_para_count;
@@ -142,7 +142,7 @@ index 4419f213e3138ee91ef3dba932f827c97f3b55b1..421ed8a1c09de46ea5de5b92bdd96ab6
                              let spacing_after = if !is_last_para {
                                  para_style.map(|s| s.spacing_after).unwrap_or(0.0)
                              } else {
-@@ -5102,9 +5121,28 @@ let body_height=match nested_body_heights
+@@ -5030,9 +5049,28 @@ let body_height=match nested_body_heights
                              } else { 0.0 };
                              let para_style = styles.para_styles.get(p.para_shape_id as usize);
                              let is_last_para = pidx + 1 == cell_para_count;
@@ -174,10 +174,10 @@ index 4419f213e3138ee91ef3dba932f827c97f3b55b1..421ed8a1c09de46ea5de5b92bdd96ab6
                                  para_style.map(|s| s.spacing_after).unwrap_or(0.0)
                              } else {
 diff --git a/src/renderer/layout.rs b/src/renderer/layout.rs
-index 1165b5dd87dda56d35544be64d8b4d30b4495a93..67c25f6a744f85a190d83cc4c3fe70bcc1eddea4 100644
+index 26224780c1a8a31935f65e6dc4b434b803ad8e9a..abe67a1f1ae203e2bc2c72fa6f725a3db1058501 100644
 --- a/src/renderer/layout.rs
 +++ b/src/renderer/layout.rs
-@@ -8124,13 +8124,29 @@ impl LayoutEngine {
+@@ -8333,13 +8333,29 @@ impl LayoutEngine {
                                      | PageItem::PartialParagraph { para_index: owner, start_line: 0, .. }
                                  if owner == para_index)
                          });
@@ -215,10 +215,10 @@ index 1165b5dd87dda56d35544be64d8b4d30b4495a93..67c25f6a744f85a190d83cc4c3fe70bc
                      PageItem::Shape { para_index, .. }
                          if (self.profile.get().hwp5_stored_pagination_layout()
 diff --git a/src/renderer/layout/table_layout.rs b/src/renderer/layout/table_layout.rs
-index 35566c3bb6b3ebaf67dad0695294dd93f91b2ee9..f2e3aac76e660dec807c927ca956bdd6a15446d6 100644
+index 4b61eff25cad64eb7f7f6a9ef6565b2be8b32b50..3ef63adc9ade17d7e13bd6651f269795bff07ade 100644
 --- a/src/renderer/layout/table_layout.rs
 +++ b/src/renderer/layout/table_layout.rs
-@@ -11124,6 +11124,26 @@ impl LayoutEngine {
+@@ -11214,6 +11214,26 @@ impl LayoutEngine {
              let total_content_height = stored_empty_picture_frame
                  .map(|frame| hwpunit_to_px(frame.content_height_hu, self.dpi))
                  .unwrap_or(total_content_height);
@@ -245,7 +245,7 @@ index 35566c3bb6b3ebaf67dad0695294dd93f91b2ee9..f2e3aac76e660dec807c927ca956bdd6
              // 행 범위의 아래쪽이 잘려도 전체 내용이 현재 셀 상자에 들어가면
              // 그 상자를 기준으로 선언된 가운데/아래 정렬을 유지한다. 짧은 병합
              // 라벨도 뒤쪽 행을 소유할 수 있으므로 행 컷만으로 내용 잘림을 추정하지 않는다.
-@@ -11238,7 +11258,8 @@ impl LayoutEngine {
+@@ -11334,7 +11354,8 @@ impl LayoutEngine {
                          + frame.paragraph_origin_offset_px(inner_height, effective_valign, self.dpi)
                  })
                  .unwrap_or(text_y_start)
@@ -255,7 +255,7 @@ index 35566c3bb6b3ebaf67dad0695294dd93f91b2ee9..f2e3aac76e660dec807c927ca956bdd6
              // 세로쓰기 셀
              if cell.text_direction != 0 {
                  let vert_inner_area = LayoutRect {
-@@ -11290,7 +11311,10 @@ impl LayoutEngine {
+@@ -11386,7 +11407,10 @@ impl LayoutEngine {
                          inner_height,
                          text_y_start,
                          use_top_vpos_anchor,
@@ -268,10 +268,10 @@ index 35566c3bb6b3ebaf67dad0695294dd93f91b2ee9..f2e3aac76e660dec807c927ca956bdd6
                          has_nested_table,
                          section_index,
 diff --git a/src/renderer/mod.rs b/src/renderer/mod.rs
-index 686a41293bc591efd5f269c2314d9cc606db36bf..0c4e325090e0be8f34009951eaa0189aaaa27d92 100644
+index 488a276e623d4ff0e0f6ce1782504e7e451be830..f00f1da6e853279eb0d03dc5e873e433f44a85e5 100644
 --- a/src/renderer/mod.rs
 +++ b/src/renderer/mod.rs
-@@ -2023,6 +2023,53 @@ pub(crate) fn cell_paragraph_has_only_text_metadata(
+@@ -2055,6 +2055,53 @@ pub(crate) fn cell_paragraph_has_only_text_metadata(
      para.controls.iter().all(cell_control_is_text_metadata)
  }
  
@@ -405,10 +405,10 @@ index 2f27de3ab1d3525031ee5e0d2900db7c1bcef6fa..6c68fdee1b3ebcc183543c3816d3772a
      // of ordinary text advances. Its complete outer frame independently
      // closes the next saved line, so the first margin is still page-relative.
 diff --git a/src/renderer/typeset/controls.rs b/src/renderer/typeset/controls.rs
-index 0b3d67d33b77c37323e6c639864414f3288d68c8..39593f66b154b30c602c6b59251a11f092469b6a 100644
+index 89664568d4e92a964cc7338edd946871f604a4b7..3dbe04ee01ec55dea122785e9126406e0b0c6538 100644
 --- a/src/renderer/typeset/controls.rs
 +++ b/src/renderer/typeset/controls.rs
-@@ -753,7 +753,7 @@ pub(super) fn try_place_stored_tac_paragraph(
+@@ -841,7 +841,7 @@ pub(super) fn try_place_stored_tac_paragraph(
          // 원본 저장 줄의 좌표축은 이미 확립돼 있다. 합성 줄의 확정 끝만
          // lazy 원점으로 역산하며, 실제 저장 표 뒤 사다리는 유지한다.
          if rebase_line_origin {
@@ -417,7 +417,7 @@ index 0b3d67d33b77c37323e6c639864414f3288d68c8..39593f66b154b30c602c6b59251a11f0
              st.record_vpos_lazy_origin(lazy_origin);
              st.mark_vpos_ladder_dirty();
          }
-@@ -804,7 +804,7 @@ pub(super) fn try_place_stored_tac_paragraph(
+@@ -892,7 +892,7 @@ pub(super) fn try_place_stored_tac_paragraph(
          st.commit_stored_tac_control(para_idx, placement);
      }
      if let Some(frame) = plan.source_frame {

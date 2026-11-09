@@ -243,6 +243,11 @@ export const pt = {
   aiTplFontsNotice:
     'As fontes do modelo já vêm neste aplicativo. Outros programas, como o PowerPoint, podem mostrar uma fonte diferente.',
   aiTplOpenFonts: 'Abrir pasta de fontes',
+  aiTplFontsAuto: 'Fontes: a IA escolhe',
+  aiTplFontsOne: 'Fontes: {font}',
+  aiTplFontsTwo: 'Fontes: títulos {title}, texto {body}',
+  aiTplFontsTemplate: 'Fontes: as do modelo escolhido',
+  aiTplFontsChange: 'Alterar',
   aiTplDesc_coral:
     'Creme e rosa alaranjado sobre fundo quase preto, com títulos enormes e estreitos.',
   aiTplDesc_blue_professional:

@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: pblsketch <239486537+pblsketch@users.noreply.github.com>
-Date: Wed, 4 Nov 2026 00:00:00 +0900
-Subject: [PATCH 12/30] fix(cursor): 저장 줄보다 많이 그려진 문단은 그려진 줄로 선택 사각형을 나눈다
+Date: Sun, 8 Nov 2026 00:00:00 +0900
+Subject: [PATCH 11/29] fix(cursor): 저장 줄보다 많이 그려진 문단은 그려진 줄로 선택 사각형을 나눈다
 
 저장 줄(line_segs)이 하나뿐인 긴 문단을 조판이 여러 줄로 다시 나누면
 선택 사각형은 저장 줄 수만큼만 만들어져 첫 줄 하나만 칠해졌다. 렌더
@@ -17,15 +17,18 @@ Subject: [PATCH 12/30] fix(cursor): 저장 줄보다 많이 그려진 문단은 
 IeumOffice patch onto v0.8.7 (not proposed upstream yet).
 
 Ported onto devel 7d06d5c70: applied without conflicts; no code changes needed.
+
+
+Ported onto v0.9.0: v0.9.0 splits the selection of a paragraph with a treat-as-char form by the rendered line starts (collect_rendered_line_starts). That rule comes first; the drawn-line split of this patch applies only when it did not, and the stored lines remain the fallback.
 ---
- src/document_core/queries/cursor_nav.rs | 122 +++++++++++++++++++++++++++++++-
- 1 file changed, 121 insertions(+), 1 deletion(-)
+ src/document_core/queries/cursor_nav.rs | 128 ++++++++++++++++++++++++++++++--
+ 1 file changed, 122 insertions(+), 6 deletions(-)
 
 diff --git a/src/document_core/queries/cursor_nav.rs b/src/document_core/queries/cursor_nav.rs
-index 65b5319cd47054238c9291476635e7a66c3e0cda..0445a4fcbc904c3657bd81a7e8dbc4b8a9c3a753 100644
+index 4f1b71bce7a62a187c288bb9371fcac5f4ee7c5e..46a9c14b1e779ee96a7d7fba2f6ea5a97b12b5c0 100644
 --- a/src/document_core/queries/cursor_nav.rs
 +++ b/src/document_core/queries/cursor_nav.rs
-@@ -2239,6 +2239,7 @@ impl DocumentCore {
+@@ -2498,6 +2498,7 @@ impl DocumentCore {
              }
  
              // 본문 문단이 다른 페이지에 있을 수 있으므로 트리 캐시에 추가
@@ -33,7 +36,7 @@ index 65b5319cd47054238c9291476635e7a66c3e0cda..0445a4fcbc904c3657bd81a7e8dbc4b8
              if cell_target.is_none() {
                  if let Ok(pp) = self.find_pages_for_paragraph(section_idx, para_idx) {
                      for &pn in &pp {
-@@ -2246,11 +2247,71 @@ impl DocumentCore {
+@@ -2505,6 +2506,7 @@ impl DocumentCore {
                              tree_cache.push((pn, selection_tree(pn)?));
                          }
                      }
@@ -41,6 +44,13 @@ index 65b5319cd47054238c9291476635e7a66c3e0cda..0445a4fcbc904c3657bd81a7e8dbc4b8
                  }
              }
  
+@@ -2529,16 +2531,53 @@ impl DocumentCore {
+                 rendered_starts.sort_unstable();
+                 rendered_starts.dedup();
+             }
+-            let line_count = if rendered_starts.is_empty() {
+-                line_count
+-            } else {
 +            // 저장 줄(line_segs)과 그려진 줄의 수가 다르면(예: 저장 줄이 하나뿐인 긴
 +            // 문단을 조판이 여러 줄로 다시 나눈 경우) 그려진 줄로 사각형을 나눈다.
 +            // 저장 줄로 나누면 첫 줄 하나만 칠해진다.
@@ -75,16 +85,30 @@ index 65b5319cd47054238c9291476635e7a66c3e0cda..0445a4fcbc904c3657bd81a7e8dbc4b8
 +                    }
 +                },
 +            );
-+            let use_rendered = rendered.len() > 1 && rendered.len() != line_count;
-+            let line_count = if use_rendered {
++            let use_rendered = rendered_starts.is_empty()
++                && rendered.len() > 1
++                && rendered.len() != line_count;
++            let line_count = if !rendered_starts.is_empty() {
+                 rendered_starts.len()
++            } else if use_rendered {
 +                rendered.len()
 +            } else {
 +                line_count
-+            };
-+
+             };
+ 
              for line_idx in 0..line_count {
--                let (line_char_start, line_char_end) = Self::get_line_char_range(para, line_idx);
-+                let (line_char_start, line_char_end) = if use_rendered {
+-                let (line_char_start, line_char_end) = if rendered_starts.is_empty() {
+-                    Self::get_line_char_range(para, line_idx)
+-                } else {
++                let (line_char_start, line_char_end) = if !rendered_starts.is_empty() {
+                     (
+                         rendered_starts[line_idx],
+                         rendered_starts
+@@ -2546,6 +2585,24 @@ impl DocumentCore {
+                             .copied()
+                             .unwrap_or(char_count),
+                     )
++                } else if use_rendered {
 +                    // 첫 줄은 문단 처음부터, 마지막 줄은 문단 끝까지 잡아 그려지지
 +                    // 않는 앞뒤 글자도 선택에 든다.
 +                    let start = if line_idx == 0 {
@@ -102,11 +126,10 @@ index 65b5319cd47054238c9291476635e7a66c3e0cda..0445a4fcbc904c3657bd81a7e8dbc4b8
 +                    (start, end)
 +                } else {
 +                    Self::get_line_char_range(para, line_idx)
-+                };
+                 };
                  let range_start = sel_start.max(line_char_start);
                  let range_end = sel_end.min(line_char_end);
-                 if range_start >= range_end {
-@@ -2364,6 +2425,65 @@ impl DocumentCore {
+@@ -2673,6 +2730,65 @@ impl DocumentCore {
  /// 지정할 수 없다 — `path.len() == 1` 가드 없이 `path[0]` 만 비교하면, 중첩
  /// 표 내부(depth>=2) run 이 그 중첩 표를 품은 바깥 셀과 동일한 `path[0]` 을
  /// 가져 잘못 매칭된다(같은 클래스의 이미 고친 `cursor_rect.rs` 버그와 동형).

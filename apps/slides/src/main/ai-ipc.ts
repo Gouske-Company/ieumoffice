@@ -15,8 +15,10 @@ import {
   writeFileSync,
 } from 'node:fs'
 import { join } from 'node:path'
+import { readSlidesAiFonts } from './ai-default-fonts'
 import {
   sanitizeAiSettings,
+  withStoredUnknownFields,
   setAiUserAgent,
   setRescueFetch,
   type AiSettings,
@@ -25,6 +27,7 @@ import {
   sealAiSecrets,
 } from '@genoffice/ai-provider'
 import { shutdownCodexAppServers } from '@genoffice/ai-provider/codex-app-server'
+import { withStoredMainFields } from '@genoffice/ai-provider/key-models'
 import {
   ensureSubscriptionIpc,
   sharedSubscriptionStatuses,
@@ -70,6 +73,15 @@ import { registerTemplateSelectionIpc } from './template-selection-ipc'
 // ---- AI settings + streaming proxy (the main process does the networking to avoid renderer CORS; implementation shared via @genoffice/ai-provider) ----
 
 const AI_SETTINGS_PATH = () => join(app.getPath('userData'), 'ai-settings.json')
+
+/**
+ * The only write of the settings file: keys and tokens go to disk sealed
+ * (decision 0063), and fields a newer build wrote stay as they are.
+ */
+function writeAiSettingsFile(settings: unknown): void {
+  const stored = readJson<unknown>(AI_SETTINGS_PATH(), {})
+  writeJsonAtomic(AI_SETTINGS_PATH(), sealAiSecrets(withStoredUnknownFields(settings, stored)))
+}
 
 /**
  * Local media roots for a slides renderer: the open deck's directory plus the
@@ -151,10 +163,7 @@ export function registerAiIpc(): void {
   ensureSubscriptionIpc(ipcMain, {
     getSettings: readAiSettings,
     setMeteredAccepted: (provider, accepted) => {
-      writeJsonAtomic(
-        AI_SETTINGS_PATH(),
-        sealAiSecrets(withMeteredAccepted(readAiSettings(), provider, accepted)),
-      )
+      writeAiSettingsFile(withMeteredAccepted(readAiSettings(), provider, accepted))
       broadcastToWindows('ai:settings-changed')
     },
     dataDir: app.getPath('userData'),
@@ -183,7 +192,9 @@ export function registerAiIpc(): void {
       console.warn('[ai] rejected invalid ai:set-settings payload')
       return
     }
-    writeJsonAtomic(AI_SETTINGS_PATH(), sealAiSecrets(sanitized))
+    // the live model lists (decision 0087) and the CLIs turned off (decision 0114) are the
+    // main process's: the file's copy is kept
+    writeAiSettingsFile(withStoredMainFields(sanitized, readAiSettings()))
     broadcastToWindows('ai:settings-changed')
   })
 
@@ -286,9 +297,21 @@ export function registerAiIpc(): void {
 // generic ai:* channels are registered by docs-main.registerAiIpc, and slides' registerAiIpc is
 // never called; docs does not have these channels, so putting them in the wrong place raises
 // "No handler registered".
+/** Same-named `.styleskill.json` beside a draft deck, or null when the path is not a pptx. */
+export function styleSkillSidecarPath(draftPath: string | null | undefined): string | null {
+  if (!draftPath || !/\.pptx$/i.test(draftPath)) return null
+  return draftPath.replace(/\.pptx$/i, '.styleskill.json')
+}
+
 export function registerSlidesOnlyAiIpc(): void {
   // The design template remembered per document (slides:ai-template-selection-get / -set)
   registerTemplateSelectionIpc()
+
+  // The fonts generation uses when the request names none (Settings › General); the
+  // renderer passes its UI language, which picks the default before a choice is stored
+  ipcMain.handle('slides:ai-default-fonts', (_event, lang: unknown) =>
+    readSlidesAiFonts(app, typeof lang === 'string' ? lang : ''),
+  )
 
   // What the search/image/media tools can do right now (settings + subscription connections):
   // the renderer offers the model only the tools that have a route.
@@ -521,9 +544,8 @@ export function registerSlidesOnlyAiIpc(): void {
     ): Promise<{ ok: boolean }> => {
       try {
         const session = sessions.get(event.sender.id)
-        const draftPath = session?.path
-        if (!draftPath || !draftPath.endsWith('.pptx')) return { ok: false }
-        const sidecarPath = draftPath.replace(/\.pptx$/i, '.styleskill.json')
+        const sidecarPath = styleSkillSidecarPath(session?.path)
+        if (!sidecarPath) return { ok: false }
         writeFileSync(sidecarPath, JSON.stringify(data, null, 2))
         return { ok: true }
       } catch {

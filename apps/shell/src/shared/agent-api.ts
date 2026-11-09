@@ -37,6 +37,11 @@ export const AGENT_CHANNELS = {
   templateAsIs: 'agent-window:template-as-is',
   /** "make a blank template": the candidate's copy in a template preview tab */
   templateBlank: 'agent-window:template-blank',
+  /**
+   * main → every window: the subscription statuses changed (`SUBSCRIPTION_IPC_CHANNELS.changed`,
+   * named here so the agent preload imports no AI package); the window reads its connections again
+   */
+  statusesChanged: 'ai:subscription-changed',
 } as const
 
 export type AgentProvider = 'claude-code' | 'codex'
@@ -75,7 +80,9 @@ export const DEFAULT_AGENT_PREFS: AgentPrefs = {
 }
 
 /** The connection of each program as the window needs it to offer a start */
-export type AgentConnection = 'ready' | 'metered-accepted' | 'unavailable' | 'checking' | 'blocked'
+/** `off`: the person turned the program off in this app (decision 0114) */
+export type AgentConnection =
+  'ready' | 'metered-accepted' | 'unavailable' | 'checking' | 'blocked' | 'off'
 
 /** Codex's own web search in an agent session: cached results, live, or off (one type, the session's) */
 export type { AgentCodexWebSearch }
@@ -221,6 +228,7 @@ export const AGENT_RUN_ERROR_KINDS = [
   'metered-not-accepted',
   'needs-update',
   'not-installed',
+  'off-in-app',
 ] as const satisfies ReadonlyArray<AiRunErrorKind | 'sandbox-unavailable'>
 export type AgentRunErrorKind = (typeof AGENT_RUN_ERROR_KINDS)[number]
 
@@ -233,6 +241,8 @@ export type AgentStartFailure =
   | { reason: 'run-error'; kind: AgentRunErrorKind }
   | { reason: 'program-problem'; problem: AgentProgramProblem }
   | { reason: 'prepare-failed'; step: AgentPrepareStep }
+  /** the window closed, or the app quit, before the session was running */
+  | { reason: 'stopped' }
   | { reason: 'unknown' }
 
 /**
@@ -309,6 +319,8 @@ export interface AgentWindowApi {
   getInit(): Promise<AgentInit>
   getTheme(): Promise<'light' | 'dark' | 'system'>
   onThemeChanged(handler: (theme: 'light' | 'dark' | 'system') => void): () => void
+  /** a program was checked, signed in or out, or turned off or on in this app */
+  onStatusesChanged(handler: () => void): () => void
   /** the folder dialog; null when cancelled */
   pickFolder(): Promise<string | null>
   setPrefs(prefs: Partial<AgentPrefs>): Promise<AgentPrefs>

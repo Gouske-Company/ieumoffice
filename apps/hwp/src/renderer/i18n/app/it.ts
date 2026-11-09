@@ -148,6 +148,7 @@ export const it = {
   aiToolMergeCells: 'Tabella {table} · celle unite',
   aiToolSplitCell: 'Tabella {table} · cella divisa',
   aiToolTables: 'Tabelle controllate · {count}',
+  aiToolLayout: 'Controllo celle che traboccano · {count}',
   aiToolReadTable: 'Tabella {table} letta',
   aiToolFillCells: 'Tabella {table} · {count} cella/e compilata/e',
   aiToolCheckBoxes: 'Tabella {table} · {count} casella/e spuntata/e',

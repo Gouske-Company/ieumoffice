@@ -145,6 +145,7 @@ export const vi = {
   aiToolMergeCells: 'Bảng {table} · gộp ô',
   aiToolSplitCell: 'Bảng {table} · tách ô',
   aiToolTables: 'Đã kiểm tra bảng · {count}',
+  aiToolLayout: 'Đã kiểm tra ô bị tràn · {count}',
   aiToolReadTable: 'Đã đọc bảng {table}',
   aiToolFillCells: 'Bảng {table} · đã điền {count} ô',
   aiToolCheckBoxes: 'Bảng {table} · đã đánh dấu {count} ô',

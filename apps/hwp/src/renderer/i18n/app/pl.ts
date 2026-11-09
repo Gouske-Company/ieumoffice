@@ -146,6 +146,7 @@ export const pl = {
   aiToolMergeCells: 'Tabela {table} · scalanie komórek',
   aiToolSplitCell: 'Tabela {table} · podział komórki',
   aiToolTables: 'Sprawdzono tabele · {count}',
+  aiToolLayout: 'Sprawdzono przepełnienie komórek · {count}',
   aiToolReadTable: 'Odczytano tabelę {table}',
   aiToolFillCells: 'Tabela {table} · wypełniono komórek: {count}',
   aiToolCheckBoxes: 'Tabela {table} · zaznaczono pól: {count}',

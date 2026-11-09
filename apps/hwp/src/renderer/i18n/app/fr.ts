@@ -148,6 +148,7 @@ export const fr = {
   aiToolMergeCells: 'Tableau {table} · cellules fusionnées',
   aiToolSplitCell: 'Tableau {table} · cellule divisée',
   aiToolTables: 'Tableaux vérifiés · {count}',
+  aiToolLayout: 'Débordement des cellules vérifié · {count}',
   aiToolReadTable: 'Tableau {table} lu',
   aiToolFillCells: 'Tableau {table} · {count} cellule(s) remplie(s)',
   aiToolCheckBoxes: 'Tableau {table} · {count} case(s) cochée(s)',

@@ -145,6 +145,7 @@ export const th = {
   aiToolMergeCells: 'ตาราง {table} · ผสานเซลล์',
   aiToolSplitCell: 'ตาราง {table} · แยกเซลล์',
   aiToolTables: 'ตรวจสอบตารางแล้ว · {count} ตาราง',
+  aiToolLayout: 'ตรวจสอบเซลล์ที่ล้นแล้ว · {count} เซลล์',
   aiToolReadTable: 'อ่านตาราง {table} แล้ว',
   aiToolFillCells: 'ตาราง {table} · กรอก {count} เซลล์',
   aiToolCheckBoxes: 'ตาราง {table} · เลือก {count} ช่อง',

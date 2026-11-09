@@ -117,3 +117,4 @@
 | [0116](0116-hwp-engine-on-rhwp-0-9-0.md)                      | 한글 엔진·편집기를 rhwp v0.9.0에 맞추고, PDF 변환 메뉴의 "HWP로 변환"으로 PDF를 한글 문서로 바꾼다   | 2026-11-08 |
 | [0117](0117-chatgpt-one-account.md)                           | ChatGPT 직접 연결과 Codex를 화면에서 ChatGPT 하나로 보이고, 길은 앱이 정한다                         | 2026-11-09 |
 | [0118](0118-template-skill-in-current-document.md)            | 내용이 있는 문서에서 양식 스킬을 부르면 지금 문서와 새 문서 중 어디서 할지 묻는다                    | 2026-11-10 |
+| [0121](0121-docx-to-hwp-export.md)                            | 워드 문서를 다른 이름으로 저장·내보내기에서 .hwp·.hwpx 사본으로 쓴다                                 | 2026-11-10 |

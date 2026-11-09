@@ -115,4 +115,4 @@
 | [0114](0114-subscription-off-in-app.md)                       | 구독 프로그램은 이 앱에서만 끌 수 있고, 끈 프로그램은 상태 확인부터 띄우지 않는다                    | 2026-11-07 |
 | [0115](0115-slides-ai-default-fonts.md)                       | AI로 만드는 슬라이드의 기본 글꼴(고딕·명조·제목만 명조)을 사용자가 설정에서 고른다                   | 2026-11-08 |
 | [0116](0116-hwp-engine-on-rhwp-0-9-0.md)                      | 한글 엔진·편집기를 rhwp v0.9.0에 맞추고, PDF 변환 메뉴의 "HWP로 변환"으로 PDF를 한글 문서로 바꾼다   | 2026-11-08 |
-| [0117](0117-chatgpt-one-account.md)                           | ChatGPT 직접 연결과 Codex를 화면에서 ChatGPT 하나로 보이고, 길은 앱이 정한다(초안)                   | 2026-11-09 |
+| [0117](0117-chatgpt-one-account.md)                           | ChatGPT 직접 연결과 Codex를 화면에서 ChatGPT 하나로 보이고, 길은 앱이 정한다                         | 2026-11-09 |

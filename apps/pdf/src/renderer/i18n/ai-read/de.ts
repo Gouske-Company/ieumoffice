@@ -38,6 +38,8 @@ export const de = {
   arConfirmSends: 'Die Seitenbilder werden an diese KI gesendet.',
   arConfirmNothing: 'Alle gewählten Seiten wurden bereits gelesen. Es gibt nichts zu senden.',
   arChecking: 'KI-Verbindung wird geprüft…',
+  arProviderLabel: 'Anbieter',
+  arProviderNotConnected: '{provider} (nicht verbunden)',
   arVisionProvider:
     '{provider} kann keine Bilder lesen, daher kann das KI-Seitenlesen nicht starten. Wählen Sie in den Einstellungen eine KI, die Bilder liest.',
   arVisionModel:

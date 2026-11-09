@@ -37,6 +37,8 @@ export const en = {
   arConfirmSends: 'The page images are sent to this AI.',
   arConfirmNothing: 'Every chosen page has already been read. There is nothing to send.',
   arChecking: 'Checking the AI connection…',
+  arProviderLabel: 'Provider',
+  arProviderNotConnected: '{provider} (not connected)',
   arVisionProvider:
     '{provider} cannot read images, so AI page reading cannot start. Choose an AI that reads images in Settings.',
   arVisionModel:

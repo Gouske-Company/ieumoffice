@@ -37,6 +37,8 @@ export const ja = {
   arConfirmSends: 'ページ画像がこの AI に送信されます。',
   arConfirmNothing: '選んだページはすべて読み取り済みです。送信するページはありません。',
   arChecking: 'AI の接続を確認しています…',
+  arProviderLabel: 'プロバイダー',
+  arProviderNotConnected: '{provider}（未接続）',
   arVisionProvider:
     '{provider} は画像を読めないため、AI によるページ読み取りを開始できません。設定で画像を読める AI を選んでください。',
   arVisionModel:

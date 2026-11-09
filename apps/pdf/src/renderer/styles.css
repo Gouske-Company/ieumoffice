@@ -5381,6 +5381,22 @@ button {
   flex-wrap: wrap;
 }
 
+.pdf-job-provider {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pdf-job-provider > span {
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+
+.pdf-job-provider > select {
+  max-width: 220px;
+}
+
 .pdf-ai-read-paid {
   font-weight: 600;
   color: var(--pdf-sig-warn);

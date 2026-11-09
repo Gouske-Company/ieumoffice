@@ -45,6 +45,7 @@ import type { TFunc } from '../i18n/locale'
 import { useModalDialog } from '../modal-dialog'
 import { parsePageRange } from '../convert/page-range'
 import { useSubscriptionConnection } from '../ai/useSubscriptionConnection'
+import { JobProviderSelect } from '../doc-jobs/JobProviderSelect'
 import { documentJobRoute, routeLabel, sameRoute, type DocumentJobRoute } from '../doc-jobs/route'
 import { pagesText } from '../translate/TranslateDialog'
 import { createIpcHighlightStore } from './ipc-highlight-store'
@@ -661,18 +662,33 @@ function HighlightConfirm({
           <li data-route="checking">{t('arChecking')}</li>
         )}
         {!nothingToSend && route.state === 'ready' && (
-          <>
-            <li data-route="ready" data-provider={route.provider}>
-              {t('arConfirmProvider', { provider: routeLabel(route) })}
-            </li>
-            <li className="pdf-ai-read-ai" data-model-picker>
+          <li data-route="ready" data-provider={route.provider}>
+            {t('arConfirmProvider', { provider: routeLabel(route) })}
+          </li>
+        )}
+        {!nothingToSend && route.state !== 'checking' && settings && (
+          <li className="pdf-ai-read-ai" data-model-picker>
+            <JobProviderSelect
+              bridge={SETTINGS_BRIDGE}
+              settings={settings}
+              statuses={connection.statuses}
+              lang={lang}
+              label={t('arProviderLabel')}
+              notConnected={(provider) => t('arProviderNotConnected', { provider })}
+              onSaved={setSettings}
+            />
+            {route.state === 'ready' && (
               <AiModelPicker
                 bridge={SETTINGS_BRIDGE}
                 lang={lang}
                 subscriptionStatuses={connection.statuses}
                 showLabel
               />
-            </li>
+            )}
+          </li>
+        )}
+        {!nothingToSend && route.state === 'ready' && (
+          <>
             <li>{t('hlConfirmSends')}</li>
             {route.paid && (
               <li className="pdf-ai-read-paid" data-paid>

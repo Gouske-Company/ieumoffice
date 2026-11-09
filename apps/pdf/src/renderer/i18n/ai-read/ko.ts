@@ -37,6 +37,8 @@ export const ko = {
   arConfirmSends: '페이지 그림이 이 AI로 보내집니다.',
   arConfirmNothing: '고른 페이지를 모두 읽어 두었습니다. 보낼 페이지가 없습니다.',
   arChecking: 'AI 연결을 확인하는 중…',
+  arProviderLabel: '제공자',
+  arProviderNotConnected: '{provider} (연결 안 됨)',
   arVisionProvider:
     '{provider}는 그림을 읽지 못해 AI 페이지 읽기를 시작할 수 없습니다. 설정에서 그림을 읽을 수 있는 AI를 고르세요.',
   arVisionModel:

@@ -36,6 +36,8 @@ export const pl = {
   arConfirmSends: 'Obrazy stron są wysyłane do tej AI.',
   arConfirmNothing: 'Wszystkie wybrane strony zostały już odczytane. Nie ma nic do wysłania.',
   arChecking: 'Sprawdzanie połączenia z AI…',
+  arProviderLabel: 'Dostawca',
+  arProviderNotConnected: '{provider} (nie połączono)',
   arVisionProvider:
     '{provider} nie odczytuje obrazów, więc czytanie stron przez AI nie może się rozpocząć. Wybierz w Ustawieniach AI, która odczytuje obrazy.',
   arVisionModel:

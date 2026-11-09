@@ -267,6 +267,8 @@ export function AiPanel({
     cards: skillCards,
     busy,
     send: (text, use) => send(text, undefined, use),
+    // a template skill called with a PDF open asks where to run
+    hasContent: () => api.doc() !== null && api.pageCount() > 0,
     onTaken: onSkillHandoff,
     setComposer: setPrompt,
   })

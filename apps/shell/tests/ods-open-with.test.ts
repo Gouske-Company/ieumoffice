@@ -9,7 +9,7 @@ import { OFFICE_TYPES } from '../src/main/default-app'
  * .ods is offered in Explorer's "Open with" and never made the default: the
  * NSIS script registers a product-own ProgId and one value under
  * .ods\OpenWithProgids, and the uninstaller removes exactly those two. An ODS
- * file opens as a converted .xlsx copy that saves as .xlsx (decision 0118), so
+ * file opens as a converted .xlsx copy that saves as .xlsx (decision 0119), so
  * taking over the user's ODS program would hide that. The installer itself can
  * only be checked by installing it, so this pins the script text and the
  * packaging config that keep ODS off the default path.

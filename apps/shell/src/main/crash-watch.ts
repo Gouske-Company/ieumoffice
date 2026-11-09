@@ -2,6 +2,7 @@ import { app, dialog } from 'electron'
 import type { BrowserWindow, RenderProcessGoneDetails, WebContents } from 'electron'
 import { freemem, totalmem } from 'node:os'
 import { join } from 'node:path'
+import { getHeapStatistics } from 'node:v8'
 import { appendCrashLog, CRASH_LOG_FILE, errorReason } from './crash-log'
 import type { CrashEntry, CrashMemory } from './crash-log'
 import { wasReleasedRenderer } from './renderer-disposal'
@@ -80,9 +81,25 @@ function record(entry: CrashEntry): void {
 const MB = 1024 * 1024
 
 /**
+ * The main process's own figures: its resident memory, and its JavaScript heap
+ * in use against the size the heap may not pass. A main process that reaches
+ * that size ends at once, with no exception and no quit path, so these are
+ * what tell such an end apart from the PC running out of memory.
+ */
+export function mainProcessFigures(): Pick<CrashMemory, 'mainMB' | 'heapMB' | 'heapLimitMB'> {
+  const heap = getHeapStatistics()
+  return {
+    mainMB: Math.round(process.memoryUsage.rss() / MB),
+    heapMB: Math.round(heap.used_heap_size / MB),
+    heapLimitMB: Math.round(heap.heap_size_limit / MB),
+  }
+}
+
+/**
  * Memory figures for a log line: the working set of all the app's own
  * processes (the subscription CLIs are not among them, so their count goes
- * along), the PC's free and total physical memory, and the AI requests in flight.
+ * along), the PC's free and total physical memory, the AI requests in flight,
+ * and the main process's own figures.
  */
 export function memoryFigures(counts: {
   aiStreams: () => number
@@ -96,6 +113,7 @@ export function memoryFigures(counts: {
     totalMB: Math.round(totalmem() / MB),
     aiStreams: counts.aiStreams(),
     cliChildren: counts.cliChildren(),
+    ...mainProcessFigures(),
   }
 }
 
@@ -108,10 +126,36 @@ export function isLowMemory(freeMB: number, totalMB: number): boolean {
   return freeMB < Math.max(LOW_MEMORY_FLOOR_MB, totalMB * LOW_MEMORY_SHARE)
 }
 
+/** past this share of its limit the main process's heap counts as short */
+export const HEAP_SHORT_SHARE = 0.85
+
+export function isHeapShort(heapMB: number, heapLimitMB: number): boolean {
+  return heapLimitMB > 0 && heapMB > heapLimitMB * HEAP_SHORT_SHARE
+}
+
+/** the cheap figures each sample looks at, before any full figures are taken */
+export interface MemoryProbe {
+  freeMB: number
+  totalMB: number
+  heapMB: number
+  heapLimitMB: number
+}
+
+function probeMemory(): MemoryProbe {
+  const heap = getHeapStatistics()
+  return {
+    freeMB: Math.round(freemem() / MB),
+    totalMB: Math.round(totalmem() / MB),
+    heapMB: Math.round(heap.used_heap_size / MB),
+    heapLimitMB: Math.round(heap.heap_size_limit / MB),
+  }
+}
+
 export interface LowMemoryWatchOptions {
-  /** AI requests in flight: the PC is looked at only while there is one */
-  aiStreams: () => number
+  /** the full figures for the line (see `memoryFigures`) */
   memory: () => CrashMemory
+  /** injectable for tests; defaults to the PC's memory and the main heap */
+  probe?: () => MemoryProbe
   sampleMs?: number
   /** minimum gap between two `low-memory` lines */
   cooldownMs?: number
@@ -119,24 +163,30 @@ export interface LowMemoryWatchOptions {
 }
 
 /**
- * While an AI request runs, look at the PC's free memory every `sampleMs` and
- * write a `low-memory` line when it runs short. It only records: nothing is
- * stopped or delayed. A PC that freezes instead of crashing leaves this trace.
- * Returns the stop function.
+ * Every `sampleMs`, look at the PC's free memory and the main process's heap,
+ * and write a `low-memory` line when either runs short: reason `pc` for the
+ * PC, `main-heap` for the heap. It runs whether or not an AI request does,
+ * since an app that died in plain editing must leave the trace too. It only
+ * records: nothing is stopped or delayed. A PC that freezes instead of
+ * crashing leaves this trace. Returns the stop function.
  */
 export function startLowMemoryWatch(options: LowMemoryWatchOptions): () => void {
   const cooldownMs = options.cooldownMs ?? 10 * 60_000
   const now = options.now ?? Date.now
+  const probe = options.probe ?? probeMemory
   let lastAt = -Infinity
   const timer = setInterval(() => {
     try {
-      if (options.aiStreams() <= 0) return
       if (now() - lastAt < cooldownMs) return
-      const memory = options.memory()
-      if (memory.freeMB === undefined || memory.totalMB === undefined) return
-      if (!isLowMemory(memory.freeMB, memory.totalMB)) return
+      const seen = probe()
+      const reason = isLowMemory(seen.freeMB, seen.totalMB)
+        ? 'pc'
+        : isHeapShort(seen.heapMB, seen.heapLimitMB)
+          ? 'main-heap'
+          : null
+      if (!reason) return
       lastAt = now()
-      appendCrashLog(crashLogPath(), { kind: 'low-memory', ...memory })
+      appendCrashLog(crashLogPath(), { ...seen, ...options.memory(), kind: 'low-memory', reason })
     } catch {
       /* best effort */
     }

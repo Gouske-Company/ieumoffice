@@ -55,7 +55,11 @@ describe('which template a request uses', () => {
     expect(isTemplateMissing('no-template')).toBe(true)
     expect(isTemplateMissing('not-found')).toBe(true)
     expect(isTemplateMissing('failed')).toBe(false)
-    expect(templateOpenResultOf({ ok: true, tabId: 't3' })).toEqual({ ok: true, tabId: 't3' })
+    expect(templateOpenResultOf({ ok: true, tabId: 't3' })).toEqual({
+      ok: true,
+      tabId: 't3',
+      attached: false,
+    })
     expect(templateOpenResultOf({ ok: false, reason: 'no-template' })).toEqual({
       ok: false,
       reason: 'no-template',
@@ -109,6 +113,19 @@ describe('what a new tab takes over', () => {
     expect(handedRequestOf(raw, 'docs')).toBeNull()
     expect(handedRequestOf({ ...raw, mode: 'ai' }, 'hwp')).toBeNull()
     expect(handedRequestOf(null, 'hwp')).toBeNull()
+  })
+
+  it('reads the asking document a request brought along, paths only', () => {
+    const raw = {
+      id: 'h3',
+      mode: 'skill',
+      target: 'docs',
+      text: 'fill it',
+      chips: [],
+      attach: ['C:/docs/notes.hwp', '', 7],
+    }
+    expect(handedRequestOf(raw, 'docs')?.attach).toEqual(['C:/docs/notes.hwp'])
+    expect(handedRequestOf({ ...raw, attach: [] }, 'docs')?.attach).toBeUndefined()
   })
 
   it('carries the pending proposal of a preview, wanting its template', () => {

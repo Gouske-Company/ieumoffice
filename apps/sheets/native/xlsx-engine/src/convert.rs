@@ -14,7 +14,7 @@
 //! Excel syntax (`odf_formula`) and the merges, column widths and row heights
 //! calamine's ODS reader does not expose are read from the package itself
 //! (`odf_layout`). A formula that cannot be translated is dropped and the cell
-//! keeps its cached value; `formulas_dropped` reports how many (decision 0118).
+//! keeps its cached value; `formulas_dropped` reports how many (decision 0119).
 
 use std::collections::HashMap;
 use std::fs::File;
@@ -73,7 +73,7 @@ pub struct ConvertResult {
     pub sheets: usize,
     pub cells: usize,
     /// Cells whose ODF formula could not be translated and was therefore
-    /// dropped, leaving only the cached value (decision 0118).
+    /// dropped, leaving only the cached value (decision 0119).
     pub formulas_dropped: u32,
 }
 

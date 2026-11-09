@@ -2685,7 +2685,7 @@ export async function openSheetsUntitledCopy(
   const originalPath = isUntitledIdentity(copy)
     ? (request.saveAsDefaultPath ?? copyInfo?.originalPath ?? undefined)
     : undefined
-  // a copy of an .ods document keeps its footer notice (decision 0118): the
+  // a copy of an .ods document keeps its footer notice (decision 0119): the
   // original's extension says the session runs on a converted .xlsx, and the
   // copy's metadata says how many formulas were kept as values
   const odsConverted = originalPath?.toLowerCase().endsWith('.ods') === true

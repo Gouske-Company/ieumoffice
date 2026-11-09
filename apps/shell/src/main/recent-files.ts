@@ -76,7 +76,7 @@ export const EXT_FAMILY: Record<string, readonly string[]> = {
   // delimited text belongs to the sheets family: Home's own FILTER_FAMILY and
   // the shell's open routing both treat .csv/.tsv as spreadsheets, so a
   // sidebar filtered on "xlsx" must page them in too (csv was missing here).
-  // .ods opens as a converted .xlsx copy in the same tab (decision 0118).
+  // .ods opens as a converted .xlsx copy in the same tab (decision 0119).
   xlsx: ['xlsx', 'xlsm', 'xls', 'csv', 'tsv', 'ods'],
   pptx: ['pptx', 'ppt'],
   // the text app opens txt/json as source too, so the sidebar "md" filter has

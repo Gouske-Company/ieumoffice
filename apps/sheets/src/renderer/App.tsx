@@ -1364,6 +1364,14 @@ export function App({
     send: (text, use) => {
       handleSend(text, undefined, undefined, use)
     },
+    // a template skill called in a workbook with content asks where to run
+    hasContent: () => sheetHasContent,
+    // a template copy that brought the asking document: it goes in as an attachment
+    attach: async (paths) => {
+      const added = await window.desktopApi.addAttachmentPaths([...paths])
+      mergeAttachments(added)
+      return (added?.accepted.length ?? 0) > 0
+    },
     onTaken: () => setOpenAiRequest((n) => n + 1),
     setComposer: setPrompt,
   })

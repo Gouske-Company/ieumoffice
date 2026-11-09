@@ -85,6 +85,7 @@ When you make a skill in an editor's AI panel, the current document can go along
 - A skill with a template shows **Has a template** in the list.
 - Call it as a chip and send, and a copy of the template opens as a new untitled document; the AI in that tab carries on with your request. The original panel keeps "Working with the template in a new tab" and **Go to the tab**.
 - When the AI picks a template skill by itself, no tab opens at once. The chat shows an **Open a new document from this template** button instead.
+- Called in a document that already has content, it asks where to work instead of opening a tab at once. **Do it in this document** edits the current document by the skill without a new tab (the template file is not opened). **New document from the template (attach this one)** opens the template copy in a new tab and sends the current document to that tab's AI panel as an attachment. To attach it, the current document must be saved. If it was never saved or has unsaved changes, the panel says so, and **Open without attaching** opens the copy without it. The button shown when the AI picks a template skill by itself also attaches a document that has content. The markdown and PDF editors take no attachments, so a template that opens there gets nothing attached.
 - You usually choose where the new document goes the first time you save it. The Markdown and HTML editors save to the default folder as they always do. The template file itself stays as it was.
 
 ## Skills with scripts

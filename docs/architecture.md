@@ -161,7 +161,7 @@ EPUB 편집기 화면 ── epub:read-chapter·apply-edits·save 등 ──→ 
 
 - 스킬을 읽고 쓰는 일은 모두 껍데기 앱 뒷단의 게이트웨이(`apps/shell/src/main/user-skills/`)가 한다. 편집기 렌더러는 파일 시스템을 만지지 않고 다리(`aiOfficeUserSkills`, `@genoffice/electron-utils/user-skills-bridge`)로 부른다.
 - 기본 AI 창: 입력칸의 `/`·`$` 목록과 칩은 `@genoffice/ui`(`useComposerSkills`)에 있다. 보낼 때 칩의 본문을 요청 글에 붙인다. AI가 스스로 쓰는 도구(`use_skill`, `read_skill_file`, `propose_skill`)는 `@genoffice/agent-core`의 기능 묶음(`createBridgedUserSkillsSkill`)이고 편집기의 도구 반복에서 돈다. 구독 프로그램은 여전히 앱 밖에 닿는 도구가 없다(도구 0개, 문서 편집 차례는 응답 형식을 맡는 `StructuredOutput` 하나, 결정 0082).
-- 양식: 양식 스킬을 부르면 뒷단(`templateTabs`)이 양식 사본을 그 형식 편집기의 제목 없는 새 탭으로 열고, 넘겨주기(`queueSkillHandoffFor`/`takeSkillHandoff`)로 요청과 칩을 그 탭의 AI 창에 넘긴다. 받는 창은 보내기 전 문지기를 거쳐 실행한다.
+- 양식: 양식 스킬을 부르면 뒷단(`templateTabs`)이 양식 사본을 그 형식 편집기의 제목 없는 새 탭으로 열고, 넘겨주기(`queueSkillHandoffFor`/`takeSkillHandoff`)로 요청과 칩을 그 탭의 AI 창에 넘긴다. 받는 창은 보내기 전 문지기를 거쳐 실행한다. 내용이 있는 문서에서는 먼저 어디에서 할지 묻고, 새 문서를 고르면 저장된 지금 문서의 경로가 넘겨주기의 `attach`로 가서 받는 창의 첨부가 된다(결정 0118).
 - 에이전트 창: 세션을 시작할 때 켜진 스킬이 묶음으로 복사된다(위 "에이전트 모드의 흐름"). 세션 MCP 서버의 `propose_skill`·`propose_skill_install`은 창에 카드와 미리보기를 띄우기만 한다.
 
 ## 사용자 MCP 서버가 지나는 길 (결정 0100)

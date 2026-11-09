@@ -49,7 +49,7 @@
 !macroend
 
 ; .ods is offered in Explorer's "Open with" for the same reason: it opens as a
-; converted .xlsx copy that saves as .xlsx (decision 0118), so taking over the
+; converted .xlsx copy that saves as .xlsx (decision 0119), so taking over the
 ; user's ODS program would hide that the original is not what gets written
 ; back. The spreadsheet opens in the Sheets tab, so the ProgId borrows the
 ; spreadsheet icon the installer already places for .xlsx.

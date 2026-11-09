@@ -10,6 +10,7 @@ import {
   chipRefOf,
   handedRequestOf,
   isTemplateMissing,
+  isUnsavedCurrent,
   skillTemplateBridge,
   templateChoice,
   templateOpenResultOf,
@@ -22,6 +23,16 @@ import type { SkillChipRef } from './skill-picker-model'
 /** How long a handed-over request may wait to start before the preview's card shows anyway */
 const UNSTARTED_RUN_MS = 5000
 
+/** Told to the model when the person chose to run a template skill in the open document */
+export const SKILL_HERE_NOTE =
+  '\n\nThe person chose to do this in the document that is open now: apply the skill to ' +
+  'this document. The skill’s template document is not opened.'
+
+/** Told to the model in a template copy's tab that took the asking document along */
+export const SKILL_ATTACHED_NOTE =
+  '\n\nThe person’s earlier document is attached. This document is a copy of the skill’s ' +
+  'template: fill it with the content of the attached document.'
+
 /** One line the template flow leaves in a panel's chat */
 export type SkillTemplateNote =
   | {
@@ -30,10 +41,13 @@ export type SkillTemplateNote =
       tabId: string
       /** several chips had a template: whose template is used */
       firstOf?: string | undefined
+      /** the asking document was to go along, but the template's editor takes no attachments */
+      notAttached?: boolean | undefined
     }
   | { kind: 'missing'; key: string; title: string }
   | { kind: 'failed'; key: string }
   | { kind: 'not-sent'; key: string }
+  | { kind: 'attach-failed'; key: string }
   | {
       kind: 'offer'
       key: string
@@ -41,6 +55,25 @@ export type SkillTemplateNote =
       /** the person's request of the turn the model used the skill in */
       request: string
       opening?: boolean | undefined
+      /** the document has content but is not saved: it cannot go along yet */
+      needsSave?: boolean | undefined
+    }
+  | {
+      /**
+       * A template skill was called in a document with content: run it here,
+       * or open the template's copy with this document attached.
+       */
+      kind: 'choose'
+      key: string
+      /** the chip whose template would open */
+      skill: SkillChipRef
+      /** every chip the request carried */
+      chips: SkillChipRef[]
+      request: string
+      firstOf?: string | undefined
+      busy?: boolean | undefined
+      /** the document is not saved: it cannot go along yet */
+      needsSave?: boolean | undefined
     }
   | { kind: 'card'; key: string; cardKey: string }
 
@@ -51,10 +84,24 @@ export interface SkillTemplatesOptions {
   /** the panel's skill cards: a template preview's card opens there */
   cards?: Pick<SkillProposals, 'addPreview' | 'render'> | undefined
   /**
-   * The panel's send for a handed-over request, through its normal send gate;
-   * false (or nothing) when nothing started.
+   * The panel's send for a handed-over request (and for a template skill run
+   * in this document), through its normal send gate; false (or nothing) when
+   * nothing started. It takes the composer's attachments as a send does.
    */
   send?: ((text: string, use: SkillUse) => boolean | void) | undefined
+  /**
+   * The document open now has content (business-rules "양식 쓰기"): a template
+   * skill called here asks whether to run in this document or in the
+   * template's copy. Absent or false: the copy opens right away, as before.
+   */
+  hasContent?: (() => boolean | Promise<boolean>) | undefined
+  /**
+   * Put files into the composer as the panel's own attachments (a hand-off
+   * that brought the asking document along, read through the panel's usual
+   * attachment route); true when all of them went in. Absent in panels
+   * without attachments.
+   */
+  attach?: ((paths: string[]) => Promise<boolean>) | undefined
   /** a run is going in this panel */
   busy?: boolean | undefined
   /** the panel can send now (its document is open); true when absent */
@@ -106,6 +153,9 @@ async function windowMcpUsableNow(): Promise<ReadonlySet<string>> {
  * - a chip whose skill has a template opens the template's copy as a new
  *   document in its editor's tab, hands the request and the chips over, and
  *   leaves "Working with the template in a new tab [Go to the tab]" here;
+ *   in a document that has content it first asks: [Do it in this document]
+ *   runs the request here, [New document from the template] opens the copy
+ *   with this (saved) document handed over as its attachment;
  * - a template skill the model used on its own offers
  *   [Open a new document from this template] with that turn's request;
  * - a tab opened for a hand-off takes it once and sends it through the
@@ -137,11 +187,35 @@ export function useSkillTemplates(options: SkillTemplatesOptions): SkillTemplate
     setNotes((prev) => [...prev, note])
   }, [])
 
+  /** the panel says its document has content (never for a panel with no document) */
+  const documentHasContent = useCallback(async (): Promise<boolean> => {
+    const hasContent = optionsRef.current.hasContent
+    if (optionsRef.current.editor === null || !hasContent) return false
+    try {
+      return (await hasContent()) === true
+    } catch {
+      return false
+    }
+  }, [])
+
   const onTemplateSkill: OnTemplateSkill = useCallback(
     async (request) => {
       const b = bridgeRef.current
       if (!b) return false
       const choice = templateChoice(request)
+      if (choice.skill.template && (await documentHasContent())) {
+        if (!liveRef.current) return 'stop'
+        optionsRef.current.setComposer?.('')
+        push({
+          kind: 'choose',
+          key: nextKey(),
+          skill: chipRefOf(choice.skill),
+          chips: request.chips.map(chipRefOf),
+          request: request.text,
+          ...(choice.several ? { firstOf: choice.skill.title } : {}),
+        })
+        return true
+      }
       const opened = templateOpenResultOf(
         await b
           .openTemplate({
@@ -170,7 +244,7 @@ export function useSkillTemplates(options: SkillTemplatesOptions): SkillTemplate
       }
       return 'stop'
     },
-    [push],
+    [push, documentHasContent],
   )
 
   const onUsed = useCallback((skill: UserSkillText) => {
@@ -187,24 +261,127 @@ export function useSkillTemplates(options: SkillTemplatesOptions): SkillTemplate
     lastRequestRef.current = text
   }, [])
 
-  const openOffer = async (key: string) => {
+  /**
+   * [Open a new document from this template]: with `attach` undefined the
+   * document goes along when it has content; `false` is "open without
+   * attaching" after a save was asked for.
+   */
+  const openOffer = async (key: string, attach?: boolean) => {
     const b = bridgeRef.current
     const offer = notes.find((n) => n.key === key)
     if (!b || !offer || offer.kind !== 'offer' || offer.opening) return
     setNotes((prev) => prev.map((n) => (n.key === key ? { ...offer, opening: true } : n)))
+    const withCurrent = attach ?? (await documentHasContent())
     const opened = templateOpenResultOf(
       await b
-        .openTemplate({ skillId: offer.skill.id, text: offer.request, chips: [offer.skill] })
+        .openTemplate({
+          skillId: offer.skill.id,
+          text: offer.request,
+          chips: [offer.skill],
+          ...(withCurrent ? { withCurrent: true } : {}),
+        })
         .catch(() => null),
     )
     if (!liveRef.current) return
     const replacement: SkillTemplateNote = opened.ok
-      ? { kind: 'taken', key, tabId: opened.tabId }
+      ? {
+          kind: 'taken',
+          key,
+          tabId: opened.tabId,
+          ...(withCurrent && !opened.attached ? { notAttached: true } : {}),
+        }
       : isTemplateMissing(opened.reason)
         ? { kind: 'missing', key, title: offer.skill.title }
-        : { ...offer, opening: false }
+        : {
+            ...offer,
+            opening: false,
+            ...(isUnsavedCurrent(opened.reason) ? { needsSave: true } : {}),
+          }
     setNotes((prev) => prev.map((n) => (n.key === key ? replacement : n)))
-    if (!opened.ok && !isTemplateMissing(opened.reason)) push({ kind: 'failed', key: nextKey() })
+    if (!opened.ok && !isTemplateMissing(opened.reason) && !isUnsavedCurrent(opened.reason)) {
+      push({ kind: 'failed', key: nextKey() })
+    }
+  }
+
+  const updateChoose = (key: string, patch: { busy?: boolean; needsSave?: boolean }) =>
+    setNotes((prev) =>
+      prev.map((n) => (n.key === key && n.kind === 'choose' ? { ...n, ...patch } : n)),
+    )
+
+  /** [Do it in this document]: the request runs here with the chips' skills */
+  const chooseHere = async (key: string) => {
+    const b = bridgeRef.current
+    const note = notes.find((n) => n.key === key)
+    if (!b || !note || note.kind !== 'choose' || note.busy) return
+    updateChoose(key, { busy: true })
+    const { skills, missing } = await readSkillsForRequest(
+      b,
+      note.chips.map((c) => c.id),
+    )
+    const usable = await windowMcpUsableNow()
+    const built = buildSkillRequest(skills, undefined, {
+      mcpServerUsable: (name) => usable.has(name),
+    })
+    if (!liveRef.current) return
+    if (missing.length > 0 || !built.ok) {
+      // spec 9.1: nothing is sent without a chosen skill
+      setNotes((prev) => prev.filter((n) => n.key !== key))
+      optionsRef.current.setComposer?.(note.request)
+      push({ kind: 'not-sent', key: nextKey() })
+      return
+    }
+    lastRequestRef.current = note.request
+    const started = optionsRef.current.send?.(note.request, {
+      text: built.text + SKILL_HERE_NOTE,
+      chips: note.chips,
+    })
+    if (started === false) {
+      // the gate held or refused it: the choice stays to press again
+      updateChoose(key, { busy: false })
+      return
+    }
+    setNotes((prev) => prev.filter((n) => n.key !== key))
+  }
+
+  /** [New document from the template]: with this document attached, or (after a save was asked) without */
+  const chooseNew = async (key: string, withCurrent: boolean) => {
+    const b = bridgeRef.current
+    const note = notes.find((n) => n.key === key)
+    if (!b || !note || note.kind !== 'choose' || note.busy) return
+    updateChoose(key, { busy: true })
+    const opened = templateOpenResultOf(
+      await b
+        .openTemplate({
+          skillId: note.skill.id,
+          text: note.request,
+          chips: note.chips,
+          ...(withCurrent ? { withCurrent: true } : {}),
+        })
+        .catch(() => null),
+    )
+    if (!liveRef.current) return
+    if (opened.ok) {
+      const taken: SkillTemplateNote = {
+        kind: 'taken',
+        key,
+        tabId: opened.tabId,
+        ...(note.firstOf ? { firstOf: note.firstOf } : {}),
+        ...(withCurrent && !opened.attached ? { notAttached: true } : {}),
+      }
+      setNotes((prev) => prev.map((n) => (n.key === key ? taken : n)))
+      return
+    }
+    if (isUnsavedCurrent(opened.reason)) {
+      updateChoose(key, { busy: false, needsSave: true })
+      return
+    }
+    if (isTemplateMissing(opened.reason)) {
+      const gone: SkillTemplateNote = { kind: 'missing', key, title: note.skill.title }
+      setNotes((prev) => prev.map((n) => (n.key === key ? gone : n)))
+      return
+    }
+    updateChoose(key, { busy: false })
+    push({ kind: 'failed', key: nextKey() })
   }
 
   // ---- the hand-off this tab was opened for ----
@@ -213,6 +390,23 @@ export function useSkillTemplates(options: SkillTemplatesOptions): SkillTemplate
   const [handed, setHanded] = useState<HandedRequest | null>(null)
   /** the run of the handed-over request: sent, seen running, or done */
   const [runPhase, setRunPhase] = useState<'idle' | 'sent' | 'running' | 'done'>('idle')
+
+  /** a handed-over request waiting for the render that shows its attachment */
+  const [deferred, setDeferred] = useState<{ text: string; use: SkillUse } | null>(null)
+
+  /** the handed-over request through the panel's own send (and its gate) */
+  const sendHanded = (text: string, use: SkillUse, preview: boolean) => {
+    lastRequestRef.current = text
+    optionsRef.current.onHandedRun?.({ preview })
+    const started = optionsRef.current.send?.(text, use)
+    if (started === false) {
+      // the gate held or refused it: the request waits in the composer
+      optionsRef.current.setComposer?.(text)
+      setRunPhase('done')
+    } else {
+      setRunPhase('sent')
+    }
+  }
   const ready = options.ready !== false
 
   useEffect(() => {
@@ -245,18 +439,30 @@ export function useSkillTemplates(options: SkillTemplatesOptions): SkillTemplate
         }
         use = { text: built.text, chips: taken.chips.map(chipRefOf) }
       }
-      lastRequestRef.current = taken.text
-      optionsRef.current.onHandedRun?.({ preview: taken.preview !== undefined })
-      const started = optionsRef.current.send?.(taken.text, use)
-      if (started === false) {
-        // the gate held or refused it: the request waits in the composer
-        optionsRef.current.setComposer?.(taken.text)
-        setRunPhase('done')
-      } else {
-        setRunPhase('sent')
+      if (taken.attach && taken.attach.length > 0 && optionsRef.current.attach) {
+        const added = await optionsRef.current.attach(taken.attach).catch(() => false)
+        if (!liveRef.current) return
+        if (!added) {
+          // the request is about that document: it does not go without it
+          optionsRef.current.setComposer?.(taken.text)
+          push({ kind: 'attach-failed', key: nextKey() })
+          setRunPhase('done')
+          return
+        }
+        // the attachment is in the composer now: send once the panel has
+        // rendered it, so the run takes it like one the person added
+        setDeferred({ text: taken.text, use: { ...use, text: use.text + SKILL_ATTACHED_NOTE } })
+        return
       }
+      sendHanded(taken.text, use, taken.preview !== undefined)
     })()
   }, [ready, push])
+
+  useEffect(() => {
+    if (!deferred) return
+    setDeferred(null)
+    sendHanded(deferred.text, deferred.use, false)
+  }, [deferred])
 
   const busy = options.busy === true
   useEffect(() => {
@@ -308,6 +514,7 @@ export function useSkillTemplates(options: SkillTemplatesOptions): SkillTemplate
                   <span className="ai-skill-card-line-text">
                     {t('takenOver')}
                     {note.firstOf ? ` · ${t('firstTemplateOnly', { title: note.firstOf })}` : ''}
+                    {note.notAttached ? ` · ${t('notAttachedEditor')}` : ''}
                   </span>
                   {' · '}
                   <button
@@ -337,10 +544,59 @@ export function useSkillTemplates(options: SkillTemplatesOptions): SkillTemplate
                   {t('handoffNotSent')}
                 </div>
               )
+            case 'attach-failed':
+              return (
+                <div key={note.key} className="ai-skill-card-line is-error" role="alert">
+                  {t('attachFailed')}
+                </div>
+              )
+            case 'choose':
+              return (
+                <div key={note.key} className="ai-skill-card-line is-template" dir="auto">
+                  <span className="ai-skill-card-line-text">
+                    {note.skill.title} · {note.needsSave ? t('needsSave') : t('chooseWhere')}
+                    {note.firstOf ? ` · ${t('firstTemplateOnly', { title: note.firstOf })}` : ''}
+                  </span>
+                  {' · '}
+                  <button
+                    type="button"
+                    className="ai-skill-card-link"
+                    disabled={note.busy === true}
+                    onClick={() => void chooseHere(note.key)}
+                  >
+                    {t('runHere')}
+                  </button>
+                  {' · '}
+                  <button
+                    type="button"
+                    className="ai-skill-card-link"
+                    disabled={note.busy === true}
+                    onClick={() => void chooseNew(note.key, true)}
+                  >
+                    {t('openNewWithCurrent')}
+                  </button>
+                  {note.needsSave ? (
+                    <>
+                      {' · '}
+                      <button
+                        type="button"
+                        className="ai-skill-card-link"
+                        disabled={note.busy === true}
+                        onClick={() => void chooseNew(note.key, false)}
+                      >
+                        {t('openWithoutAttach')}
+                      </button>
+                    </>
+                  ) : null}
+                </div>
+              )
             case 'offer':
               return (
                 <div key={note.key} className="ai-skill-card-line is-template" dir="auto">
-                  <span className="ai-skill-card-line-text">{note.skill.title}</span>
+                  <span className="ai-skill-card-line-text">
+                    {note.skill.title}
+                    {note.needsSave ? ` · ${t('needsSave')}` : ''}
+                  </span>
                   {' · '}
                   <button
                     type="button"
@@ -350,6 +606,19 @@ export function useSkillTemplates(options: SkillTemplatesOptions): SkillTemplate
                   >
                     {t('openWithTemplate')}
                   </button>
+                  {note.needsSave ? (
+                    <>
+                      {' · '}
+                      <button
+                        type="button"
+                        className="ai-skill-card-link"
+                        disabled={note.opening === true}
+                        onClick={() => void openOffer(note.key, false)}
+                      >
+                        {t('openWithoutAttach')}
+                      </button>
+                    </>
+                  ) : null}
                 </div>
               )
             case 'card':

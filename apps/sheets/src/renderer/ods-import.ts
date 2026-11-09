@@ -1,6 +1,6 @@
 /**
  * The footer line for a document opened from an .ods file. The session runs on
- * a converted .xlsx copy (decision 0118), so the line says where saving will
+ * a converted .xlsx copy (decision 0119), so the line says where saving will
  * write and, when the conversion had to drop formulas, how many cells kept
  * their value only. It lives for the life of the open document and is kept
  * apart from the transient status message.

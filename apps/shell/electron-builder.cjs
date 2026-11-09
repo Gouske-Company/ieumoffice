@@ -338,7 +338,7 @@ function ensureThirdPartyNotices() {
 // with, and HWP and HWPX must not be taken from Hancom Office on a PC that has
 // it, so Windows takes none of the four as the extension's default. A Visio
 // drawing is only imported (as a new diagram), and an ODS spreadsheet opens as
-// a converted .xlsx copy that saves as .xlsx (decision 0118), so both keep
+// a converted .xlsx copy that saves as .xlsx (decision 0119), so both keep
 // their program too.
 // They are still offered in Explorer's "Open with": build/installer.nsh
 // writes a product-own ProgId with a document icon for each (the per-type
@@ -418,7 +418,7 @@ const FILE_ASSOCIATIONS = [
     mimeType: 'text/tab-separated-values',
   },
   {
-    // Open With only (decision 0118): an ODS file opens as a converted .xlsx
+    // Open With only (decision 0119): an ODS file opens as a converted .xlsx
     // copy and saves as .xlsx, so installing must not take over the program
     // the user already opens it with. Windows leaves it out
     // (WIN_OPEN_WITH_ONLY_EXTS) and macOS ranks the app an alternate; the NSIS

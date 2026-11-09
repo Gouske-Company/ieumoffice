@@ -7,7 +7,7 @@
 //! Excel matches `[.B1:.B2]` to nothing and shows the cached value forever.
 //!
 //! The converter therefore translates the pieces both dialects spell the same
-//! way and refuses the rest (decision 0118). A refused formula leaves the cell
+//! way and refuses the rest (decision 0119). A refused formula leaves the cell
 //! with its cached value only, and the count of refused cells travels back to
 //! the caller as `formulasDropped`. Refusing is the safe direction: a wrong
 //! translation would silently change the numbers in the document.

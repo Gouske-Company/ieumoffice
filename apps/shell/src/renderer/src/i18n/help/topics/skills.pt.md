@@ -85,6 +85,7 @@ Quando cria uma habilidade no painel de IA de um editor, o documento atual pode 
 - Uma habilidade com modelo mostra **Tem modelo** na lista.
 - Chame-a como chip e envie: uma cópia do modelo abre-se como um novo documento sem título, e a IA desse separador continua o seu pedido. O painel original mantém «O trabalho com o modelo continua numa nova aba» e **Ir para a aba**.
 - Quando a IA escolhe sozinha uma habilidade com modelo, nenhum separador se abre de imediato. Em vez disso, a conversa mostra um botão **Abrir um novo documento com este modelo**.
+- Chamada num documento que já tem conteúdo, ela pergunta onde trabalhar em vez de abrir uma guia na hora. **Fazer neste documento** altera o documento atual conforme a habilidade, sem guia nova (o arquivo de modelo não é aberto). **Novo documento a partir do modelo (anexar este)** abre a cópia do modelo numa nova guia e envia o documento atual ao painel de IA dessa guia como anexo. Para anexá-lo, o documento atual precisa estar salvo. Se nunca foi salvo ou tem alterações não salvas, o painel avisa, e **Abrir sem anexar** abre a cópia sem ele. O botão que aparece quando a IA usa sozinha uma habilidade com modelo também anexa um documento com conteúdo. Os editores de Markdown e PDF não aceitam anexos, então um modelo que abre neles não recebe nada.
 - Normalmente escolhe onde fica o novo documento na primeira vez que o guarda. Os editores de Markdown e HTML guardam na pasta predefinida, como sempre. O ficheiro de modelo em si continua como estava.
 
 ## Habilidades com scripts

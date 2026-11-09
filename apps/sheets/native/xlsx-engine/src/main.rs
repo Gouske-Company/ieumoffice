@@ -1003,7 +1003,7 @@ mod tests {
     }
 
     /// `convert_workbook` answers with the ODF formula loss it took, so the
-    /// window can say how many cells came over as values only (decision 0118).
+    /// window can say how many cells came over as values only (decision 0119).
     #[test]
     fn convert_workbook_reports_dropped_formulas() {
         let dir = tempfile::tempdir().unwrap();

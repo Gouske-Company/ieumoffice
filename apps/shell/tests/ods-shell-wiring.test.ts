@@ -6,7 +6,7 @@ import { EXT_FAMILY } from '../src/main/recent-files'
 import { isSupportedTreeFile } from '../src/main/folder-tree'
 
 /**
- * `.ods` opens as an `.xlsx` copy in the spreadsheet tab (decision 0118), so
+ * `.ods` opens as an `.xlsx` copy in the spreadsheet tab (decision 0119), so
  * every shell list that offers or filters documents has to name it in the same
  * family as `.xlsx`. The main entry (src/main/index.ts) and Home.tsx cannot be
  * imported in a node test, so their lists are read out of the source, the same

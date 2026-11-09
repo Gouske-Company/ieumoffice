@@ -5,7 +5,7 @@ import type { DocumentTabKind } from '../shared/tabs-api'
 const DOCX_RE = /\.docx$/i
 // OpenDocument text opens in the Word tab too (apps/docs docFormatOfPath picks the format)
 const ODT_RE = /\.odt$/i
-// .ods opens as a converted .xlsx copy in the spreadsheet tab (decision 0118);
+// .ods opens as a converted .xlsx copy in the spreadsheet tab (decision 0119);
 // ODS_RE lets the rename gate tell the ODF package from the other sheet forms
 const ODS_RE = /\.ods$/i
 const XLSX_RE = /\.(xlsx|xlsm|xls|csv|tsv|ods)$/i

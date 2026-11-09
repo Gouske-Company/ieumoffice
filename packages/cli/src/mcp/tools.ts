@@ -651,7 +651,7 @@ export const TOOLS: ToolSpec[] = [
     readOnly: true,
     images: true,
     description:
-      'One PNG per page of a document (docx, xlsx, pptx, pdf, md, html) as the GenOffice renderer lays it out, written to a directory and returned as images. Starts a hidden GenOffice process. page renders one page; grid adds a contact sheet of every page.',
+      'One PNG per page of a document (docx, xlsx, pptx, pdf, md, html, hwp, hwpx) as the app prints it, written to a directory and returned as images. Starts a hidden GenOffice process. page renders one page; grid adds a contact sheet of every page.',
     positionals: [{ key: 'file', description: 'path of the document' }],
     options: [
       { key: 'out', description: 'directory for the PNGs (required)', required: true },

@@ -4,6 +4,7 @@ export const id = {
   loading: 'Membuka dokumen…',
   editorFailed: 'Editor tidak dapat dimulai.',
   openFailed: 'Dokumen tidak dapat dibuka.',
+  pdfImportCancelled: 'Impor PDF dibatalkan. Anda dapat menutup tab ini.',
   saveFailed: 'Dokumen tidak dapat disimpan.',
   fileSave: 'Simpan',
   fileSaveAs: 'Simpan Sebagai…',

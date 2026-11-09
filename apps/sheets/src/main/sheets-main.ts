@@ -117,9 +117,10 @@ import {
   type AiSettings,
   type AiStreamChunk,
   sealAiSecrets,
+  withStoredUnknownFields,
 } from '@genoffice/ai-provider'
 import { shutdownCodexAppServers } from '@genoffice/ai-provider/codex-app-server'
-import { withStoredKeyModels } from '@genoffice/ai-provider/key-models'
+import { withStoredMainFields } from '@genoffice/ai-provider/key-models'
 import {
   ensureSubscriptionIpc,
   sharedSubscriptionStatuses,
@@ -2752,6 +2753,15 @@ function readJson<T>(path: string, fallback: T): T {
 
 const SETTINGS_PATH = () => userDataPath('ai-settings.json')
 
+/**
+ * The only write of the settings file: keys and tokens go to disk sealed
+ * (decision 0063), and fields a newer build wrote stay as they are.
+ */
+function writeAiSettingsFile(settings: unknown): void {
+  const stored = readJson<unknown>(SETTINGS_PATH(), {})
+  writeJsonAtomic(SETTINGS_PATH(), sealAiSecrets(withStoredUnknownFields(settings, stored)))
+}
+
 // Dev-only automation hooks: a fixed CDP port for driving the app from test
 // scripts, and a workbook path that bypasses the native file dialog.
 const debugPort = app.isPackaged ? undefined : process.env.XLSX_DEBUG_PORT
@@ -4501,8 +4511,7 @@ export function registerSheetsAiIpc(): void {
   ensureSubscriptionIpc(ipcMain, {
     getSettings: () => aiSettingsFromStored(readJson<unknown>(SETTINGS_PATH(), {})),
     setMeteredAccepted: (provider, accepted) => {
-      writeJsonAtomic(
-        SETTINGS_PATH(),
+      writeAiSettingsFile(
         withMeteredAccepted(readJson<unknown>(SETTINGS_PATH(), {}), provider, accepted),
       )
       broadcastAiSettingsChanged()
@@ -4535,12 +4544,10 @@ export function registerSheetsAiIpc(): void {
   ipcMain.handle(IPC_CHANNELS.aiSetSettings, async (event, input: unknown) => {
     sessionFor(event)
     const settings = aiSettingsInputSchema.parse(input)
-    // the live model lists are the main process's (decision 0087): the file's copy is kept
+    // the live model lists (decision 0087) and the CLIs turned off (decision 0114) are the
+    // main process's: the file's copy is kept
     const stored = aiSettingsFromStored(readJson<unknown>(SETTINGS_PATH(), {}))
-    writeJsonAtomic(
-      SETTINGS_PATH(),
-      sealAiSecrets(withStoredKeyModels(settings as AiSettings, stored)),
-    )
+    writeAiSettingsFile(withStoredMainFields(settings as AiSettings, stored))
     broadcastAiSettingsChanged()
   })
 

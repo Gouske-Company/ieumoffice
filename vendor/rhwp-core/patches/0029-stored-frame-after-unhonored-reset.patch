@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: pblsketch <239486537+pblsketch@users.noreply.github.com>
-Date: Wed, 4 Nov 2026 00:00:00 +0900
-Subject: [PATCH 19/30] fix(typeset,layout): 흐름이 따르지 않은 저장 쪽 경계 뒤의 표는 저장 좌표에 두지 않는다
+Date: Sun, 8 Nov 2026 00:00:00 +0900
+Subject: [PATCH 18/29] fix(typeset,layout): 흐름이 따르지 않은 저장 쪽 경계 뒤의 표는 저장 좌표에 두지 않는다
 
 저장 줄의 vpos 는 한/글이 저장할 때의 쪽 원점에서 잰 값이다. 사다리가 되감기는
 자리(앞 줄 vpos > 5000, 뒤 줄이 그보다 작음)는 한/글이 거기서 쪽을 나눴다는
@@ -45,10 +45,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  5 files changed, 126 insertions(+), 13 deletions(-)
 
 diff --git a/src/renderer/layout.rs b/src/renderer/layout.rs
-index 8904717404625a6e85cc7bc27b2381937943d131..94896363dc2195ebdb8864fdc45215a5701ec0fc 100644
+index 74d68ac41ff0f9d0079b9b3e1cb2e0bb1a169dc4..f916250874a3d61f9cc72fed1287273734ad9361 100644
 --- a/src/renderer/layout.rs
 +++ b/src/renderer/layout.rs
-@@ -16486,26 +16486,52 @@ impl LayoutEngine {
+@@ -16768,26 +16768,52 @@ impl LayoutEngine {
          // (예: -1796 HU = 4294965500u32) 도 통과시킴. signed 비교로 정정.
          let pt_y_start = if let Some(para) = paragraphs.get(para_index) {
              if let Some(Control::Table(t)) = para.controls.get(control_index) {
@@ -115,10 +115,10 @@ index 8904717404625a6e85cc7bc27b2381937943d131..94896363dc2195ebdb8864fdc45215a5
                          stored_top
                      } else if !t.common.treat_as_char
 diff --git a/src/renderer/typeset.rs b/src/renderer/typeset.rs
-index 6d049e1e3e638d0c840108696c4f17eeccc6a4b4..a9362fc75691f04cb82b643cd60e39dfa1d0e3da 100755
+index 65967ced409b1b23552c431aa782836de275a4cd..9ad66608ae4aeef75e9ce0460d0b5550ed390227 100755
 --- a/src/renderer/typeset.rs
 +++ b/src/renderer/typeset.rs
-@@ -2613,6 +2613,70 @@ pub(in crate::renderer::typeset) fn stored_vpos_overflow_defers_paragraph(
+@@ -2647,6 +2647,70 @@ pub(in crate::renderer::typeset) fn stored_vpos_overflow_defers_paragraph(
      hosts_table && overflows_body_narrowly && next < own
  }
  
@@ -190,10 +190,10 @@ index 6d049e1e3e638d0c840108696c4f17eeccc6a4b4..a9362fc75691f04cb82b643cd60e39df
  ///
  /// 기존 [`paragraph_saved_vpos_reset_starts_new_page_after`] 는 단일 단에서 `nv == 0`
 diff --git a/src/renderer/typeset/state.rs b/src/renderer/typeset/state.rs
-index 71790c3a94a1992e06c0b02e06638012cde47025..09ea61edac2e3f794d5d3488806d232be456822a 100644
+index 8e1ccddbe87ab1549607430154b7642268dd55b1..718311f3c4e5aa36d45e121fc0d86a016602cebd 100644
 --- a/src/renderer/typeset/state.rs
 +++ b/src/renderer/typeset/state.rs
-@@ -972,6 +972,21 @@ impl TypesetState {
+@@ -962,6 +962,21 @@ impl TypesetState {
              })
      }
  
@@ -216,10 +216,10 @@ index 71790c3a94a1992e06c0b02e06638012cde47025..09ea61edac2e3f794d5d3488806d232b
      pub(super) fn begin_atomic_overflow_paragraph(&mut self, para_idx: usize) {
          match self
 diff --git a/src/renderer/typeset/table/block/prepare.rs b/src/renderer/typeset/table/block/prepare.rs
-index 0d43e94a2fc650ff9ee81537fdb4c77b1d30700f..aa5c2c8d1bcf63014c8469a1968270a9a9f21c53 100644
+index 3340efac77344b8b22577cbdd45897464788a13f..e7b2e6390aedf2ca60b9f36830ce71e0427b5df2 100644
 --- a/src/renderer/typeset/table/block/prepare.rs
 +++ b/src/renderer/typeset/table/block/prepare.rs
-@@ -1641,6 +1641,11 @@ impl TypesetEngine {
+@@ -1703,6 +1703,11 @@ impl TypesetEngine {
                          (saved_top <= st.current_height && saved_top < table_available)
                              .then_some(saved_top)
                      })
@@ -232,10 +232,10 @@ index 0d43e94a2fc650ff9ee81537fdb4c77b1d30700f..aa5c2c8d1bcf63014c8469a1968270a9
              next_para_stored_top: paragraphs_all.get(para_idx + 1).and_then(|next| {
                  let seg = next
 diff --git a/src/renderer/typeset/table/block/whole_fit.rs b/src/renderer/typeset/table/block/whole_fit.rs
-index 4b31a14a1aae0ed044cd23e8d8344561f7f46bb5..10c9058dd7203c1b760b3a15a9032d3c1f39d71a 100644
+index 6661af0331873a852866fb2912e98401240a7f61..1109db35a029d2d0d8fc1e78207778020c1b2480 100644
 --- a/src/renderer/typeset/table/block/whole_fit.rs
 +++ b/src/renderer/typeset/table/block/whole_fit.rs
-@@ -264,10 +264,13 @@ impl TypesetEngine {
+@@ -267,10 +267,13 @@ impl TypesetEngine {
          host_spacing_before: f64,
          styles: &crate::renderer::style_resolver::ResolvedStyleSet,
      ) -> Option<crate::renderer::float_placement::ParagraphFloatPlacement> {

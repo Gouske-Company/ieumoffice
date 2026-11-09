@@ -4,6 +4,7 @@ export const de = {
   loading: 'Dokument wird geöffnet…',
   editorFailed: 'Der Editor konnte nicht gestartet werden.',
   openFailed: 'Das Dokument konnte nicht geöffnet werden.',
+  pdfImportCancelled: 'Der PDF-Import wurde abgebrochen. Sie können diesen Tab schließen.',
   saveFailed: 'Das Dokument konnte nicht gespeichert werden.',
   fileSave: 'Speichern',
   fileSaveAs: 'Speichern unter…',

@@ -267,7 +267,7 @@ draw.io 다이어그램(`.drawio`, `.dio`, `.drawio.svg`, `.drawio.png`)을 읽�
 - 에이전트 모드(결정 0032)의 세션 MCP 서버는 이것과 별개다. 앱이 띄운 프로그램만 쓰고, 세션마다 운영체제가 고른 포트와 새 토큰(`Authorization: Bearer`)을 요구하며, 도구는 `open_documents`(`list`·`read`만), `read_document`, `insert_content`, `replace_blocks`, `apply_ops`, `read_sheet`, `apply_sheet_ops`, `read_deck`, `apply_slide_ops`, `read_hwp`, `read_pdf`다. 읽기는 가린 자리를 `{{이름}}`으로 내보내고, `read_hwp`·`read_pdf`는 프로젝트 폴더 안만 읽는다. 결정 0048·0049로 `propose_skill`(에이전트 창에 스킬 카드를 띄움)과 `propose_skill_install`(깃허브 설치 미리보기를 띄움)이 더해져 13개다. 둘 다 파일을 쓰지 않는다. 바깥 호출자에게 약속하는 출력이 아니다. 위 서버의 출력은 바뀌지 않는다.
 - `open_documents`의 목록에 마인드맵 탭이 `kind: "mindmap"`, `type: "mind map"`으로 나온다(떼어 낸 창도 같다). `read`의 `content`는 지금 지도의 개요 글 문자열이고 저장하지 않은 편집이 들어 있다. 마크다운·HTML 탭의 읽기와 같은 모양이다. `close`의 저장은 편집기의 저장과 같은 길을 지나고, 한 번도 저장하지 않은 지도는 기본 저장 폴더에 겹치지 않는 이름의 `.xmind`로 저장된다. `ok`로 열리지 않은 지도는 어떤 경우에도 쓰지 않는다. 지도를 만들거나 고치는 도구는 없다.
 - **갑자기 꺼진 뒤 되살린 탭(결정 0061).** 처음 누를 때까지 편집기 화면이 없는 탭도 `open_documents`의 목록에 보통 탭과 같은 필드로 나온다(저장하지 않은 변경은 없음으로). 도구가 그 탭을 대상으로 하면(`read`, `save`, `close`의 저장, 내용 도구의 열린 문서 대상) 앱이 그 탭을 앞에 내지 않고 불러와 편집기 화면이 다 뜰 때까지 기다린 뒤 이어 간다. 기다리는 것은 화면이 뜨는 것까지이고, 문서 내용을 다 읽는 것까지는 아니다. 시작 목록에 아직 답하지 않았거나, 파일 탭의 문서에 풀리지 않은 복구 사본이 있어 문서별 물음을 거쳐야 하면, 탭을 불러오지 않고 바로 실패로 돌아온다. 사람이 탭을 눌러 화면이 아직 뜨는 중일 때도 같다. 실패 글에는 `the user must open this document in the app first`가 들어 있다(`"<제목>" has recovered changes to decide on: …`). 화면이 다 뜬 뒤에 편집기가 문서별 물음을 띄우면 그 물음에는 사람이 답하고, 그동안 도구는 아직 열리는 중인 다른 문서에서와 같이 움직인다. 저장 없이 닫기(`unsaved: "discard"`)는 불러오지 않은 탭을 불러오지 않고 닫으며, 그 탭의 복구 사본은 남는다. 출력의 구조와 이름은 바뀌지 않았다.
-- `get_app_info`의 `families`에 `{ family: "xmind", label: "mind map", editor: { open: ["xmind"], save: ["xmind"], export: ["png", "pdf", "md"] } }`가 있다. `mcp` 항목은 없다.
+- `get_app_info`의 `families`에 `{ family: "xmind", label: "mind map", editor: { open: ["xmind", "mm"], save: ["xmind"], export: ["png", "pdf", "md"] } }`가 있다. `mcp` 항목은 없다.
 - `open_documents`의 목록에 EPUB 탭이 `kind: "epub"`, `type: "e-book"`으로 나온다(떼어 낸 창도 같다). `read`의 `content`는 spine 순서로 이은 책 글이고(제목은 `#`), 저장하지 않은 편집이 들어 있다. `close`의 저장은 편집기의 저장과 같은 규칙을 지나고, 바꾼 것이 없으면 파일을 쓰지 않는다. 책을 만들거나 고치는 도구는 없다.
 - `get_app_info`의 `families`에 `{ family: "epub", label: "e-book", editor: { open: ["epub"], save: ["epub"], export: [] } }`가 있다.
 - `open_documents`의 목록에 다이어그램 탭이 `kind: "diagram"`, `type: "diagram"`으로 나온다(떼어 낸 창도 같다). `format`은 파일의 형식(`drawio`, `dio`, `drawio.svg`, `drawio.png`)이고, 한 번도 저장하지 않은 다이어그램과 Visio 파일에서 만든 탭은 `drawio`다. `read`의 `content`는 모든 쪽의 읽기 표 글(쪽 목록, 쪽마다 도형과 선의 줄)이고 저장하지 않은 편집이 들어 있다. `save`와 `close`의 저장은 편집기의 저장과 같은 길을 지나고, 바꾼 것이 없으면 파일을 쓰지 않는다. 한 번도 저장하지 않은 다이어그램은 기본 저장 폴더에 겹치지 않는 이름의 `.drawio`로 저장된다. 열리지 않은 파일과 가져온 `.vsdx`에는 쓰지 않는다. 다이어그램은 `create_session`·`save_session`의 대상이 아니다.
@@ -347,6 +347,7 @@ metadata:
 | `provider`                           | `auto` 또는 제공자 식별자                                                         | `auto`                                                     |
 | `providers`                          | 제공자별 `{ apiKey, model, baseUrl?, cliPath?, models?, effort?, modelEfforts? }` | 빈 표                                                      |
 | `meteredAccepted`                    | 구독 제공자별 참/거짓                                                             | 거짓                                                       |
+| `subscriptionOff`                    | 이 앱에서 끈 구독 프로그램. `claude-code`·`codex`별 `true`                        | 없음(모두 켬)                                              |
 | `headlessSubscriptionEnabled`        | 참/거짓. 자동 호출 경로의 구독 사용                                               | 거짓                                                       |
 | `headlessSubscriptionConsentVersion` | 자동 호출 스위치를 켤 때 동의한 경고의 판(정수)                                   | 없음                                                       |
 | `subscriptionNoticeSeen`             | 참/거짓. 첫 연결 안내를 봤는지                                                    | 거짓                                                       |
@@ -361,11 +362,13 @@ metadata:
 - 키와 토큰(`providers.*.apiKey`, `customEndpoints[].apiKey`, `media.providers.*.apiKey`, `search.providers.*.apiKey`, `readUrl.githubToken`)은 Windows와 Linux(GNOME 키링·KWallet이 있을 때)에서 앱이 저장할 때 `sealed:v1:<base64>`로 봉인된다(결정 0063). 사람이 평문으로 적어 넣어도 읽히고, 앱이 다음에 저장하거나 시작할 때 봉인된다. 명령어와 MCP는 봉인된 값을 앱에게 풀어 받아 쓰고(처음 한 번 1~2초), 풀지 못한 값은 빈 키로 읽는다. 명령어는 봉인하지 않는다. macOS는 봉인하지 않는다.
 - `readUrl.githubToken`은 비공개 GitHub 파일을 읽는 읽기 토큰이다. 키와 같은 방식으로 저장되고, `api.github.com` 요청에만 실린다. 다른 사이트나 리다이렉트 홉에는 보내지 않는다.
 - `headlessSubscriptionEnabled`가 참이어도 `headlessSubscriptionConsentVersion`이 지금 경고의 판(2)보다 작거나 없으면 꺼진 것으로 읽는다. 판 1은 시간당 한도가 있던 예전 경고이고, 그때는 판을 저장하지 않았다.
-- 이미지 생성 제공자의 저장값 기본은 `codex`다. Codex 구독 이미지 생성이 들어 있지 않은 지금은 `none`(선택 없음)과 똑같이 동작한다.
+- 이미지 생성 제공자의 저장값 기본은 `codex`다. 앱에서는 Codex 구독으로 만든다(결정 0076). 터미널 명령어와 MCP에는 Codex 이미지 생성이 없어 `none`(선택 없음)과 똑같이 동작한다.
 - 구독 제공자의 식별자는 `claude-code`, `chatgpt`, `codex`다. 인증 방식은 `claude-subscription`, `chatgpt-plan`, `codex-chatgpt`, `api-key` 넷이다. `provider`에 `chatgpt`를 저장할 수 있고, `providers.chatgpt.model`이 그 모델이다(빈 값은 요금제 목록의 첫 모델). `meteredAccepted`에는 `chatgpt` 항목이 없다(요금제 범위 연결이라 종량 로그인이 없다).
 - ChatGPT 직접 연결(결정 0081)의 토큰은 이 파일이 아니라 같은 폴더의 `chatgpt-connection.json`에 있다. 앱만 읽고 쓴다. 손으로 고치거나 옮기지 않는다(다른 PC·계정에서는 봉인이 풀리지 않아 연결이 없는 것으로 읽힌다). 터미널 명령어와 MCP는 이 파일을 읽지 않는다. 명령어에서 `chatgpt`는 늘 로그인되지 않은 상태이고, `auto`는 Claude, Codex 순으로 고른다.
-- 모르는 제공자 식별자나 없어진 값이 있어도 오류 없이 읽는다. 그 자리는 기본값이 되고, 다음에 앱이 저장할 때 지워진다.
+- 모르는 제공자 식별자나 없어진 선택값이 있어도 오류 없이 읽는다. 그 자리는 기본값이 되고, 모르는 식별자의 제공자 설정은 다음에 앱이 저장할 때 지워진다.
+- 이 판이 모르는 값(새 판이나 다른 프로그램이 맨 위나 `providers.<id>` 안에 적은 값)은 편집기 화면에 넘기지 않는다. 앱이 저장할 때는 파일에 적힌 그대로 남긴다. 봉인된 값도 그대로다. 이 판이 아는 값 가운데 종류가 틀린 것(숫자로 적힌 `effort` 등)은 읽을 때 버리고 저장할 때 지운다. 제공자 설정 이전의 맨 위 `apiKey`·`model`·`baseUrl`은 `providers.custom`으로 옮겨 읽고 저장할 때 지운다.
 - `providers` 표가 아예 없는 파일은 제공자 설정 이전의 파일로 읽혀, 다른 값까지 기본값이 된다.
+- `subscriptionOff`(결정 0114)는 앱이 설정 → AI의 "이 앱에서 쓰지 않기"·"다시 쓰기"로만 쓴다. 글자 그대로의 `true`만 끈 것이고, 그 밖의 값과 `chatgpt` 항목은 켠 것으로 읽어 다음 저장 때 지운다. 꺼진 프로그램은 앱도 명령어도 MCP도 상태를 묻거나 실행하지 않는다. 사람이 손으로 적어도 같고, 앱이 켜져 있는 동안 손으로 바꾼 값은 다음 상태 확인 때 반영된다. 화면이 `ai:set-settings`로 보낸 값은 저장하지 않는다.
 - 종량 허용은 이 파일의 값만으로는 유효하지 않다. 같은 폴더의 기록(`subscription-metered.json`)에 적힌 로그인 종류가 지금 감지된 것과 같아야 한다.
 - 구독 제공자의 `model`에는 프로그램이 받는 값이 그대로 들어간다(Claude의 `opus`·`claude-opus-5-5` 같은 별칭이나 식별자, Codex의 모델 식별자). 빈 값은 프로그램의 기본 모델이다. 화면에 보이는 표시 이름은 저장하지 않는다.
 - `effort`는 생각 깊이다(결정 0096). `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max` 가운데 하나이고, 없으면 프로그램이나 회사의 기본이다. 다른 값은 앱이 저장할 때 지우고, 손으로 적어도 실행에 넘기지 않는다. Claude에는 `low`~`max`만, Codex에는 그 모델이 받는 값만, 키 제공자에는 `modelEfforts`가 그 모델에 적은 값만 넘긴다. 로컬 서버는 `customEndpoints[].effort`에 두고, 쓰는 서버의 값이 `providers.custom`에 옮겨진다. 명령어와 MCP의 실행도 이 값을 쓴다.
@@ -593,29 +596,30 @@ metadata:
 
 앱 안에서 뒷단이 화면에 주는 값이다. 바깥 프로그램에는 나가지 않는다.
 
-| 항목              | 값                                                                                   |
-| ----------------- | ------------------------------------------------------------------------------------ |
-| `provider`        | `claude-code` \| `chatgpt` \| `codex`                                                |
-| `state`           | `checking` \| `not-installed` \| `signed-out` \| `ready` \| `metered` \| `error`     |
-| `version`         | 프로그램 버전(있을 때)                                                               |
-| `loginMethod`     | `subscription` \| `metered` \| `unknown`                                             |
-| `planName`        | 요금제 이름(프로그램이 알려 줄 때, 표시용)                                           |
-| `account`         | 로그인된 계정의 이메일(프로그램이 알려 줄 때, 표시용, 저장 금지)                     |
-| `models`          | 프로그램이 알려 준 모델 목록(있을 때). 항목은 `{ id, label, resolved?, isDefault? }` |
-| `meteredAccepted` | 참/거짓                                                                              |
-| `error`           | 오류 내용(`error`일 때)                                                              |
-| `programPath`     | 확인에 쓴 프로그램 파일의 절대 경로(버전이 낮은 `error`일 때만, 표시용)              |
+| 항목              | 값                                                                                        |
+| ----------------- | ----------------------------------------------------------------------------------------- |
+| `provider`        | `claude-code` \| `chatgpt` \| `codex`                                                     |
+| `state`           | `checking` \| `not-installed` \| `signed-out` \| `ready` \| `metered` \| `error` \| `off` |
+| `version`         | 프로그램 버전(있을 때)                                                                    |
+| `loginMethod`     | `subscription` \| `metered` \| `unknown`                                                  |
+| `planName`        | 요금제 이름(프로그램이 알려 줄 때, 표시용)                                                |
+| `account`         | 로그인된 계정의 이메일(프로그램이 알려 줄 때, 표시용, 저장 금지)                          |
+| `models`          | 프로그램이 알려 준 모델 목록(있을 때). 항목은 `{ id, label, resolved?, isDefault? }`      |
+| `meteredAccepted` | 참/거짓                                                                                   |
+| `error`           | 오류 내용(`error`일 때)                                                                   |
+| `programPath`     | 확인에 쓴 프로그램 파일의 절대 경로(버전이 낮은 `error`일 때만, 표시용)                   |
 
 - `account`와 `models`는 `ready`·`metered`일 때만 있다. `account`는 이메일 주소 모양이 아니면 빠진다.
 - `programPath`는 버전이 낮은 `error`(`needs-update`)일 때만 있다. 한 줄짜리 절대 경로(드라이브, `\\` 공유, `/`로 시작)가 아니면 빠진다.
 - `models`의 `id`는 프로그램이 받는 값이자 저장되는 선택값이다. 빈 `id`는 프로그램의 기본 모델을 뜻하고, 그것이 가리키는 모델이 `resolved`에 온다. 목록은 50개까지다.
-- 창구 이름은 `ai:subscription-statuses`, `-recheck`, `-login`, `-logout`, `-install`, `-metered`, `-codex-image`와 변경 알림 `ai:subscription-changed`다. `-logout`은 껍데기 앱의 화면에서만 부른다.
+- 창구 이름은 `ai:subscription-statuses`, `-recheck`, `-login`, `-logout`, `-install`, `-metered`, `-off`, `-codex-image`와 변경 알림 `ai:subscription-changed`다. `-logout`과 `-off`는 껍데기 앱의 화면에서만 부른다.
+- `off`(결정 0114)는 이 앱에서 끈 `claude-code`·`codex`에만 온다. 다른 항목은 없다(`meteredAccepted`는 거짓). `-off`는 `{ provider, off }`(CLI 식별자와 참/거짓)를 받아 `{ ok, statuses }`로 답한다. 끈 프로그램에 대한 `-login`·`-logout`·`-install`·`-update`는 `invalid`, `-metered`는 `ok: false`다.
 - `chatgpt`의 `state`는 `checking`, `signed-out`, `ready`, `error`뿐이다. `-login`은 앱 자신의 브라우저 로그인을 시작하고, `-logout`은 이 앱의 연결만 끊는다. `-install`·`-update`는 `invalid`로 답한다. 답에 `chatgpt` 항목이 없으면(예전 앱) `signed-out`으로 읽는다.
 
 ## 문서 호환
 
 - `.docx`·`.xlsx`·`.pptx`·PDF·마크다운·HTML 파일은 원본 프로그램과 같은 방식으로 읽고 쓴다. 한쪽에서 만든 문서를 다른 쪽에서 열 수 있다.
-- **마인드맵.** XMind 파일(`.xmind`, `content.json`이 든 형식)을 열고 같은 형식으로 저장한다. 이 앱이 보여 주지 않는 요소와 모르는 값도 저장할 때 그대로 나가고, 바뀐 것이 없으면 원본과 바이트까지 같은 파일을 쓴다. 바뀌었으면 `content.json`만 다시 쓰고, 미리보기 그림(`Thumbnails/thumbnail.png`)은 새로 만들었을 때만 바꾸며, `manifest.json`은 고치지 않는다. 예전 형식(`content.xml`만 있는 파일)과 암호가 걸린 파일은 열지 않는다. 테마는 사용자가 고를 때와 새 시트를 만들 때(새 파일 포함, 기본 테마) 파일 형식의 속성표로 적고, 이 앱만의 표식은 넣지 않는다. 그 밖에는 이미 있는 시트의 테마를 그대로 둔다. 터미널 명령어와 그 MCP 서버는 `.xmind`를 다루지 않는다.
+- **마인드맵.** XMind 파일(`.xmind`, `content.json`이 든 형식)을 열고 같은 형식으로 저장한다. 이 앱이 보여 주지 않는 요소와 모르는 값도 저장할 때 그대로 나가고, 바뀐 것이 없으면 원본과 바이트까지 같은 파일을 쓴다. 바뀌었으면 `content.json`만 다시 쓰고, 미리보기 그림(`Thumbnails/thumbnail.png`)은 새로 만들었을 때만 바꾸며, `manifest.json`은 고치지 않는다. 예전 형식(`content.xml`만 있는 파일)과 암호가 걸린 파일은 열지 않는다. 테마는 사용자가 고를 때와 새 시트를 만들 때(새 파일 포함, 기본 테마) 파일 형식의 속성표로 적고, 이 앱만의 표식은 넣지 않는다. 그 밖에는 이미 있는 시트의 테마를 그대로 둔다. 터미널 명령어와 그 MCP 서버는 `.xmind`를 다루지 않는다. FreeMind·Freeplane 지도(`.mm`)는 새 지도로 가져오기만 하고 그 파일에는 쓰지 않는다. 노드 글, 순서, 메모, 웹 링크, 접힘만 옮기고, 저장은 `.xmind`로 한다. 그림은 옮기지 않는다. 글 없이 그림만 있는 노드는 그림의 대체 글(`alt`), 제목(`title`), 파일 이름(경로 없이) 가운데 먼저 있는 것을 토픽 글로 삼고, 셋 다 없으면 화면 언어로 "(그림)"이라고 적는다. 그림 파일은 읽지도 넣지도 않는다. 보이지 않는 제어 문자와 글 방향을 바꾸는 문자(U+202A–U+202E, U+2066–U+2069)는 옮기지 않는다. 표는 한 행을 한 줄로 옮기고 칸 사이를 " | "로 나눈다. 큰 가지가 모두 한쪽에 있으면 그쪽 배치로 그린다. 양쪽에 섞여 있으면 가지마다의 쪽은 따라오지 않는다. 편집기가 큰 가지를 반씩 나눠 좌우에 그리기 때문이다. 설치본은 `.mm`을 어떤 프로그램 연결에도 등록하지 않는다.
 - **열기 암호.** 열기 암호가 걸린 `.docx`·`.xlsx`·`.xlsm`·`.xls`·`.pptx`는 열 때 암호를 묻고, 저장(다른 이름으로 저장 포함)할 때 같은 암호로 다시 잠근다. 다시 잠그는 방식은 Office 2013 이후의 기본(ECMA-376 Agile)이다. 수정 암호만 걸린 `.xls`처럼 엑셀의 기본 암호로 잠긴 파일은 묻지 않고 열며, 그런 `.xls`를 `.xlsx`로 저장하면 열기 암호를 걸지 않는다. 풀 수 없는 방식이면 열지 않고 알린다(결정 0041). 암호가 걸린 PDF도 열 때 암호를 묻고, 저장할 때 원래의 암호화 항목을 그대로 두어 다시 잠근다. PDF 편집기의 주석 → 보호에서 암호를 걸거나 바꾸거나 풀면 다음 저장이 AES-256(V5/R6)으로 새로 잠근다. 인증서로 잠긴 PDF는 열지 않고 알린다.
 - 가리기 표시는 문서 안에 저장되고, 그 이름공간 주소는 원본과 같다. 원본으로 가린 문서를 열면 가리기가 그대로 인식된다.
 - 문서 곁에 저장되는 보조 파일의 이름(`.genoffice-assets.json` 등)도 원본과 같다.

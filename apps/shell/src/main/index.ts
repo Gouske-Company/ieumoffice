@@ -1,5 +1,6 @@
 import { execSync, spawn } from 'node:child_process'
 import {
+  copyFileSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -559,6 +560,7 @@ import {
   stopAgentSessions,
 } from './agent/agent-window'
 import { startAgentMcpServer } from './agent/agent-mcp'
+import { sweepAgentSessionFolders } from './agent/agent-session-folders'
 import { userSkillsManageGate } from './agent/agent-skills'
 import {
   buildAgentSkillBundle,
@@ -1204,7 +1206,7 @@ const tMain = createI18n({
     filterPpt: 'PowerPoint 演示文稿',
     filterMarkdown: '文本文件 (Markdown, TXT, JSON)',
     filterHtml: 'HTML 文档',
-    filterMindmap: '思维导图 (XMind 文件)',
+    filterMindmap: '思维导图 (XMind, FreeMind, Freeplane)',
     filterHwp: 'HWP 文档 (HWP, HWPX)',
     filterEpub: '电子书 (EPUB)',
     filterDiagram: '图表 (draw.io, VSDX)',
@@ -1358,7 +1360,7 @@ const tMain = createI18n({
     filterPpt: 'PowerPoint Presentations',
     filterMarkdown: 'Text Files (Markdown, TXT, JSON)',
     filterHtml: 'HTML Documents',
-    filterMindmap: 'Mind Maps (XMind files)',
+    filterMindmap: 'Mind Maps (XMind, FreeMind, Freeplane)',
     filterHwp: 'HWP Documents (HWP, HWPX)',
     filterEpub: 'E-books (EPUB)',
     filterDiagram: 'Diagrams (draw.io, VSDX)',
@@ -1520,7 +1522,7 @@ const tMain = createI18n({
     filterPpt: 'Bản trình bày PowerPoint',
     filterMarkdown: 'Tệp văn bản (Markdown, TXT, JSON)',
     filterHtml: 'Tài liệu HTML',
-    filterMindmap: 'Sơ đồ tư duy (tệp XMind)',
+    filterMindmap: 'Sơ đồ tư duy (XMind, FreeMind, Freeplane)',
     filterHwp: 'Tài liệu HWP (HWP, HWPX)',
     filterEpub: 'Sách điện tử (EPUB)',
     filterDiagram: 'Sơ đồ (draw.io, VSDX)',
@@ -1683,7 +1685,7 @@ const tMain = createI18n({
     filterPpt: 'PowerPoint プレゼンテーション',
     filterMarkdown: 'テキストファイル (Markdown, TXT, JSON)',
     filterHtml: 'HTML ドキュメント',
-    filterMindmap: 'マインドマップ (XMind ファイル)',
+    filterMindmap: 'マインドマップ (XMind, FreeMind, Freeplane)',
     filterHwp: 'HWP ドキュメント (HWP, HWPX)',
     filterEpub: '電子書籍 (EPUB)',
     filterDiagram: 'ダイアグラム (draw.io, VSDX)',
@@ -1847,7 +1849,7 @@ const tMain = createI18n({
     filterPpt: 'PowerPoint 프레젠테이션',
     filterMarkdown: '텍스트 파일 (Markdown, TXT, JSON)',
     filterHtml: 'HTML 문서',
-    filterMindmap: '마인드맵 (XMind 파일)',
+    filterMindmap: '마인드맵 (XMind, FreeMind, Freeplane)',
     filterHwp: '한글 문서 (HWP, HWPX)',
     filterEpub: '전자책 (EPUB)',
     filterDiagram: '다이어그램 (draw.io, VSDX)',
@@ -2009,7 +2011,7 @@ const tMain = createI18n({
     filterPpt: 'Présentations PowerPoint',
     filterMarkdown: 'Fichiers texte (Markdown, TXT, JSON)',
     filterHtml: 'Documents HTML',
-    filterMindmap: 'Cartes mentales (fichiers XMind)',
+    filterMindmap: 'Cartes mentales (XMind, FreeMind, Freeplane)',
     filterHwp: 'Documents HWP (HWP, HWPX)',
     filterEpub: 'Livres numériques (EPUB)',
     filterDiagram: 'Diagrammes (draw.io, VSDX)',
@@ -2174,7 +2176,7 @@ const tMain = createI18n({
     filterPpt: 'PowerPoint-Präsentationen',
     filterMarkdown: 'Textdateien (Markdown, TXT, JSON)',
     filterHtml: 'HTML-Dokumente',
-    filterMindmap: 'Mindmaps (XMind-Dateien)',
+    filterMindmap: 'Mindmaps (XMind, FreeMind, Freeplane)',
     filterHwp: 'HWP-Dokumente (HWP, HWPX)',
     filterEpub: 'E-Books (EPUB)',
     filterDiagram: 'Diagramme (draw.io, VSDX)',
@@ -2339,7 +2341,7 @@ const tMain = createI18n({
     filterPpt: 'Presentaciones de PowerPoint',
     filterMarkdown: 'Archivos de texto (Markdown, TXT, JSON)',
     filterHtml: 'Documentos HTML',
-    filterMindmap: 'Mapas mentales (archivos XMind)',
+    filterMindmap: 'Mapas mentales (XMind, FreeMind, Freeplane)',
     filterHwp: 'Documentos HWP (HWP, HWPX)',
     filterEpub: 'Libros electrónicos (EPUB)',
     filterDiagram: 'Diagramas (draw.io, VSDX)',
@@ -2503,7 +2505,7 @@ const tMain = createI18n({
     filterPpt: 'งานนำเสนอ PowerPoint',
     filterMarkdown: 'ไฟล์ข้อความ (Markdown, TXT, JSON)',
     filterHtml: 'เอกสาร HTML',
-    filterMindmap: 'แผนที่ความคิด (ไฟล์ XMind)',
+    filterMindmap: 'แผนที่ความคิด (XMind, FreeMind, Freeplane)',
     filterHwp: 'เอกสาร HWP (HWP, HWPX)',
     filterEpub: 'หนังสืออิเล็กทรอนิกส์ (EPUB)',
     filterDiagram: 'ไดอะแกรม (draw.io, VSDX)',
@@ -2663,7 +2665,7 @@ const tMain = createI18n({
     filterPpt: 'Presentasi PowerPoint',
     filterMarkdown: 'File teks (Markdown, TXT, JSON)',
     filterHtml: 'Dokumen HTML',
-    filterMindmap: 'Peta pikiran (file XMind)',
+    filterMindmap: 'Peta pikiran (XMind, FreeMind, Freeplane)',
     filterHwp: 'Dokumen HWP (HWP, HWPX)',
     filterEpub: 'Buku elektronik (EPUB)',
     filterDiagram: 'Diagram (draw.io, VSDX)',
@@ -2827,7 +2829,7 @@ const tMain = createI18n({
     filterPpt: 'Презентации PowerPoint',
     filterMarkdown: 'Текстовые файлы (Markdown, TXT, JSON)',
     filterHtml: 'Документы HTML',
-    filterMindmap: 'Интеллект-карты (файлы XMind)',
+    filterMindmap: 'Интеллект-карты (XMind, FreeMind, Freeplane)',
     filterHwp: 'Документы HWP (HWP, HWPX)',
     filterEpub: 'Электронные книги (EPUB)',
     filterDiagram: 'Диаграммы (draw.io, VSDX)',
@@ -2990,7 +2992,7 @@ const tMain = createI18n({
     filterPpt: 'عروض PowerPoint التقديمية',
     filterMarkdown: 'ملفات نصية (Markdown, TXT, JSON)',
     filterHtml: 'مستندات HTML',
-    filterMindmap: 'خرائط ذهنية (ملفات XMind)',
+    filterMindmap: 'خرائط ذهنية (XMind, FreeMind, Freeplane)',
     filterHwp: 'مستندات HWP (HWP, HWPX)',
     filterEpub: 'كتب إلكترونية (EPUB)',
     filterDiagram: 'مخططات (draw.io, VSDX)',
@@ -3150,7 +3152,7 @@ const tMain = createI18n({
     filterPpt: 'Apresentações do PowerPoint',
     filterMarkdown: 'Arquivos de texto (Markdown, TXT, JSON)',
     filterHtml: 'Documentos HTML',
-    filterMindmap: 'Mapas mentais (arquivos XMind)',
+    filterMindmap: 'Mapas mentais (XMind, FreeMind, Freeplane)',
     filterHwp: 'Documentos HWP (HWP, HWPX)',
     filterEpub: 'Livros digitais (EPUB)',
     filterDiagram: 'Diagramas (draw.io, VSDX)',
@@ -3314,7 +3316,7 @@ const tMain = createI18n({
     filterPpt: 'Presentazioni PowerPoint',
     filterMarkdown: 'File di testo (Markdown, TXT, JSON)',
     filterHtml: 'Documenti HTML',
-    filterMindmap: 'Mappe mentali (file XMind)',
+    filterMindmap: 'Mappe mentali (XMind, FreeMind, Freeplane)',
     filterHwp: 'Documenti HWP (HWP, HWPX)',
     filterEpub: 'Libri digitali (EPUB)',
     filterDiagram: 'Diagrammi (draw.io, VSDX)',
@@ -3478,7 +3480,7 @@ const tMain = createI18n({
     filterPpt: 'Prezentacje programu PowerPoint',
     filterMarkdown: 'Pliki tekstowe (Markdown, TXT, JSON)',
     filterHtml: 'Dokumenty HTML',
-    filterMindmap: 'Mapy myśli (pliki XMind)',
+    filterMindmap: 'Mapy myśli (XMind, FreeMind, Freeplane)',
     filterHwp: 'Dokumenty HWP (HWP, HWPX)',
     filterEpub: 'E-booki (EPUB)',
     filterDiagram: 'Diagramy (draw.io, VSDX)',
@@ -3641,7 +3643,7 @@ const tMain = createI18n({
     filterPpt: 'Prezentace PowerPoint',
     filterMarkdown: 'Textové soubory (Markdown, TXT, JSON)',
     filterHtml: 'Dokumenty HTML',
-    filterMindmap: 'Myšlenkové mapy (soubory XMind)',
+    filterMindmap: 'Myšlenkové mapy (XMind, FreeMind, Freeplane)',
     filterHwp: 'Dokumenty HWP (HWP, HWPX)',
     filterEpub: 'E-knihy (EPUB)',
     filterDiagram: 'Diagramy (draw.io, VSDX)',
@@ -3803,7 +3805,7 @@ const tMain = createI18n({
     filterPpt: 'PowerPoint-presentaties',
     filterMarkdown: 'Tekstbestanden (Markdown, TXT, JSON)',
     filterHtml: 'HTML-documenten',
-    filterMindmap: 'Mindmaps (XMind-bestanden)',
+    filterMindmap: 'Mindmaps (XMind, FreeMind, Freeplane)',
     filterHwp: 'HWP-documenten (HWP, HWPX)',
     filterEpub: 'E-boeken (EPUB)',
     filterDiagram: 'Diagrammen (draw.io, VSDX)',
@@ -3968,7 +3970,7 @@ const tMain = createI18n({
     filterPpt: 'Persembahan PowerPoint',
     filterMarkdown: 'Fail teks (Markdown, TXT, JSON)',
     filterHtml: 'Dokumen HTML',
-    filterMindmap: 'Peta minda (fail XMind)',
+    filterMindmap: 'Peta minda (XMind, FreeMind, Freeplane)',
     filterHwp: 'Dokumen HWP (HWP, HWPX)',
     filterEpub: 'Buku elektronik (EPUB)',
     filterDiagram: 'Rajah (draw.io, VSDX)',
@@ -4130,7 +4132,7 @@ const tMain = createI18n({
     filterPpt: 'מצגות PowerPoint',
     filterMarkdown: 'קובצי טקסט (Markdown, TXT, JSON)',
     filterHtml: 'מסמכי HTML',
-    filterMindmap: 'מפות חשיבה (קובצי XMind)',
+    filterMindmap: 'מפות חשיבה (XMind, FreeMind, Freeplane)',
     filterHwp: 'מסמכי HWP (HWP, HWPX)',
     filterEpub: 'ספרים אלקטרוניים (EPUB)',
     filterDiagram: 'תרשימים (draw.io, VSDX)',
@@ -4291,7 +4293,7 @@ const tMain = createI18n({
     filterPpt: 'PowerPoint प्रस्तुतियाँ',
     filterMarkdown: 'पाठ फ़ाइलें (Markdown, TXT, JSON)',
     filterHtml: 'HTML दस्तावेज़',
-    filterMindmap: 'माइंड मैप (XMind फ़ाइलें)',
+    filterMindmap: 'माइंड मैप (XMind, FreeMind, Freeplane)',
     filterHwp: 'HWP दस्तावेज़ (HWP, HWPX)',
     filterEpub: 'ई-बुक (EPUB)',
     filterDiagram: 'आरेख (draw.io, VSDX)',
@@ -4454,7 +4456,7 @@ const tMain = createI18n({
     filterPpt: 'PowerPoint 簡報',
     filterMarkdown: '文字檔 (Markdown, TXT, JSON)',
     filterHtml: 'HTML 文件',
-    filterMindmap: '心智圖 (XMind 檔案)',
+    filterMindmap: '心智圖 (XMind, FreeMind, Freeplane)',
     filterHwp: 'HWP 文件 (HWP, HWPX)',
     filterEpub: '電子書 (EPUB)',
     filterDiagram: '圖表 (draw.io, VSDX)',
@@ -4753,6 +4755,7 @@ const SEARCH_EXT_FAMILY: Record<string, readonly string[]> = {
   md: ['md', 'markdown', 'txt', 'json'],
   html: ['html', 'htm'],
   hwp: ['hwp', 'hwpx'],
+  xmind: ['xmind', 'mm'],
   drawio: ['drawio', 'dio', 'drawio.svg', 'drawio.png', 'vsdx'],
 }
 
@@ -5484,6 +5487,7 @@ const OPEN_DIALOG_EXTENSIONS = [
   'html',
   'htm',
   'xmind',
+  'mm',
   'hwp',
   'hwpx',
   'epub',
@@ -6437,7 +6441,7 @@ function registerHomeIpc(): void {
         { name: tm('filterPdf'), extensions: ['pdf'] },
         { name: tm('filterMarkdown'), extensions: ['md', 'markdown', 'txt', 'json'] },
         { name: tm('filterHtml'), extensions: ['html', 'htm'] },
-        { name: tm('filterMindmap'), extensions: ['xmind'] },
+        { name: tm('filterMindmap'), extensions: ['xmind', 'mm'] },
         { name: tm('filterHwp'), extensions: ['hwp', 'hwpx'] },
         { name: tm('filterEpub'), extensions: ['epub'] },
         {
@@ -9241,7 +9245,35 @@ ipcMain.handle(PDF_CHANNELS.convertOffice, async (e, format: unknown) => {
   if (format === 'docx') await exportPdfAsDocxLocal()
   else if (format === 'xlsx') await exportPdfAsXlsxLocal()
   else if (format === 'pptx') await exportPdfAsPptxLocal()
+  else if (format === 'hwp') await openPdfAsHwp()
 })
+
+/**
+ * Converter › HWP (decision 0116): the PDF opens in a new, untitled Hangul tab, where
+ * the editor's own PDF import asks how to lay it out and converts it in the tab. The
+ * PDF is copied first (pending edits flushed) so the tab reads a file of its own; the
+ * copy goes with the tab, and the first save asks where to put the .hwp/.hwpx.
+ */
+async function openPdfAsHwp(): Promise<void> {
+  const tab = activePdfTarget()
+  if (!tab?.filePath || !tabManager) return
+  if (!(await flushPdfSave(tab.webContents, true))) return
+  const dir = join(app.getPath('temp'), 'ieumoffice-pdf-imports', randomUUID())
+  const baseName = basename(tab.filePath).replace(/\.pdf$/i, '')
+  let tabId: string
+  try {
+    mkdirSync(dir, { recursive: true })
+    const copy = join(dir, basename(tab.filePath))
+    copyFileSync(tab.filePath, copy)
+    tabId = tabManager.openHwpTab(copy, { untitledCopy: { title: baseName, importedPdf: true } })
+  } catch (err) {
+    rmSync(dir, { recursive: true, force: true })
+    throw err
+  }
+  const contents = tabManager.webContentsForTab(tabId)
+  if (contents) contents.once('destroyed', () => rmSync(dir, { recursive: true, force: true }))
+  else rmSync(dir, { recursive: true, force: true })
+}
 
 function openThirdPartyNotices(): Promise<string> {
   const path = app.isPackaged
@@ -10052,6 +10084,8 @@ app.whenReady().then(async () => {
         setProjectSkills(APP_SETTINGS_PATH(), folder, await userSkills.enabledForAgent(folder), on),
     },
   })
+  // session folders a run that did not quit normally left; after the start, so it never slows it
+  setTimeout(() => void sweepAgentSessionFolders(), 10_000).unref()
   void startMcpFromSettings(currentMcpSettings()).catch((error) => {
     console.error('[mcp] failed to start on boot:', error)
   })

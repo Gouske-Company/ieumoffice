@@ -4,6 +4,7 @@ export const ru = {
   loading: 'Открытие документа…',
   editorFailed: 'Не удалось запустить редактор.',
   openFailed: 'Не удалось открыть документ.',
+  pdfImportCancelled: 'Импорт PDF отменён. Эту вкладку можно закрыть.',
   saveFailed: 'Не удалось сохранить документ.',
   fileSave: 'Сохранить',
   fileSaveAs: 'Сохранить как…',

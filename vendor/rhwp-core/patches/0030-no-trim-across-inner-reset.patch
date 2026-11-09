@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: pblsketch <239486537+pblsketch@users.noreply.github.com>
-Date: Wed, 4 Nov 2026 00:00:00 +0900
-Subject: [PATCH 20/30] fix(typeset): 문단 안에서 저장 사다리가 되감기는 문단은 끝 줄간격을 깎지 않는다
+Date: Sun, 8 Nov 2026 00:00:00 +0900
+Subject: [PATCH 19/29] fix(typeset): 문단 안에서 저장 사다리가 되감기는 문단은 끝 줄간격을 깎지 않는다
 
 조판은 저장 줄이 있는 문단의 흐름 전진에서 끝 줄의 줄간격(과 앞 간격)을 깎고,
 다음 문단의 저장 vpos 스냅이 그 몫을 되돌린다는 전제를 둔다(#2279 ①). 문단 안의
@@ -34,10 +34,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  1 file changed, 15 insertions(+)
 
 diff --git a/src/renderer/typeset/paragraph.rs b/src/renderer/typeset/paragraph.rs
-index dc1960ebec9a1d93a2e7731bd690b0a495ee564b..a7faf4d24d76e51ba5c3da4b96a066e60ce329f2 100644
+index 951ba544eeda767856a54ace4938489d86732c4e..87f2410b146f93c6bb23f8ec6a9eef530a7b8578 100644
 --- a/src/renderer/typeset/paragraph.rs
 +++ b/src/renderer/typeset/paragraph.rs
-@@ -61,6 +61,11 @@ fn spacing_restoration_unavailable(
+@@ -62,6 +62,11 @@ fn spacing_restoration_unavailable(
      st.vpos_ladder_dirty
          || (st.col_count == 1 && st.vpos_page_base.or(st.vpos_lazy_base).is_none())
          || !spacing_trim_restorable(paragraphs, para_idx)
@@ -49,7 +49,7 @@ index dc1960ebec9a1d93a2e7731bd690b0a495ee564b..a7faf4d24d76e51ba5c3da4b96a066e6
          || next_boundary_reverts_spacing_trim(
              st.profile.hwpx_stored_layout() && !st.profile.hwp3_layout(),
              paragraphs,
-@@ -70,6 +75,16 @@ fn spacing_restoration_unavailable(
+@@ -71,6 +76,16 @@ fn spacing_restoration_unavailable(
          )
  }
  

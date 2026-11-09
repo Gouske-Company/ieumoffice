@@ -564,7 +564,7 @@ describe('inserting, editing and removing a memo', () => {
     expect(editor.plugin.listMemos().memos[0]).toMatchObject({
       id: made.id,
       author: 'tester',
-      date: null,
+      date: expect.stringMatching(/^\d{4}-\d\d-\d\dT/),
       text: 'after\n\nend',
     })
     // the text the memo was put on is untouched

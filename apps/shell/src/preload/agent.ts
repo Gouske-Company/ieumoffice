@@ -33,6 +33,11 @@ const api: AgentWindowApi = {
   async getTheme() {
     return themeOf(await ipcRenderer.invoke(AGENT_CHANNELS.getTheme))
   },
+  onStatusesChanged(handler) {
+    const listener = () => handler()
+    ipcRenderer.on(AGENT_CHANNELS.statusesChanged, listener)
+    return () => ipcRenderer.removeListener(AGENT_CHANNELS.statusesChanged, listener)
+  },
   onThemeChanged(handler) {
     const listener = (_event: IpcRendererEvent, theme: unknown) => handler(themeOf(theme))
     ipcRenderer.on('app:theme-changed', listener)

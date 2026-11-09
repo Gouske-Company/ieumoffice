@@ -81,6 +81,7 @@ Enam alat: **Gambar, Persegi, Elips, Panah, Catatan**, ditambah **Redaksi area**
 ## Ekspor dan pencetakan
 
 - **Ekspor sebagai Word… / PowerPoint… / Excel…** di menu File, atau ketiganya dari **Konversi PDF** pada pita — semuanya lokal, tanpa unggahan. .pptx keluar dengan satu slide per halaman dan .xlsx dengan satu lembar kerja per halaman. Masing-masing menanyakan tempat penyimpanan.
+- **PDF ke HWP** di **Konversi PDF** pada pita mengubah PDF menjadi dokumen HWP di tab HWP baru. Pilih **Impor** (가져오기) di jendela impor PDF yang muncul di tab; dokumen dibuat di tab itu, dan penyimpanan pertama menanyakan tempat untuk .hwp atau .hwpx. PDF aslinya tetap seperti semula, dan konversi berjalan di PC ini. Apakah teks masuk sebagai paragraf yang mengalir mengikuti halaman atau sebagai kotak teks tetap dipilih di opsi (환경 설정) tab HWP, bagian impor PDF.
 - **Cetak**: urutan dan rotasi saat ini melalui dialog sistem; rentang halaman didukung.
 
 ## Menyimpan

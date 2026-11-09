@@ -282,6 +282,8 @@ describe('the GitHub read token', () => {
         openai: { apiKey: 'sk-test', model: 'gpt-test' },
       },
     })
+    // the providers as the settings file holds them: JSON keeps no undefined field
+    const storedProviders = JSON.parse(JSON.stringify(initial.providers)) as AiSettings['providers']
     const file = { stored: initial, writes: 0 }
     vi.stubGlobal('window', {
       aiOffice: {
@@ -300,7 +302,7 @@ describe('the GitHub read token', () => {
     expect(file.stored).toMatchObject({
       provider: 'codex',
       maxOutputTokens: 9216,
-      providers: initial.providers,
+      providers: storedProviders,
     })
 
     expect(await changeAiSettings((current) => withReadUrlGithubToken(current, ''))).not.toBeNull()
@@ -308,7 +310,7 @@ describe('the GitHub read token', () => {
     expect(file.stored).toMatchObject({
       provider: 'codex',
       maxOutputTokens: 9216,
-      providers: initial.providers,
+      providers: storedProviders,
     })
     expect(file.writes).toBe(2)
   })

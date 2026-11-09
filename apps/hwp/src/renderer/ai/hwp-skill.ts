@@ -1,5 +1,7 @@
 import {
   attachedImageNote,
+  undoDoubledEscapes,
+  undoDoubledEscapesInList,
   type AgentSkill,
   type AgentToolCall,
   type AgentToolDef,
@@ -1292,9 +1294,60 @@ const isWhere = (value: unknown): value is AgentWhere =>
 const isTextList = (value: unknown): value is string[] =>
   Array.isArray(value) && value.length > 0 && value.every((item) => typeof item === 'string')
 
-/** Text of a change as the panel lists it: one line, cut when long. */
+/**
+ * The call with `undoDoubledEscapes` applied to the new text it writes: cell, note and
+ * paragraph text, replacements, table rows, field values and a contents title. The text
+ * a call looks for (find, anchor, after) is left alone: a document that already shows
+ * `\n` must still be found and cleaned up.
+ */
+function withDoubledEscapesUndone(call: AgentToolCall): AgentToolCall {
+  const input = { ...call.input }
+  const fix = (key: string) => {
+    if (typeof input[key] === 'string') input[key] = undoDoubledEscapes(input[key])
+  }
+  switch (call.name) {
+    case 'fill_cells':
+      if (Array.isArray(input.cells)) {
+        input.cells = input.cells.map((cell: unknown) => {
+          if (typeof cell !== 'object' || cell === null) return cell
+          const text = (cell as { text?: unknown }).text
+          return typeof text === 'string' ? { ...cell, text: undoDoubledEscapes(text) } : cell
+        })
+      }
+      break
+    case 'insert_note':
+    case 'edit_note':
+      fix('text')
+      break
+    case 'replace_text':
+    case 'replace_all':
+      fix('replace')
+      break
+    case 'insert_paragraphs':
+    case 'replace_selection':
+      input.paragraphs = undoDoubledEscapesInList(input.paragraphs)
+      break
+    case 'insert_table':
+      if (Array.isArray(input.rows)) input.rows = input.rows.map(undoDoubledEscapesInList)
+      break
+    case 'fill_field':
+      fix('value')
+      break
+    case 'insert_toc':
+      fix('title')
+      break
+    default:
+      return call
+  }
+  return { ...call, input }
+}
+
+/** Text of a change as the panel lists it: one line, line breaks shown as ⏎, cut when long. */
 function changeText(text: string): string {
-  const flat = text.replace(/\s+/g, ' ').trim()
+  const flat = text
+    .trim()
+    .replace(/\s*[\r\n]\s*/g, ' ⏎ ')
+    .replace(/\s+/g, ' ')
   return flat.length > CHANGE_TEXT_CHARS ? `${flat.slice(0, CHANGE_TEXT_CHARS)}…` : flat
 }
 
@@ -3592,7 +3645,7 @@ export function createHwpSkill(deps: HwpSkillDeps): HwpSkill {
       buildContext: () => [context, selectionContext()].filter(Boolean).join('\n\n'),
       executeTool: async (call, signal) => {
         try {
-          return await run(call, signal)
+          return await run(withDoubledEscapesUndone(call), signal)
         } catch (error) {
           // the editor refused or is gone: the model gets the cause and can say so
           return bad(call, error instanceof Error ? error.message : String(error))

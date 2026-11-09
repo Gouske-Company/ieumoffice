@@ -32,7 +32,7 @@ ieumoffice slides replace deck.pptx --slide 2 --spec deck/pages/03.json   # rebu
 ieumoffice slides apply deck.pptx --ops edit.json [--dry-run] [--out copy.pptx]
 ieumoffice slides audit deck.pptx [--slide 0] --json            # out_of_bounds / off_slide / text_overflow / text_overflow_width / overlap / picture_distorted: typed issues with durable ids and a setTransform `suggest` where geometry fixes it
 ieumoffice slides render deck.pptx --out shots/ [--scale 2]     # one PNG per slide through the app's PDF export
-ieumoffice render report.docx|book.xlsx|page.html|file.pdf --out shots/ [--page 3] [--scale 2]   # one PNG per page of any document, to look at what was made
+ieumoffice render report.docx|book.xlsx|page.html|form.hwp|file.pdf --out shots/ [--page 3] [--scale 2]   # one PNG per page of any document, to look at what was made
 ieumoffice render deck.pptx --out shots/ --el e_12 [--pad 16]   # plus the page cropped to that element (<stem>-NN-e_12.png)
 ieumoffice render deck.pptx --out shots/ --grid [--cols 4] [--tile 320]   # plus <stem>-grid.png: every page on one contact sheet
 ieumoffice create --type xlsx --from table.json --out book.xlsx   # 2-D array or {sheets:[{name,rows}]}; "=..." cells are formulas

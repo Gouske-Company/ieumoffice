@@ -4,6 +4,7 @@ export const pt = {
   loading: 'Abrindo o documento…',
   editorFailed: 'Não foi possível iniciar o editor.',
   openFailed: 'Não foi possível abrir o documento.',
+  pdfImportCancelled: 'A importação do PDF foi cancelada. Você pode fechar esta aba.',
   saveFailed: 'Não foi possível salvar o documento.',
   fileSave: 'Salvar',
   fileSaveAs: 'Salvar Como…',

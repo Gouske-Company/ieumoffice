@@ -21,6 +21,7 @@ import {
   type AiProviderId,
   type AiSettings,
   type AiStreamChunk,
+  type AiSubscriptionCliId,
   type AiSubscriptionProviderId,
   type AiSubscriptionStatuses,
   type StreamCallbacks,
@@ -171,4 +172,17 @@ export function withMeteredAccepted(
 ): AiSettings {
   const settings = normalizeAiSettings(stored)
   return { ...settings, meteredAccepted: { ...settings.meteredAccepted, [provider]: accepted } }
+}
+
+/** The stored settings with one vendor CLI turned off in this app, or back on (decision 0114) */
+export function withSubscriptionOff(
+  stored: unknown,
+  provider: AiSubscriptionCliId,
+  off: boolean,
+): AiSettings {
+  const { subscriptionOff, ...settings } = normalizeAiSettings(stored)
+  const next = { ...subscriptionOff }
+  if (off) next[provider] = true
+  else delete next[provider]
+  return Object.keys(next).length > 0 ? { ...settings, subscriptionOff: next } : settings
 }

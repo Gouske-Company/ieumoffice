@@ -53,6 +53,8 @@ export const he = {
   errSignedOut: 'תוקף הכניסה אל {provider} פג. היכנסו שוב כדי להמשיך.',
   errRateLimit: 'מכסת המינוי של {provider} נוצלה במלואה.',
   errRateLimitReset: 'מכסת המינוי של {provider} נוצלה במלואה. היא תתאפס ב-{time}.',
+  errChatGptAppLimit:
+    'האפליקציה הזו ניצלה את השימוש ב-ChatGPT שעומד לרשותה. ייתכן שזו המגבלה של כל התוכנית או מגבלה שהוגדרה לאפליקציה הזו. בדקו ב-ChatGPT תחת הגדרות ← שימוש.',
   errUnsafeTools:
     'התוכנה {provider} הופעלה כשהכלים שלה עצמה פעילים, ולכן ההרצה נעצרה מטעמי בטיחות.',
   errMeteredNotAccepted:

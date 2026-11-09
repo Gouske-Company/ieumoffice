@@ -57,6 +57,8 @@ export const ja = {
   errRateLimit: '{provider} のサブスクリプションの上限に達しました。',
   errRateLimitReset:
     '{provider} のサブスクリプションの上限に達しました。{time} にリセットされます。',
+  errChatGptAppLimit:
+    'このアプリが使える ChatGPT の利用量を使い切りました。プラン全体の上限か、このアプリ用に設定した上限の可能性があります。ChatGPT の「設定 → 利用状況」で確認してください。',
   errUnsafeTools:
     '{provider} のプログラムが独自のツールを有効にしたまま起動したため、安全のため実行を停止しました。',
   errMeteredNotAccepted:

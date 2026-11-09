@@ -58,6 +58,8 @@ export const nl = {
   errRateLimit: 'De limiet van het abonnement {provider} is bereikt.',
   errRateLimitReset:
     'De limiet van het abonnement {provider} is bereikt. Deze wordt om {time} hersteld.',
+  errChatGptAppLimit:
+    'Deze app heeft het ChatGPT-gebruik opgebruikt waarover hij beschikt. Dat kan de limiet van je hele abonnement zijn of een limiet die voor deze app is ingesteld. Controleer het in ChatGPT onder Instellingen → Gebruik.',
   errUnsafeTools:
     'Het programma {provider} is gestart met eigen hulpmiddelen ingeschakeld; de uitvoering is uit veiligheid gestopt.',
   errMeteredNotAccepted:

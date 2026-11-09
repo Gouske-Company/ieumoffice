@@ -50,6 +50,8 @@ export const zhTW = {
   errSignedOut: '{provider} 的登入已失效。請重新登入後繼續。',
   errRateLimit: '{provider} 的訂閱額度已用完。',
   errRateLimitReset: '{provider} 的訂閱額度已用完，將於 {time} 重設。',
+  errChatGptAppLimit:
+    '本應用程式可用的 ChatGPT 用量已用完。這可能是整個方案的額度，也可能是為本應用程式設定的額度。請在 ChatGPT 的「設定 → 用量」中查看。',
   errUnsafeTools: '{provider} 程式啟動時帶有自身的工具，為了安全已停止這次執行。',
   errMeteredNotAccepted:
     '{provider} 連線是依用量付費的登入，你尚未允許使用。請在連線設定中選擇「仍要使用」。',

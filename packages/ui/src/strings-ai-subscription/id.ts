@@ -54,6 +54,8 @@ export const id = {
   errSignedOut: 'Sesi masuk {provider} sudah berakhir. Masuk lagi untuk melanjutkan.',
   errRateLimit: 'Batas langganan {provider} sudah habis.',
   errRateLimitReset: 'Batas langganan {provider} sudah habis. Batas diatur ulang pada {time}.',
+  errChatGptAppLimit:
+    'Aplikasi ini sudah menghabiskan penggunaan ChatGPT yang bisa dipakainya. Batas itu bisa batas seluruh paket Anda atau batas yang ditetapkan untuk aplikasi ini. Periksa di ChatGPT pada Pengaturan → Penggunaan.',
   errUnsafeTools:
     'Program {provider} dimulai dengan alat bawaannya masih aktif, sehingga proses dihentikan demi keamanan.',
   errMeteredNotAccepted:

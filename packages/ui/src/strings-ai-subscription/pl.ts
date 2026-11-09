@@ -56,6 +56,8 @@ export const pl = {
   errSignedOut: 'Logowanie do {provider} wygasło. Zaloguj się ponownie, aby kontynuować.',
   errRateLimit: 'Limit subskrypcji {provider} został wyczerpany.',
   errRateLimitReset: 'Limit subskrypcji {provider} został wyczerpany. Odnowi się o {time}.',
+  errChatGptAppLimit:
+    'Ta aplikacja wykorzystała dostępne dla niej użycie ChatGPT. Może to być limit całego planu albo limit ustawiony dla tej aplikacji. Sprawdź w ChatGPT w Ustawienia → Użycie.',
   errUnsafeTools:
     'Program {provider} uruchomił się z włączonymi własnymi narzędziami, więc ze względów bezpieczeństwa zatrzymano działanie.',
   errMeteredNotAccepted:

@@ -54,6 +54,8 @@ export const cs = {
   errSignedOut: 'Přihlášení k {provider} vypršelo. Přihlaste se znovu a pokračujte.',
   errRateLimit: 'Limit předplatného {provider} je vyčerpán.',
   errRateLimitReset: 'Limit předplatného {provider} je vyčerpán. Obnoví se v {time}.',
+  errChatGptAppLimit:
+    'Tato aplikace vyčerpala využití ChatGPT, které může čerpat. Může jít o limit celého tarifu, nebo o limit nastavený pro tuto aplikaci. Zkontrolujte Nastavení → Využití v ChatGPT.',
   errUnsafeTools:
     'Program {provider} se spustil se zapnutými vlastními nástroji, proto byl běh z bezpečnostních důvodů zastaven.',
   errMeteredNotAccepted:

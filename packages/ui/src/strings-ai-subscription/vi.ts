@@ -55,6 +55,8 @@ export const vi = {
   errRateLimit: 'Đã dùng hết giới hạn của gói đăng ký {provider}.',
   errRateLimitReset:
     'Đã dùng hết giới hạn của gói đăng ký {provider}. Giới hạn sẽ được đặt lại lúc {time}.',
+  errChatGptAppLimit:
+    'Ứng dụng này đã dùng hết lượng ChatGPT mà nó được dùng. Đó có thể là giới hạn của cả gói hoặc giới hạn đặt riêng cho ứng dụng này. Hãy kiểm tra trong ChatGPT tại Cài đặt → Mức sử dụng.',
   errUnsafeTools:
     'Chương trình {provider} khởi động khi các công cụ riêng của nó vẫn bật, nên lượt chạy đã bị dừng để đảm bảo an toàn.',
   errMeteredNotAccepted:

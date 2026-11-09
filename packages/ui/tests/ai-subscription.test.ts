@@ -820,6 +820,27 @@ describe('aiRunErrorText', () => {
     }
   })
 
+  it('does not call a ChatGPT limit the whole plan, nor give it a reset time', () => {
+    // OpenAI: the code may come from a limit set for this app alone
+    const text = aiRunErrorText('en', { kind: 'rate-limit', provider: 'chatgpt', resetsAt }, now)
+    expect(text).toBe(
+      'This app has used up the ChatGPT usage it can draw on. The limit may be your whole plan’s or one set for this app. Check Settings → Usage in ChatGPT.',
+    )
+    expect(text).not.toContain(time)
+    expect(aiRunErrorText('ko', { kind: 'rate-limit', provider: 'chatgpt' })).toBe(
+      'ChatGPT에서 이 앱이 쓸 수 있는 사용량을 다 썼습니다. 요금제 전체의 한도이거나 이 앱에 정해 둔 한도일 수 있습니다. ChatGPT 설정 → 사용량에서 확인하세요.',
+    )
+    for (const lang of LANGS) {
+      const worded = aiRunErrorText(lang, { kind: 'rate-limit', provider: 'chatgpt' })
+      expect(worded, lang).toContain('ChatGPT')
+      expect(worded, lang).not.toMatch(/[{}]/)
+      if (lang !== 'en')
+        expect(worded, lang).not.toBe(
+          aiRunErrorText('en', { kind: 'rate-limit', provider: 'chatgpt' }),
+        )
+    }
+  })
+
   it('ignores a reset time that is not a number', () => {
     expect(aiRunErrorText('en', { kind: 'rate-limit', provider: 'codex', resetsAt: NaN })).toBe(
       'The Codex subscription limit has been used up.',

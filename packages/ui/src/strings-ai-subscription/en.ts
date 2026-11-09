@@ -54,6 +54,8 @@ export const en = {
   errSignedOut: 'The {provider} sign-in has expired. Sign in again to continue.',
   errRateLimit: 'The {provider} subscription limit has been used up.',
   errRateLimitReset: 'The {provider} subscription limit has been used up. It resets at {time}.',
+  errChatGptAppLimit:
+    'This app has used up the ChatGPT usage it can draw on. The limit may be your whole plan’s or one set for this app. Check Settings → Usage in ChatGPT.',
   errUnsafeTools:
     'The {provider} program started with its own tools turned on, so the run was stopped for safety.',
   errMeteredNotAccepted:

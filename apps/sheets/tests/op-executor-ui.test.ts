@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { nextSheetName, planFromOps, prefetchOpImages } from '../src/renderer/op-executor'
+import { planFromOps, prefetchOpImages } from '../src/renderer/op-executor'
+import { nextSheetName } from '../src/renderer/new-sheet-name'
 
 const workbook = {
   getSheetBySheetId: (id: string) => (id === 'sh1' ? { getSheetName: () => 'Data' } : undefined),

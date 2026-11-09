@@ -29,6 +29,7 @@ openoffice/
 │   ├── plans/
 │   │   ├── ai-friendly-docs.md    ← 행정문서 점검(행안부 가이드라인) 계획(설계)
 │   │   ├── ai-web-reading.md      ← AI 웹 읽기 계획(초안)
+│   │   ├── chatgpt-one-account.md ← ChatGPT 두 길을 하나로 보이기 계획(확정)
 │   │   ├── connect-guide.md       ← AI 연결 도우미 계획(진행 중)
 │   │   ├── diagram-editor.md      ← 다이어그램(.drawio) 편집기 계획(구현됨, 사람 확인 남음)
 │   │   ├── epub-editor.md         ← EPUB 편집기 계획(구현됨, 사람 확인 남음)

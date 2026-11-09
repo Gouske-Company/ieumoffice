@@ -7,7 +7,7 @@ repository.
 ## How changes land here
 
 Development happens in this repository,
-[pblsketch/openoffice](https://github.com/pblsketch/openoffice). Pull requests,
+[pblsketch/ieumoffice](https://github.com/pblsketch/ieumoffice). Pull requests,
 issues and feature requests are all handled here.
 
 IeumOffice is a modified version of GenOffice (see

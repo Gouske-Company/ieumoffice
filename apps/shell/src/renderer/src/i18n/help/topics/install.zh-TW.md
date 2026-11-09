@@ -1,6 +1,6 @@
 # 安裝 GenOffice
 
-每個版本都發布在專案 GitHub 的 [Releases 頁面](https://github.com/pblsketch/openoffice/releases/latest)上。除了 Windows 版，也以 Beta 形式發布 Mac 版和 Linux 版。Mac 版和 Linux 版開發者沒有親自測試，而是透過使用者的回報來確認。
+每個版本都發布在專案 GitHub 的 [Releases 頁面](https://github.com/pblsketch/ieumoffice/releases/latest)上。除了 Windows 版，也以 Beta 形式發布 Mac 版和 Linux 版。Mac 版和 Linux 版開發者沒有親自測試，而是透過使用者的回報來確認。
 
 ## 選擇適合你電腦的檔案
 

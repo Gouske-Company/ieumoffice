@@ -3,7 +3,7 @@
 ## Reporting a Vulnerability
 
 Please report suspected vulnerabilities privately via GitHub's
-[private vulnerability reporting](https://github.com/pblsketch/openoffice/security/advisories/new)
+[private vulnerability reporting](https://github.com/pblsketch/ieumoffice/security/advisories/new)
 on this repository. Do not open public issues for security reports. IeumOffice
 is maintained by volunteers, so reports are handled on a best-effort basis.
 
@@ -20,8 +20,13 @@ build provenance attestation, so you can check that it was made from this
 repository's source by its own workflow:
 
 ```
-gh attestation verify IeumOffice-Setup-<version>.exe --repo pblsketch/openoffice
+gh attestation verify IeumOffice-Setup-<version>.exe --repo pblsketch/ieumoffice
 ```
+
+The repository was renamed from `pblsketch/openoffice` on 2026-11-08. The
+attestation of a file released before that (0.12.11 and earlier) names the
+old repository; if it does not match the new name, verify it with
+`--repo pblsketch/openoffice`.
 
 The installer is not code-signed, so Windows shows an "unknown publisher"
 warning the first time you run it.

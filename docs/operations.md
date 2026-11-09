@@ -7,8 +7,8 @@
 필요한 것: Node 22.12 이상(npm 10 이상), Rust(`cargo`), 설치 파일을 만들려면 Windows 10/11 SDK.
 
 ```bash
-git clone https://github.com/pblsketch/openoffice.git
-cd openoffice
+git clone https://github.com/pblsketch/ieumoffice.git
+cd ieumoffice
 export PATH="$HOME/.cargo/bin:$PATH"   # cargo가 PATH에 없을 때(Git Bash). 엑셀 처리 프로그램 빌드에 필요
 npm ci                                  # 잠금 파일 그대로 설치. 용량이 크다
 npm run fixtures                        # 테스트용 문서 만들기. 테스트보다 먼저

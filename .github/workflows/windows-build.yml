@@ -3,7 +3,7 @@ name: Windows build
 # Builds the Windows installer (x64 NSIS, latest.yml) on a GitHub-hosted
 # Windows runner from the public source, and records where it came from as a
 # build provenance attestation that anyone can check with
-# `gh attestation verify <file> --repo pblsketch/openoffice` (decision 0056).
+# `gh attestation verify <file> --repo pblsketch/ieumoffice` (decision 0056).
 # The installer stays unsigned, as the hand build is: a signed release would
 # lock every later update to that signer (docs/releasing.ko.md, 4).
 # No repository secret is involved.

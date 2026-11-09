@@ -1,6 +1,6 @@
 # GenOffice 설치
 
-모든 버전은 GitHub에 있는 프로젝트의 [Releases 페이지](https://github.com/pblsketch/openoffice/releases/latest)에 올라옵니다. Windows판과 함께 Mac판과 Linux판이 베타로 올라옵니다. Mac판과 Linux판은 개발자가 직접 확인하지 못하고 사용자들의 보고로 확인합니다.
+모든 버전은 GitHub에 있는 프로젝트의 [Releases 페이지](https://github.com/pblsketch/ieumoffice/releases/latest)에 올라옵니다. Windows판과 함께 Mac판과 Linux판이 베타로 올라옵니다. Mac판과 Linux판은 개발자가 직접 확인하지 못하고 사용자들의 보고로 확인합니다.
 
 ## 내 컴퓨터에 맞는 파일 고르기
 

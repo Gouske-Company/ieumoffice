@@ -27,7 +27,7 @@ const PRODUCT_NAME = 'IeumOffice'
 // (<local app data>/<name>-updater), so a shared name is a shared folder.
 const PACKAGED_APP_NAME = 'ieumoffice'
 const REPO_OWNER = 'pblsketch'
-const REPO_NAME = 'openoffice'
+const REPO_NAME = 'ieumoffice'
 const MAINTAINER = 'pblsketch <pblsketch@users.noreply.github.com>'
 
 // GENOFFICE_MAC_X64=1 — package the Intel (x64) dmg/zip alongside arm64.

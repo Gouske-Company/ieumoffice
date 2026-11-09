@@ -1,6 +1,6 @@
 # Installer GenOffice
 
-Chaque version est publiée sur la [page Releases](https://github.com/pblsketch/openoffice/releases/latest) du projet sur GitHub. La version Windows est accompagnée de versions Mac et Linux publiées en bêta. Le développeur ne peut pas tester directement les versions Mac et Linux ; elles sont confirmées grâce aux retours des utilisateurs.
+Chaque version est publiée sur la [page Releases](https://github.com/pblsketch/ieumoffice/releases/latest) du projet sur GitHub. La version Windows est accompagnée de versions Mac et Linux publiées en bêta. Le développeur ne peut pas tester directement les versions Mac et Linux ; elles sont confirmées grâce aux retours des utilisateurs.
 
 ## Choisir le fichier pour votre machine
 

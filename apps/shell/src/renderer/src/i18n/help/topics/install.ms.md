@@ -1,6 +1,6 @@
 # Pemasangan GenOffice
 
-Setiap versi diterbitkan pada [halaman Keluaran](https://github.com/pblsketch/openoffice/releases/latest) projek ini di GitHub. Binaan Windows diterbitkan bersama binaan Mac dan Linux yang dikeluarkan sebagai beta. Pembangun tidak dapat menguji binaan Mac dan Linux secara langsung; kedua-duanya disahkan melalui laporan pengguna.
+Setiap versi diterbitkan pada [halaman Keluaran](https://github.com/pblsketch/ieumoffice/releases/latest) projek ini di GitHub. Binaan Windows diterbitkan bersama binaan Mac dan Linux yang dikeluarkan sebagai beta. Pembangun tidak dapat menguji binaan Mac dan Linux secara langsung; kedua-duanya disahkan melalui laporan pengguna.
 
 ## Memilih fail untuk mesin anda
 

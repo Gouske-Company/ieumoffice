@@ -2,7 +2,9 @@
 
 이음오피스(IeumOffice)의 새 버전을 만들어 GitHub에 올리는 순서입니다. 위에서부터 차례대로 하면 됩니다.
 
-설치된 앱은 공개 저장소 `pblsketch/openoffice`의 **릴리스(Releases)** 를 보고 스스로 업데이트합니다. 그래서 "새 버전을 낸다"는 것은 설치 파일을 만들어 그 저장소의 릴리스에 올리는 일입니다. 따로 운영하는 서버나 비밀 키는 없습니다.
+설치된 앱은 공개 저장소 `pblsketch/ieumoffice`의 **릴리스(Releases)** 를 보고 스스로 업데이트합니다. 그래서 "새 버전을 낸다"는 것은 설치 파일을 만들어 그 저장소의 릴리스에 올리는 일입니다. 따로 운영하는 서버나 비밀 키는 없습니다.
+
+저장소는 2026-11-08에 `pblsketch/openoffice`에서 지금 이름으로 바뀌었습니다. 그 전에 설치한 앱은 옛 이름으로 업데이트를 묻고 GitHub가 새 이름으로 넘겨주므로, `pblsketch/openoffice`라는 저장소를 새로 만들지 않습니다. 새로 만들면 옛 앱이 업데이트를 받지 못합니다.
 
 > **에이전트에게 맡길 때.** Claude Code 같은 에이전트로 릴리스를 맡기면 `.claude/skills/release-ieumoffice/SKILL.md`를 함께 읽게 합니다. 승인 없이는 게시하지 않는 규칙, 릴리스 본문 윤문, 업데이트 창 확인 절차가 그 스킬에 있습니다.
 
@@ -56,7 +58,7 @@ Windows SDK는 스캔 문서 글자 인식 도우미(`win-ocr.exe`)를 만들 �
 
 ## 4. 설치 파일 만들기
 
-**GitHub Actions로 만들기 (권장, 결정 0056).** Mac·Linux처럼 GitHub의 Windows 빌드 기계가 만들고, 설치 파일과 `latest.yml`에 "이 저장소의 이 커밋에서 만들었다"는 출처 증명을 붙입니다. 사용자는 `gh attestation verify IeumOffice-Setup-<버전>.exe --repo pblsketch/openoffice`로 확인할 수 있습니다.
+**GitHub Actions로 만들기 (권장, 결정 0056).** Mac·Linux처럼 GitHub의 Windows 빌드 기계가 만들고, 설치 파일과 `latest.yml`에 "이 저장소의 이 커밋에서 만들었다"는 출처 증명을 붙입니다. 사용자는 `gh attestation verify IeumOffice-Setup-<버전>.exe --repo pblsketch/ieumoffice`로 확인할 수 있습니다. 저장소 이름을 바꾸기 전(0.12.11까지)에 낸 파일의 증명에는 옛 이름이 적혀 있어서, 새 이름으로 맞지 않으면 `--repo pblsketch/openoffice`로 확인합니다.
 
 1. 6번대로 릴리스를 **본문만으로** 먼저 공개합니다. 프리릴리스를 거치지 않고 바로 정식 공개합니다("Set as a pre-release"는 체크하지 않고 "Set as the latest release"를 체크). 파일은 아직 올리지 않습니다. 파일이 붙기 전까지 설치된 앱은 받을 것이 없다고 보고 조용히 넘어가고, 사이트의 내려받기 버튼은 릴리스 페이지로 갑니다.
 2. **Actions** 탭 → **Windows build** → **Run workflow**에서 가지는 `main`, **release_tag** 칸에 그 태그(예: `v0.12.4`)를 적고 실행합니다.
@@ -65,7 +67,7 @@ Windows SDK는 스캔 문서 글자 인식 도우미(`win-ocr.exe`)를 만들 �
 
 빌드나 검사가 실패해 파일이 하나도 붙지 않았다면, 그 릴리스와 태그를 지워 직전 릴리스가 다시 "최신"이 되게 하고 고친 뒤 처음부터 다시 합니다. 받은 사람이 없으므로 같은 번호를 다시 써도 됩니다.
 
-**Google 드라이브 클라이언트.** 세 빌드(Windows·macOS·Linux)는 저장소 secrets의 `GENOFFICE_GOOGLE_CLIENT_ID`와 `GENOFFICE_GOOGLE_CLIENT_SECRET`을 앱 빌드와 묶기 단계에 넘깁니다(결정 0033, 0085). 두 값이 없으면 빌드는 그대로 끝나지만 설치본에 드라이브 기능이 빠집니다. 값은 저장소 주인이 `gh secret set GENOFFICE_GOOGLE_CLIENT_ID --repo pblsketch/openoffice`처럼 직접 넣고, 커밋이나 로그에 남기지 않습니다.
+**Google 드라이브 클라이언트.** 세 빌드(Windows·macOS·Linux)는 저장소 secrets의 `GENOFFICE_GOOGLE_CLIENT_ID`와 `GENOFFICE_GOOGLE_CLIENT_SECRET`을 앱 빌드와 묶기 단계에 넘깁니다(결정 0033, 0085). 두 값이 없으면 빌드는 그대로 끝나지만 설치본에 드라이브 기능이 빠집니다. 값은 저장소 주인이 `gh secret set GENOFFICE_GOOGLE_CLIENT_ID --repo pblsketch/ieumoffice`처럼 직접 넣고, 커밋이나 로그에 남기지 않습니다.
 
 release_tag를 비워 두면 결과물(`ieumoffice-windows-x64`)만 남습니다. **처음 한 번은 이렇게 돌려** 내려받은 설치 파일이 손으로 만든 것과 똑같이 설치되고 동작하는지 확인합니다. _(확인 필요: 이 워크플로는 아직 Actions에서 돌려 보지 않았습니다. 첫 실행에서 확인한 뒤 이 표시를 지워 주세요.)_
 
@@ -137,7 +139,7 @@ npm run dist:win -- -- --publish never
 
 ## 6. GitHub 릴리스 만들기
 
-1. <https://github.com/pblsketch/openoffice/releases/new> 를 엽니다.
+1. <https://github.com/pblsketch/ieumoffice/releases/new> 를 엽니다.
 2. **태그**: `v` + 버전 번호. 예: 버전이 `0.11.1`이면 `v0.11.1`. "Choose a tag"에 직접 적고 "Create new tag on publish"를 고릅니다. 대상(Target)은 3번에서 올린 커밋이 있는 브랜치입니다.
 3. **제목**: 알아보기 쉬운 이름(예: `v0.11.1`). **설명**: 바뀐 점.
    - 설명은 웹 페이지와 **앱의 업데이트 창** 모두에 그대로 나옵니다(앱은 본문을 번역하지 않습니다).
@@ -163,7 +165,7 @@ npm run dist:win -- -- --publish never
 올린 뒤 바로 확인합니다. 브라우저에서 아래 주소를 열었을 때 `latest.yml`이 내려받아지면 됩니다.
 
 ```
-https://github.com/pblsketch/openoffice/releases/latest/download/latest.yml
+https://github.com/pblsketch/ieumoffice/releases/latest/download/latest.yml
 ```
 
 (릴리스가 하나도 없던 2026-10-13에는 이 주소가 "404 찾을 수 없음"이었습니다.)

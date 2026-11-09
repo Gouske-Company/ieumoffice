@@ -1,6 +1,6 @@
 # Memasang GenOffice
 
-Setiap versi dipublikasikan di [halaman Rilis](https://github.com/pblsketch/openoffice/releases/latest) proyek ini di GitHub. Build Windows dipublikasikan bersama build Mac dan Linux yang dirilis sebagai beta. Pengembang tidak dapat menguji build Mac dan Linux secara langsung; keduanya dipastikan lewat laporan para pengguna.
+Setiap versi dipublikasikan di [halaman Rilis](https://github.com/pblsketch/ieumoffice/releases/latest) proyek ini di GitHub. Build Windows dipublikasikan bersama build Mac dan Linux yang dirilis sebagai beta. Pengembang tidak dapat menguji build Mac dan Linux secara langsung; keduanya dipastikan lewat laporan para pengguna.
 
 ## Pilih berkas untuk komputer Anda
 

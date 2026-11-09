@@ -279,7 +279,7 @@ draw.io 다이어그램(`.drawio`, `.dio`, `.drawio.svg`, `.drawio.png`)을 읽�
 
 ## 에이전트 스킬
 
-- 이름과 폴더는 `ieumoffice`다. 저장소의 `skills/ieumoffice/SKILL.md`가 원본이고, 앱의 설정 → 연동에서 고른 에이전트에 설치한다. 터미널에서는 `npx skills add pblsketch/openoffice`.
+- 이름과 폴더는 `ieumoffice`다. 저장소의 `skills/ieumoffice/SKILL.md`가 원본이고, 앱의 설정 → 연동에서 고른 에이전트에 설치한다. 터미널에서는 `npx skills add pblsketch/ieumoffice`.
 - 스킬 문서는 사용자의 에이전트 폴더로 복사되고, 문서의 `metadata.version`이 커졌을 때만 새것으로 바뀐다. 본문을 고치고 버전을 올리지 않으면 고친 내용이 아무에게도 닿지 않는다(검사 `npm run check:skill-version`).
 - 스킬과 도움말이 에이전트에게 알려 주는 명령은 모두 `ieumoffice`로 시작한다.
 - 설치 자리(결정 0095). 새로 설치하는 줄은 셋이다. Claude Code(`~/.claude/skills`, `CLAUDE_CONFIG_DIR`를 따름), 공용 폴더 `agents`(`~/.agents/skills`), Windsurf(`~/.codeium/windsurf/skills`). 공용 폴더는 Codex, Cursor, Gemini CLI, Copilot, OpenCode가 읽고, `~/.agents`나 그 다섯 도구의 폴더 중 하나가 있으면(`CODEX_HOME`, `XDG_CONFIG_HOME`를 따름) 보인다.
@@ -643,4 +643,5 @@ metadata:
 - 이음오피스는 Windows 기본 앱 목록에 `RegisteredApplications`의 `IeumOffice`와 `Software\IeumOffice\Capabilities\FileAssociations`로 오른다. 이 등록은 기본 프로그램을 바꾸지 않고, 사용자가 기본 앱에서 이음오피스를 고를 때 앱 실행 파일이 아니라 확장자별 ProgId(문서 아이콘)가 기록되게 한다. `.hwp`·`.hwpx`·`.xmind`·`.odt`는 여기서도 "연결 프로그램" 후보일 뿐이다.
 - `.odt`는 "연결 프로그램" 후보로만 등록한다(`IeumOffice.OpenDocumentText`와 `.odt\OpenWithProgids`의 값 하나, `apps/shell/build/installer.nsh`). 기본 프로그램은 바꾸지 않는다. 지울 때는 그 값과 등록 이름만 지운다.
 - Windows 설치본은 `.txt`·`.json`·`.xmind`를 이 앱에 연결해 등록하지 않는다. 설치해도 그 파일들의 기본 프로그램이 바뀌지 않는다. 앱 안에서는 열기 창, 끌어다 놓기, 최근 파일, 폴더 나무로 열고, 실행 인자로 경로를 받으면 연다.
-- 자동 업데이트는 `pblsketch/openoffice`의 GitHub 릴리스에서 `latest.yml`과 설치 파일을 읽는다. 릴리스는 `v<버전>` 태그여야 한다.
+- 자동 업데이트는 `pblsketch/ieumoffice`의 GitHub 릴리스에서 `latest.yml`과 설치 파일을 읽는다. 릴리스는 `v<버전>` 태그여야 한다.
+- 저장소는 2026-11-08에 `pblsketch/openoffice`에서 `pblsketch/ieumoffice`로 이름을 바꿨다. 그 전에 설치한 앱은 옛 이름으로 업데이트를 묻고, GitHub가 새 이름으로 넘겨준다. 이 넘겨주기가 끊기지 않도록 `pblsketch/openoffice`라는 저장소를 새로 만들지 않는다.

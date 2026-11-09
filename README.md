@@ -2,8 +2,8 @@
 
 **한국어** · [English](README.en.md)
 
-[![누적 다운로드](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fpblsketch%2Fopenoffice%2Fmain%2Fdocs%2Ftracking%2Fgrowth-latest.json&query=%24.totalDownloads&label=%EB%88%84%EC%A0%81%20%EB%8B%A4%EC%9A%B4%EB%A1%9C%EB%93%9C)](https://github.com/pblsketch/openoffice/releases)
-[![별](https://img.shields.io/github/stars/pblsketch/openoffice?style=social)](https://github.com/pblsketch/openoffice/stargazers)
+[![누적 다운로드](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fpblsketch%2Fieumoffice%2Fmain%2Fdocs%2Ftracking%2Fgrowth-latest.json&query=%24.totalDownloads&label=%EB%88%84%EC%A0%81%20%EB%8B%A4%EC%9A%B4%EB%A1%9C%EB%93%9C)](https://github.com/pblsketch/ieumoffice/releases)
+[![별](https://img.shields.io/github/stars/pblsketch/ieumoffice?style=social)](https://github.com/pblsketch/ieumoffice/stargazers)
 
 이음오피스가 도움이 된다면 위의 **별**을 눌러 주세요. 별 하나가 이 프로그램을
 더 많은 사람에게 알리는 힘이 됩니다.
@@ -95,7 +95,7 @@ AI는 **이미 쓰고 있는 Claude 구독이나 ChatGPT 요금제**로 돌아�
 배포하는 운영체제는 **Windows**이고, **Mac용 베타**(Apple Silicon과 Intel)와
 **Linux(64비트 x64)용 베타**가 따로 있습니다. Mac판과 Linux판은 개발자가 직접
 확인하지 못했습니다. 문제가 있으면
-[이슈](https://github.com/pblsketch/openoffice/issues)로 알려 주세요.
+[이슈](https://github.com/pblsketch/ieumoffice/issues)로 알려 주세요.
 
 ## 구독 연결하기
 
@@ -220,7 +220,7 @@ ieumoffice open report.docx
 
 - **에이전트 스킬.** **설정 → 연동**에 PC에서 찾은 코딩 에이전트가 나오고, 고른
   에이전트에 `ieumoffice` 스킬을 설치해 줍니다. 터미널에서는
-  `npx skills add pblsketch/openoffice`로 설치합니다.
+  `npx skills add pblsketch/ieumoffice`로 설치합니다.
 - **MCP 서버.** `ieumoffice mcp`는 같은 명령들을 MCP(Model Context Protocol)
   도구로 제공합니다. 같은 설정 화면에 바로 쓸 수 있는 예시가 있습니다. 예:
   `claude mcp add --transport stdio ieumoffice -- ieumoffice mcp`
@@ -245,7 +245,7 @@ MCP 도구 호출은 화면을 보는 사람이 아니라 프로그램이 보내
 
 ## 내려받기와 설치
 
-설치 파일은 [릴리스 페이지](https://github.com/pblsketch/openoffice/releases)에
+설치 파일은 [릴리스 페이지](https://github.com/pblsketch/ieumoffice/releases)에
 `IeumOffice-Setup-<버전>.exe`라는 이름으로 올라옵니다. 64비트 Windows 10과
 11용입니다. 그 페이지가 아직 비어 있다면 공개된 버전이 없는 것이니, 아래
 방법으로 직접 빌드하세요.
@@ -343,8 +343,8 @@ Node 22.12 이상(npm 10 이상)과 Rust가 필요합니다. `cargo`가 PATH에 
 합니다(엑셀 처리 프로그램을 만드는 데 씁니다).
 
 ```bash
-git clone https://github.com/pblsketch/openoffice.git
-cd openoffice
+git clone https://github.com/pblsketch/ieumoffice.git
+cd ieumoffice
 npm install
 npm run dev      # 모든 편집기와 앱 창을 개발 모드로 실행
 npm run shell    # 또는: 전체를 빌드한 뒤 앱 실행
@@ -435,7 +435,7 @@ Parallel과 DuckDuckGo로, 업데이트 확인은 GitHub로 갑니다. 편집기
 
 ## 기여와 문제 신고
 
-- 버그와 제안: [GitHub Issues](https://github.com/pblsketch/openoffice/issues)
+- 버그와 제안: [GitHub Issues](https://github.com/pblsketch/ieumoffice/issues)
 - 보안 문제: 공개 이슈로 올리지 말고 [SECURITY.md](SECURITY.md)에 적힌 대로
   비공개로 알려 주세요.
 - 코드 기여: [CONTRIBUTING.md](CONTRIBUTING.md)와
@@ -501,7 +501,7 @@ Google LLC의 상표입니다. 그 밖에 이 글에 나오는 제품 이름도 
 ### 공식 배포처와 다시 배포할 때
 
 이음오피스는 무료입니다. 공식 배포처는
-[GitHub 릴리스](https://github.com/pblsketch/openoffice/releases)와
+[GitHub 릴리스](https://github.com/pblsketch/ieumoffice/releases)와
 [ieumoffice.com](https://ieumoffice.com) 두 곳뿐이고, 돈을 받고 파는 곳이
 있다면 공식 배포가 아닙니다.
 

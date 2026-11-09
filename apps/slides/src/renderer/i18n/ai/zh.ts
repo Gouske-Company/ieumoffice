@@ -233,6 +233,11 @@ export const zh = {
   aiTplFontsNotice:
     '模板字体已包含在此应用中。在 PowerPoint 等其他程序中打开时，可能会显示为其他字体。',
   aiTplOpenFonts: '打开字体文件夹',
+  aiTplFontsAuto: '字体：由 AI 选择',
+  aiTplFontsOne: '字体：{font}',
+  aiTplFontsTwo: '字体：标题 {title}，正文 {body}',
+  aiTplFontsTemplate: '字体：使用所选模板的字体',
+  aiTplFontsChange: '更改',
   aiTplDesc_coral: '近黑底色搭配奶油色与橙粉色，标题字大而粗',
   aiTplDesc_blue_professional: '奶油色底搭配鲜明的钴蓝点缀，简洁利落的商务风',
   aiTplDesc_monochrome: '象牙色底只用黑字，衬线标题，完全不用色彩',

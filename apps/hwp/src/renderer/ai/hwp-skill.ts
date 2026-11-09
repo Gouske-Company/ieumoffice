@@ -1,5 +1,7 @@
 import {
   attachedImageNote,
+  undoDoubledEscapes,
+  undoDoubledEscapesInList,
   type AgentSkill,
   type AgentToolCall,
   type AgentToolDef,
@@ -168,7 +170,7 @@ const SYSTEM_PROMPT = [
   '- Change the settings of all footnotes or endnotes (각주·미주 모양): number format such as 1) or ①, the characters around the number, superscript, start number, numbering, placement and separator line (read_note_settings, set_note_settings).',
   '- Change the page setup (쪽 설정, 편집 용지): paper size, orientation and margins, for the whole document or one section (read_page_setup, set_page_setup).',
   "- Number or bullet paragraphs, or take that away (list, list_level and bullet of format_paragraph, format_selection and format_look): the editor's own numbering, not typed characters.",
-  '- Read how a document is formatted, this one or an attached .hwp / .hwpx, and copy that formatting: page setup, note settings, styles and the looks of body paragraphs (read_formatting); format all body paragraphs of one look at once (format_look).',
+  '- Read how a document is formatted, this one or an attached .hwp / .hwpx, and copy that formatting: page setup, note settings, styles and the looks of body paragraphs (read_formatting); see which look each body paragraph has, to find one formatted unlike the others (list_paragraph_looks); format all body paragraphs of one look at once (format_look).',
   '- See the pictures of the document (body text and table cells): list them (list_pictures), then look at one and answer a question about it (analyze_picture). The document text does not show what a picture shows.',
   '',
   '## What they cannot do',
@@ -1122,6 +1124,21 @@ const TOOLS: AgentToolDef[] = [
     },
   },
   {
+    name: 'list_paragraph_looks',
+    description:
+      'List the body paragraphs of this document in reading order with the look id of each (the ids read_formatting gives, with the font, size, alignment, indents and spacing of each look) and the start of its text; empty paragraphs are left out. The document text does not show formatting: use this to see which paragraphs are formatted alike and which one stands apart, such as one heading indented unlike the others, before format_look or format_paragraph. A long document comes in parts; call again with from.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        from: {
+          type: 'integer',
+          minimum: 1,
+          description: 'the paragraph to start from, as numbered here (default 1)',
+        },
+      },
+    },
+  },
+  {
     name: 'format_look',
     description:
       'Format every body paragraph of one look of this document at once (an id from read_formatting): paragraph style, paragraph formatting, list, and character formatting of all their text, as format_paragraph does for one paragraph. One undo step.',
@@ -1257,9 +1274,60 @@ const isWhere = (value: unknown): value is AgentWhere =>
 const isTextList = (value: unknown): value is string[] =>
   Array.isArray(value) && value.length > 0 && value.every((item) => typeof item === 'string')
 
-/** Text of a change as the panel lists it: one line, cut when long. */
+/**
+ * The call with `undoDoubledEscapes` applied to the new text it writes: cell, note and
+ * paragraph text, replacements, table rows, field values and a contents title. The text
+ * a call looks for (find, anchor, after) is left alone: a document that already shows
+ * `\n` must still be found and cleaned up.
+ */
+function withDoubledEscapesUndone(call: AgentToolCall): AgentToolCall {
+  const input = { ...call.input }
+  const fix = (key: string) => {
+    if (typeof input[key] === 'string') input[key] = undoDoubledEscapes(input[key])
+  }
+  switch (call.name) {
+    case 'fill_cells':
+      if (Array.isArray(input.cells)) {
+        input.cells = input.cells.map((cell: unknown) => {
+          if (typeof cell !== 'object' || cell === null) return cell
+          const text = (cell as { text?: unknown }).text
+          return typeof text === 'string' ? { ...cell, text: undoDoubledEscapes(text) } : cell
+        })
+      }
+      break
+    case 'insert_note':
+    case 'edit_note':
+      fix('text')
+      break
+    case 'replace_text':
+    case 'replace_all':
+      fix('replace')
+      break
+    case 'insert_paragraphs':
+    case 'replace_selection':
+      input.paragraphs = undoDoubledEscapesInList(input.paragraphs)
+      break
+    case 'insert_table':
+      if (Array.isArray(input.rows)) input.rows = input.rows.map(undoDoubledEscapesInList)
+      break
+    case 'fill_field':
+      fix('value')
+      break
+    case 'insert_toc':
+      fix('title')
+      break
+    default:
+      return call
+  }
+  return { ...call, input }
+}
+
+/** Text of a change as the panel lists it: one line, line breaks shown as ⏎, cut when long. */
 function changeText(text: string): string {
-  const flat = text.replace(/\s+/g, ' ').trim()
+  const flat = text
+    .trim()
+    .replace(/\s*[\r\n]\s*/g, ' ⏎ ')
+    .replace(/\s+/g, ' ')
   return flat.length > CHANGE_TEXT_CHARS ? `${flat.slice(0, CHANGE_TEXT_CHARS)}…` : flat
 }
 
@@ -3430,6 +3498,27 @@ export function createHwpSkill(deps: HwpSkillDeps): HwpSkill {
             : label('aiToolFormatting'),
         }
       }
+      case 'list_paragraph_looks': {
+        const from = call.input.from
+        if (
+          from !== undefined &&
+          (typeof from !== 'number' || !Number.isInteger(from) || from < 1)
+        ) {
+          return bad(call, 'from must be a whole number from 1')
+        }
+        const listed = await bridge.paragraphLooks(typeof from === 'number' ? from : null)
+        const lines = listed.paragraphs.map((row) => `${row.paragraph}. [${row.look}] ${row.text}`)
+        if (listed.next) lines.push(`[more: call list_paragraph_looks with from ${listed.next}]`)
+        if (listed.truncated)
+          lines.push('(the document is very long: its last paragraphs are not listed)')
+        return {
+          output:
+            listed.count === 0
+              ? 'This document has no body paragraphs with text.'
+              : `Body paragraphs ${listed.paragraphs[0]?.paragraph ?? 0}–${listed.paragraphs.at(-1)?.paragraph ?? 0} of ${listed.count}, each with its look id (read_formatting describes the looks):\n${lines.join('\n')}`,
+          summary: label('aiToolParagraphLooks', { count: listed.count }),
+        }
+      }
       case 'format_look': {
         const look = textArg(call, 'look')?.trim() ?? ''
         if (!look) return bad(call, 'look must be a look id from read_formatting of this document')
@@ -3494,7 +3583,7 @@ export function createHwpSkill(deps: HwpSkillDeps): HwpSkill {
       buildContext: () => [context, selectionContext()].filter(Boolean).join('\n\n'),
       executeTool: async (call, signal) => {
         try {
-          return await run(call, signal)
+          return await run(withDoubledEscapesUndone(call), signal)
         } catch (error) {
           // the editor refused or is gone: the model gets the cause and can say so
           return bad(call, error instanceof Error ? error.message : String(error))

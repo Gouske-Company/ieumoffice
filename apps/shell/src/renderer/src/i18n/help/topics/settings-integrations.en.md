@@ -22,6 +22,7 @@ Light / Dark / System. System follows the OS appearance, and the editors re-skin
 - **Auto-save all documents** turns AutoSave on by default in every editor; you can still switch it off for one window.
 - **Save Location** with a **Change** button, and **Default app for Office documents** to claim .docx / .xlsx / .pptx for GenOffice.
 - **Save format for new HWP documents** picks whether HWP or HWPX is offered first when you first save a new document. Documents you open keep their own format.
+- **AI slide fonts** sets the fonts AI uses for a new presentation when your request names none. Pick Auto, Sans serif, Serif, or Serif titles, and change the sans-serif and serif font separately. A design template you choose uses its own fonts, and pages added to a presentation in other fonts follow that presentation.
 
 GenOffice does not collect or send usage statistics, so there is no switch for it.
 

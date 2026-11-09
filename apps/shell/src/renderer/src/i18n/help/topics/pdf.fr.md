@@ -81,6 +81,7 @@ Six outils : **Dessin, Rectangle, Ellipse, Flèche, Note**, plus le **Caviarder 
 ## Export et impression
 
 - **Exporter en Word… / PowerPoint… / Excel…** dans le menu Fichier, ou les trois mêmes depuis **Convertir le PDF** dans le ruban — tout est local, sans téléversement. Le .pptx donne une diapositive par page et le .xlsx une feuille de calcul par page. Chacun demande où l’enregistrer.
+- **PDF en HWP**, dans **Convertir le PDF** du ruban, transforme le PDF en document HWP dans un nouvel onglet HWP. Choisissez **Importer** (가져오기) dans la fenêtre d'importation PDF que l'onglet affiche ; le document est créé dans cet onglet, et le premier enregistrement demande où placer le .hwp ou le .hwpx. Le PDF lui-même reste tel quel, et la conversion se fait sur ce PC. Le choix entre un texte en paragraphes qui suivent les pages ou en zones de texte fixes se fait dans les options (환경 설정) de l'onglet HWP, rubrique importation PDF.
 - **Imprimer** : l’ordre et les rotations courants via la boîte de dialogue du système ; plages de pages prises en charge.
 
 ## Enregistrement

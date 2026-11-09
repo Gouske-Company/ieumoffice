@@ -22,6 +22,7 @@ Chiaro / Scuro / Segui il sistema. L'opzione Segui il sistema segue l'aspetto de
 - **Salva automaticamente tutti i documenti** attiva il salvataggio automatico per impostazione predefinita in ogni editor; puoi comunque disattivarlo per una singola finestra.
 - **Posizione di salvataggio** con il pulsante **Cambia** e **App predefinita per i documenti Office** per far gestire a GenOffice .docx / .xlsx / .pptx.
 - **Formato di salvataggio dei nuovi documenti HWP** sceglie se proporre prima HWP o HWPX al primo salvataggio di un nuovo documento. I documenti aperti mantengono il proprio formato.
+- **Caratteri delle diapositive IA** imposta i caratteri che l’IA usa per una nuova presentazione quando la richiesta non ne indica nessuno. Scegli Automatico, Senza grazie, Con grazie o Titoli con grazie e cambia separatamente il carattere senza grazie e quello con grazie. Un modello di progettazione scelto usa i propri caratteri, e le pagine aggiunte a una presentazione in altri caratteri seguono quella presentazione.
 
 GenOffice non raccoglie né invia statistiche di utilizzo, quindi non c'è alcun interruttore.
 

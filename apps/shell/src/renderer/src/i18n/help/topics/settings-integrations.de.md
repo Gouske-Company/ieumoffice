@@ -22,6 +22,7 @@ Hell / Dunkel / System folgen. „System folgen“ richtet sich nach dem Erschei
 - **Alle Dokumente automatisch speichern** schaltet AutoSave in jedem Editor standardmäßig ein; für ein einzelnes Fenster können Sie es weiterhin abschalten.
 - **Speicherort** mit der Schaltfläche **Ändern** und **Standard-App für Office-Dokumente**, um .docx / .xlsx / .pptx für GenOffice zu beanspruchen.
 - **Speicherformat für neue HWP-Dokumente** legt fest, ob beim ersten Speichern eines neuen Dokuments zuerst HWP oder HWPX angeboten wird. Geöffnete Dokumente behalten ihr eigenes Format.
+- **Schriftarten für KI-Folien** legt fest, welche Schriftarten die KI für eine neue Präsentation verwendet, wenn Ihre Anfrage keine nennt. Wählen Sie Automatisch, Serifenlos, Serifen oder Titel mit Serifen und ändern Sie die serifenlose und die Serifenschrift getrennt. Eine gewählte Designvorlage verwendet ihre eigenen Schriftarten, und Folien, die einer Präsentation in anderen Schriftarten hinzugefügt werden, folgen dieser Präsentation.
 
 GenOffice erhebt und sendet keine Nutzungsstatistiken; deshalb gibt es dafür auch keinen Schalter.
 

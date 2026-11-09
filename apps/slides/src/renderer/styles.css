@@ -9788,3 +9788,27 @@ body.show-curtain::after {
   user-select: none;
   pointer-events: none;
 }
+
+/* The default fonts line under the template cards (Settings › General, decision 0115) */
+.ai-tpl-fonts-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border-default);
+}
+
+.ai-tpl-fonts-text {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12px;
+  color: var(--color-text-primary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ai-tpl-fonts-row + .ai-tpl-foot {
+  border-top: none;
+  padding-top: 4px;
+}

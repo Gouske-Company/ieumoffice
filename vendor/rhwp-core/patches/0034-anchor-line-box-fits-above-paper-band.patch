@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: pblsketch <239486537+pblsketch@users.noreply.github.com>
-Date: Wed, 4 Nov 2026 00:00:00 +0900
-Subject: [PATCH 24/30] fix(typeset): 0020 의 "앵커 글이 개체 위에 들어감" 판정을 줄 상자로 잰다
+Date: Sun, 8 Nov 2026 00:00:00 +0900
+Subject: [PATCH 23/29] fix(typeset): 0020 의 "앵커 글이 개체 위에 들어감" 판정을 줄 상자로 잰다
 
 0020(topbottom-float-anchor-flow)은 종이·쪽 기준 자리차지 개체를 앵커한 문단이 개체
 밴드에 걸리면 앵커 문단을 개체 아래끝에서 시작한다. 들어감 판정은 그리는 쪽의 옛 판정
@@ -34,10 +34,10 @@ paper-topbottom-box-stale-ladder.hwpx 는 그대로 2쪽, 2쪽 글줄 18. 위 �
  2 files changed, 15 insertions(+), 2 deletions(-)
 
 diff --git a/src/renderer/typeset.rs b/src/renderer/typeset.rs
-index 53f6724dd9bde80aeb5fac43caefba4cf7fd7e14..3c9302ae643c050d5a6de08563882d2fbdf18b48 100644
+index 8c46139f59883449a8e2b0aa8b685679694035c8..33e987f96185aba1ec3d0940126d5a9e28f0b405 100644
 --- a/src/renderer/typeset.rs
 +++ b/src/renderer/typeset.rs
-@@ -6718,6 +6718,7 @@ impl TypesetEngine {
+@@ -6883,6 +6883,7 @@ impl TypesetEngine {
  /// `flow_y` 와 돌려주는 값은 단 상단 기준 px 이다. 이미 개체 아래면 `None`.
  pub(crate) fn topbottom_float_anchor_flow_bottom(
      para: &Paragraph,
@@ -45,7 +45,7 @@ index 53f6724dd9bde80aeb5fac43caefba4cf7fd7e14..3c9302ae643c050d5a6de08563882d2f
      anchor_text_height: f64,
      flow_y: f64,
      col: &crate::renderer::page_layout::LayoutRect,
-@@ -6789,7 +6790,10 @@ pub(crate) fn topbottom_float_anchor_flow_bottom(
+@@ -6954,7 +6955,10 @@ pub(crate) fn topbottom_float_anchor_flow_bottom(
          .filter_map(float_common)
          .find(|common| matches!(common.text_wrap, TextWrap::TopAndBottom))
          .map(|common| geometry(common).1);

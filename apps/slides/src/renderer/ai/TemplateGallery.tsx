@@ -26,6 +26,7 @@ import { syncPrivateFonts } from '../doc-fonts'
 import { useI18n, type StringKey } from '../i18n/locale'
 import { strings } from '../i18n/strings'
 import { loadTemplateCover, templateCoverLang } from './template-cover'
+import { slidesAiFontRoles, type SlidesAiFontRoles } from '@genoffice/ui/slides-ai-fonts'
 import {
   templateSelectionState,
   useTemplateSelection,
@@ -205,6 +206,67 @@ function SavedCard({
   )
 }
 
+/**
+ * The fonts a deck generated without a template gets (Settings › General, decision
+ * 0115), read when the gallery shows and again when the window comes back, since the
+ * setting is changed on the Home tab. Null until read, or where the main process does
+ * not answer (a standalone app without the handler).
+ */
+function useDefaultFonts(lang: string): SlidesAiFontRoles | null | undefined {
+  const [roles, setRoles] = useState<SlidesAiFontRoles | null | undefined>(undefined)
+  useEffect(() => {
+    let alive = true
+    const read = () => {
+      void Promise.resolve(window.slidesApi.getAiDefaultFonts?.(lang))
+        .then((fonts) => {
+          if (alive) setRoles(fonts ? slidesAiFontRoles(fonts) : undefined)
+        })
+        .catch(() => undefined)
+    }
+    read()
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') read()
+    }
+    window.addEventListener('focus', read)
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      alive = false
+      window.removeEventListener('focus', read)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [lang])
+  return roles
+}
+
+/** One line under the cards: which fonts the next deck gets, and a way to change them. */
+function DefaultFontsRow({ templateChosen }: { templateChosen: boolean }) {
+  const { t, lang } = useI18n()
+  const roles = useDefaultFonts(lang)
+  if (roles === undefined) return null
+  const line = templateChosen
+    ? t('aiTplFontsTemplate')
+    : roles === null
+      ? t('aiTplFontsAuto')
+      : roles.title === roles.body
+        ? t('aiTplFontsOne', { font: roles.body })
+        : t('aiTplFontsTwo', { title: roles.title, body: roles.body })
+  const canChange = typeof window.slidesApi.openFontSettings === 'function'
+  return (
+    <div className="ai-tpl-fonts-row" data-testid="ai-tpl-default-fonts">
+      <span className="ai-tpl-fonts-text">{line}</span>
+      {canChange && (
+        <button
+          type="button"
+          className="ai-tpl-foot-btn"
+          onClick={() => void window.slidesApi.openFontSettings?.().catch(() => undefined)}
+        >
+          {t('aiTplFontsChange')}
+        </button>
+      )}
+    </div>
+  )
+}
+
 export interface TemplateGalleryProps {
   state?: TemplateSelectionState
   /** After a pick; `changed` is false when the card was already the selection */
@@ -294,6 +356,7 @@ export function TemplateGallery({
           </div>
         </div>
       )}
+      <DefaultFontsRow templateChosen={selection !== null} />
       <div className="ai-tpl-foot">
         <p className="ai-tpl-foot-note">{t('aiTplFontsNotice')}</p>
         <button type="button" className="ai-tpl-foot-btn" onClick={openFontsFolder}>

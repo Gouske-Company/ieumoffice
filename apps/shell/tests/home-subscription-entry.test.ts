@@ -198,6 +198,23 @@ describe('home settings entry', () => {
     expect(entry().querySelector('.account-avatar')?.classList.contains('logged-in')).toBe(false)
   })
 
+  it('says a selected CLI turned off in this app is off, and opens Settings on the AI section', async () => {
+    await renderHome(statuses({ state: 'off' }, { state: 'ready' }), {
+      aiSettings: {
+        ...defaultAiSettings(),
+        provider: 'claude-code',
+        subscriptionOff: { 'claude-code': true },
+      },
+    })
+    expect(entry().dataset.subscription).toBe('off')
+    expect(entryText('.account-name')).toBe('Claude')
+    expect(entryText('.account-sub')).toBe('Off in this app')
+    expect(entry().dataset.tip).toBe('Claude · Off in this app')
+    expect(entry().querySelector('.account-avatar')?.classList.contains('logged-in')).toBe(false)
+    await click(entry())
+    expect(host.querySelector('.set-nav-item.active')?.textContent).toContain('AI')
+  })
+
   it('reads the statuses alone while the settings are not read', async () => {
     await renderHome(statuses({ state: 'ready' }, { state: 'ready' }), { aiSettings: null })
     expect(entryText('.account-name')).toBe('Claude · Codex')

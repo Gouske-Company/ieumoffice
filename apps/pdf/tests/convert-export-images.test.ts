@@ -72,6 +72,7 @@ describe('Convert PDF menu', () => {
       en.convertToWord,
       en.convertToExcel,
       en.convertToPpt,
+      en.convertToHwp,
       en.cvToMarkdown,
       en.cvToEpub,
       en.imgExportWholePages,
@@ -93,7 +94,7 @@ describe('Convert PDF menu', () => {
     expect(button?.disabled).toBe(true)
   })
 
-  it('hands Word / Excel / PPT to the shell and Markdown / EPUB to the dialog', async () => {
+  it('hands Word / Excel / PPT / HWP to the shell and Markdown / EPUB to the dialog', async () => {
     const { el, onConvert, onReflow } = await renderMenu()
     const pick = async (label: string) => {
       await openMenu(el)
@@ -106,9 +107,10 @@ describe('Convert PDF menu', () => {
     await pick(en.convertToWord)
     await pick(en.convertToExcel)
     await pick(en.convertToPpt)
+    await pick(en.convertToHwp)
     await pick(en.cvToMarkdown)
     await pick(en.cvToEpub)
-    expect(onConvert.mock.calls).toEqual([['docx'], ['xlsx'], ['pptx']])
+    expect(onConvert.mock.calls).toEqual([['docx'], ['xlsx'], ['pptx'], ['hwp']])
     expect(onReflow.mock.calls).toEqual([['md'], ['epub']])
   })
 

@@ -5,6 +5,12 @@ import {
   AiTimeoutError,
   HEADLESS_SUBSCRIPTION_CONSENT_VERSION,
   defaultAiSettings,
+  type AiCustomEndpoint,
+  type AiLocalModelProfile,
+  type AiMediaProviderConfig,
+  type AiMediaSettings,
+  type AiModelEffort,
+  type AiProviderConfig,
   type AiSettings,
   type AiStreamChunk,
   type AiSubscriptionStatus,
@@ -18,7 +24,12 @@ import {
   subscriptionStreamCallbacks,
   withMeteredAccepted,
 } from '../src/main/ai-run'
-import { aiSettingsInputSchema } from '../src/shared/desktop-api'
+import {
+  aiChatRequestSchema,
+  aiSettingsInputSchema,
+  aiStreamRequestSchema,
+  type AiSettingsInput,
+} from '../src/shared/desktop-api'
 
 function status(
   provider: AiSubscriptionStatus['provider'],
@@ -100,6 +111,166 @@ describe('aiSettingsFromStored (ai:get-settings)', () => {
       headlessSubscriptionEnabled: true,
       headlessSubscriptionConsentVersion: HEADLESS_SUBSCRIPTION_CONSENT_VERSION,
     })
+  })
+})
+
+/** A field of the settings type the strict schema leaves out; a file that carries it is refused */
+type Unnamed<Type, Input> = [Exclude<keyof Type, keyof NonNullable<Input>>] extends [never]
+  ? true
+  : Exclude<keyof Type, keyof NonNullable<Input>>
+type InputEndpoint = NonNullable<AiSettingsInput['customEndpoints']>[number]
+// fails to compile, naming the field, when the settings type grows one the schema does not take
+const everyFieldNamed: [
+  Unnamed<AiSettings, AiSettingsInput>,
+  Unnamed<AiProviderConfig, AiSettingsInput['providers'][string]>,
+  Unnamed<AiModelEffort, NonNullable<AiSettingsInput['providers'][string]['modelEfforts']>[string]>,
+  Unnamed<AiCustomEndpoint, InputEndpoint>,
+  Unnamed<AiLocalModelProfile, NonNullable<InputEndpoint['modelProfiles']>[string]>,
+  Unnamed<AiMediaSettings, AiSettingsInput['media']>,
+  Unnamed<AiMediaProviderConfig, NonNullable<AiSettingsInput['media']>['providers'][string]>,
+] = [true, true, true, true, true, true, true]
+
+type Same<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false
+type InputModelEffort = NonNullable<AiSettingsInput['providers'][string]['modelEfforts']>[string]
+type InputProfile = NonNullable<InputEndpoint['modelProfiles']>[string]
+// fails to compile when the schema takes a wider effort than the settings type
+const effortsAsTyped: [
+  Same<InputModelEffort['efforts'], AiModelEffort['efforts']>,
+  Same<InputModelEffort['defaultEffort'], AiModelEffort['defaultEffort']>,
+  Same<InputProfile['efforts'], AiLocalModelProfile['efforts']>,
+  Same<InputProfile['defaultEffort'], AiLocalModelProfile['defaultEffort']>,
+  Same<AiSettingsInput['providers'][string]['effort'], AiProviderConfig['effort']>,
+  Same<InputEndpoint['effort'], AiCustomEndpoint['effort']>,
+] = [true, true, true, true, true, true]
+
+describe('the strict settings schema of the standalone sheets editor', () => {
+  it('names every field of the settings type', () => {
+    expect(everyFieldNamed.every((named) => named === true)).toBe(true)
+    expect(effortsAsTyped.every((same) => same === true)).toBe(true)
+  })
+
+  // every field the app writes, as another editor or the Settings window leaves the file
+  const written = file({
+    provider: 'claude-code',
+    providers: {
+      'claude-code': { apiKey: '', model: 'opus', effort: 'high' },
+      openai: {
+        apiKey: 'sk-test',
+        model: 'gpt-5.5',
+        models: ['gpt-5.5'],
+        modelEfforts: { 'gpt-5.5': { efforts: ['low', 'high'], defaultEffort: 'low' } },
+      },
+    },
+    customEndpoints: [
+      {
+        id: 'local-1',
+        name: 'Ollama',
+        baseUrl: 'http://127.0.0.1:11434/v1',
+        apiKey: '',
+        model: 'qwen3',
+        kind: 'local',
+        effort: 'low',
+        modelProfiles: { qwen3: { contextLength: 8192, efforts: ['low', 'high'] } },
+      },
+    ],
+    customEndpoint: 'local-1',
+    subscriptionOff: { 'claude-code': true },
+    readUrl: { githubToken: 'ghp_test' },
+    internetTools: false,
+  })
+
+  it('accepts settings read from a file that carries every field the app writes', () => {
+    const settings = aiSettingsFromStored(written)
+    const parsed = aiSettingsInputSchema.parse(JSON.parse(JSON.stringify(settings)))
+    expect(parsed.subscriptionOff).toEqual({ 'claude-code': true })
+    expect(parsed.readUrl).toEqual({ githubToken: 'ghp_test' })
+    expect(parsed.internetTools).toBe(false)
+    expect(parsed.providers['claude-code']?.effort).toBe('high')
+    expect(parsed.providers.openai?.modelEfforts).toEqual({
+      'gpt-5.5': { efforts: ['low', 'high'], defaultEffort: 'low' },
+    })
+  })
+
+  it('takes the same settings on ai:chat and ai:stream requests', () => {
+    const settings = JSON.parse(JSON.stringify(aiSettingsFromStored(written))) as unknown
+    expect(() => aiChatRequestSchema.parse({ settings, system: 's', user: 'u' })).not.toThrow()
+    expect(() =>
+      aiStreamRequestSchema.parse({ requestId: 'r1', settings, system: 's', messages: [] }),
+    ).not.toThrow()
+  })
+
+  it('turns off only a vendor CLI, and only with a literal true', () => {
+    const base = JSON.parse(JSON.stringify(aiSettingsFromStored(file()))) as Record<string, unknown>
+    expect(
+      aiSettingsInputSchema.parse({ ...base, subscriptionOff: { codex: true } }).subscriptionOff,
+    ).toEqual({ codex: true })
+    for (const subscriptionOff of [{ chatgpt: true }, { codex: false }, { codex: 'yes' }]) {
+      expect(() => aiSettingsInputSchema.parse({ ...base, subscriptionOff })).toThrow()
+    }
+  })
+
+  it('takes a model effort level only from the fixed list', () => {
+    const base = JSON.parse(JSON.stringify(aiSettingsFromStored(written))) as AiSettingsInput
+    const withOpenAi = (fields: Record<string, unknown>) => ({
+      ...base,
+      providers: { ...base.providers, openai: { ...base.providers.openai!, ...fields } },
+    })
+    const withProfile = (profile: Record<string, unknown>) => ({
+      ...base,
+      customEndpoints: [{ ...base.customEndpoints![0]!, modelProfiles: { qwen3: profile } }],
+    })
+    expect(
+      aiSettingsInputSchema.parse(
+        withOpenAi({
+          modelEfforts: { 'gpt-5.5': { efforts: ['none', 'max'], defaultEffort: 'max' } },
+        }),
+      ).providers.openai?.modelEfforts,
+    ).toEqual({ 'gpt-5.5': { efforts: ['none', 'max'], defaultEffort: 'max' } })
+    for (const unknownLevel of [
+      withOpenAi({ modelEfforts: { 'gpt-5.5': { efforts: ['low', 'ultra'] } } }),
+      withOpenAi({ modelEfforts: { 'gpt-5.5': { efforts: ['low'], defaultEffort: 'ultra' } } }),
+      withProfile({ efforts: ['low', 'ultra'] }),
+      withProfile({ efforts: ['low'], defaultEffort: 'ultra' }),
+    ]) {
+      expect(() => aiSettingsInputSchema.parse(unknownLevel)).toThrow()
+    }
+    // the chosen level is a plain string in the type: empty runs the program's own default
+    expect(aiSettingsInputSchema.parse(withOpenAi({ effort: '' })).providers.openai?.effort).toBe(
+      '',
+    )
+  })
+
+  it('accepts what it reads from a file that lists a level this build does not know', () => {
+    const stored = file({
+      providers: {
+        openai: {
+          apiKey: 'sk-test',
+          model: 'gpt-5.5',
+          models: ['gpt-5.5', 'gpt-6'],
+          modelEfforts: {
+            'gpt-5.5': { efforts: ['low', 'ultra'], defaultEffort: 'ultra' },
+            'gpt-6': { efforts: ['ultra'] },
+          },
+        },
+      },
+      customEndpoints: [
+        {
+          id: 'local-1',
+          name: 'Ollama',
+          baseUrl: 'http://127.0.0.1:11434/v1',
+          apiKey: '',
+          model: 'qwen3',
+          kind: 'local',
+          modelProfiles: { qwen3: { efforts: ['ultra', 'high'], defaultEffort: 'ultra' } },
+        },
+      ],
+      customEndpoint: 'local-1',
+    })
+    const parsed = aiSettingsInputSchema.parse(
+      JSON.parse(JSON.stringify(aiSettingsFromStored(stored))),
+    )
+    expect(parsed.providers.openai?.modelEfforts).toEqual({ 'gpt-5.5': { efforts: ['low'] } })
+    expect(parsed.customEndpoints?.[0]?.modelProfiles?.qwen3).toEqual({ efforts: ['high'] })
   })
 })
 

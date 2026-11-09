@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { NodeViewContent, NodeViewWrapper } from '@tiptap/react'
 import type { NodeViewProps } from '@tiptap/react'
 import { Dropdown } from '@genoffice/ui'
 import { t } from '../i18n/locale'
 import { DIAGRAM_LANGUAGES, diagramLanguage, renderDiagram } from './diagrams'
+import { isGanttSource } from './mermaid'
 import type { DiagramLanguage, DiagramResult } from './diagrams'
 
 const LANGUAGES = [
@@ -41,6 +42,8 @@ const LANGUAGES = [
 ].sort()
 
 const RERENDER_DEBOUNCE_MS = 300
+/** `.md-diagram-preview` padding (16px) and border (1px), both sides */
+const DIAGRAM_BOX_INSET_PX = 34
 
 export function CodeBlockView({ node, updateAttributes, editor, getPos }: NodeViewProps) {
   const [copied, setCopied] = useState(false)
@@ -59,6 +62,23 @@ export function CodeBlockView({ node, updateAttributes, editor, getPos }: NodeVi
   const hasDiagramRef = useRef(false)
   hasDiagramRef.current = diagram !== null
   const [caretInside, setCaretInside] = useState(false)
+  const wrapperRef = useRef<HTMLDivElement>(null)
+  const [boxWidth, setBoxWidth] = useState(0)
+
+  // measured before the first render request goes out, so a gantt is drawn once
+  // at the width of its box rather than first at the window's
+  useLayoutEffect(() => {
+    const el = wrapperRef.current
+    if (!diagramLang || !el) return
+    const measure = () => setBoxWidth(Math.max(0, el.clientWidth - DIAGRAM_BOX_INSET_PX))
+    measure()
+    if (typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [diagramLang])
+  // only a gantt sizes itself to its box, so only a gantt redraws when the column resizes
+  const fitWidth = diagramLang && isGanttSource(source) ? boxWidth : 0
 
   useEffect(() => {
     mountedRef.current = true
@@ -95,7 +115,7 @@ export function CodeBlockView({ node, updateAttributes, editor, getPos }: NodeVi
     // first paint right away, then debounce while the user types
     const delay = hasDiagramRef.current ? RERENDER_DEBOUNCE_MS : 0
     const timer = window.setTimeout(() => {
-      void renderDiagram(diagramLang, source).then((result) => {
+      void renderDiagram(diagramLang, source, fitWidth || undefined).then((result) => {
         if (!cancelled) setRendered({ language: diagramLang, result })
       })
     }, delay)
@@ -103,7 +123,7 @@ export function CodeBlockView({ node, updateAttributes, editor, getPos }: NodeVi
       cancelled = true
       window.clearTimeout(timer)
     }
-  }, [diagramLang, source])
+  }, [diagramLang, source, fitWidth])
 
   const copy = () => {
     void navigator.clipboard
@@ -143,7 +163,11 @@ export function CodeBlockView({ node, updateAttributes, editor, getPos }: NodeVi
     .join(' ')
 
   return (
-    <NodeViewWrapper className={className} data-diagram={hasPicture ? 'rendered' : undefined}>
+    <NodeViewWrapper
+      ref={wrapperRef}
+      className={className}
+      data-diagram={hasPicture ? 'rendered' : undefined}
+    >
       <div className="md-codeblock-bar" contentEditable={false}>
         <Dropdown
           className="md-codeblock-lang"

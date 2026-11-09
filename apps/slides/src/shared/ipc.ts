@@ -1,4 +1,5 @@
 import type { AiPanelPrefs, FontFamilyInfo } from '@genoffice/ui'
+import type { SlidesAiFonts } from '@genoffice/ui/slides-ai-fonts'
 /**
  * slides main-process <-> renderer IPC contract (Phase 3: open/save/edit, AI not included yet).
  *
@@ -1417,6 +1418,8 @@ export interface SlidesApi {
   /** Single-page generation: a JSON slide spec (LLM output) built directly into a one-slide pptx temp file; the marker goes into a landGeneratedPages pageMarkers slot */
   localGeneratePage: (op: {
     specJson: string
+    /** Settings › General fonts for runs the spec leaves without a font (only when they apply to this deck) */
+    defaultFonts?: { title: string; body: string }
   }) => Promise<{ ok: boolean; marker?: string; error?: string; imageFailures?: string[] }>
   editText: (op: EditTextOp) => Promise<RenderSlide | null>
   /** Change font/size on selected elements wholesale (elements without text ignored; returns null if all ignored) */
@@ -1896,6 +1899,10 @@ export interface SlidesApi {
   }>
   /** The design template remembered for this window's document, on this PC only; null when there is none */
   getTemplateSelection: () => Promise<TemplateSelection | null>
+  /** The fonts AI generation uses when the request names none (Settings › General); `lang` picks the default before a choice is stored */
+  getAiDefaultFonts?: (lang: string) => Promise<SlidesAiFonts>
+  /** Open Settings › General at the AI slide fonts (the shell answers; a standalone app does not) */
+  openFontSettings?: () => Promise<void>
   /** Remember a selection for this window's document (null forgets it; malformed input is ignored). Answers with what is stored afterwards */
   setTemplateSelection: (
     selection: TemplateSelectionInput | null,

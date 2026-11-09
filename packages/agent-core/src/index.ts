@@ -15,6 +15,7 @@ export type {
 } from './types'
 export { composeSkills } from './skill'
 export { attachedImageNote } from './attached-images'
+export { undoDoubledEscapes, undoDoubledEscapesInList } from './doubled-escapes'
 export { createKnowledgeBaseSkill, formatKbSize } from './knowledge-base-skill'
 export type { KnowledgeBaseDeps, KbFileInfo, KbSearchHit, KbReadPage } from './knowledge-base-skill'
 export {

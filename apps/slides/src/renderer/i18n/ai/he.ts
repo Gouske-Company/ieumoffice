@@ -237,6 +237,11 @@ export const he = {
   aiTplFontsNotice:
     'גופני התבנית כלולים באפליקציה הזו. תוכנות אחרות, כמו PowerPoint, עשויות להציג גופן אחר.',
   aiTplOpenFonts: 'פתיחת תיקיית הגופנים',
+  aiTplFontsAuto: 'גופנים: ה-AI בוחר',
+  aiTplFontsOne: 'גופנים: {font}',
+  aiTplFontsTwo: 'גופנים: כותרות {title}, טקסט {body}',
+  aiTplFontsTemplate: 'גופנים: של התבנית שנבחרה',
+  aiTplFontsChange: 'שינוי',
   aiTplDesc_coral: 'קרם וורוד-כתום על רקע כמעט שחור, עם כותרות ענקיות וצרות.',
   aiTplDesc_blue_professional: 'רקע בצבע קרם עם נגיעות של כחול קובלט עז. נקי, מודרני וענייני.',
   aiTplDesc_monochrome: 'רקע בצבע שנהב, טקסט שחור בלבד וכותרות בגופן סריפי. בלי צבע בכלל.',

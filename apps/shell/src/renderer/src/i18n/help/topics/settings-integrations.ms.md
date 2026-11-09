@@ -22,6 +22,7 @@ Tiga pilihan ialah Cerah, Gelap, dan Ikut Sistem. Mod Ikut Sistem mengikut rupa 
 - **Simpan automatik semua dokumen** membolehkan AutoSave secara lalai dalam setiap editor; anda masih boleh mematikannya untuk satu tetingkap sahaja.
 - **Lokasi simpanan** dengan butang **Tukar**, dan **Apl lalai untuk dokumen Office** untuk menuntut .docx / .xlsx / .pptx bagi GenOffice.
 - **Format simpanan dokumen HWP baharu** memilih sama ada HWP atau HWPX ditawarkan dahulu semasa menyimpan dokumen baharu kali pertama. Dokumen yang dibuka kekal dalam formatnya sendiri.
+- **Fon slaid AI** menetapkan fon yang digunakan AI untuk persembahan baharu apabila permintaan anda tidak menyebut fon. Pilih Auto, Sans serif, Serif atau Tajuk serif, dan tukar fon sans serif dan fon serif secara berasingan. Templat reka bentuk yang dipilih menggunakan fonnya sendiri, dan halaman yang ditambah pada persembahan dengan fon lain mengikut persembahan itu.
 
 GenOffice tidak mengumpul atau menghantar statistik penggunaan, jadi tiada suis untuknya.
 

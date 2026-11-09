@@ -129,17 +129,20 @@ import {
   setCodexImageGenerationAvailable,
   setRescueFetch,
   streamForProvider,
+  subscriptionOffIn,
+  withStoredUnknownFields,
   type AiChatRequest,
   type AiSettings,
   type AiStreamChunk,
   type AiStreamRequest,
+  type AiSubscriptionCliId,
   type AiSubscriptionProviderId,
   sealAiSecrets,
   withMigratedSubscriptionNoticeVersion,
 } from '@genoffice/ai-provider'
 import { listCodexModels, shutdownCodexAppServers } from '@genoffice/ai-provider/codex-app-server'
 import { listCustomModelsForIpc } from '@genoffice/ai-provider/custom-models'
-import { createKeyModelRefresher, withStoredKeyModels } from '@genoffice/ai-provider/key-models'
+import { createKeyModelRefresher, withStoredMainFields } from '@genoffice/ai-provider/key-models'
 import {
   ensureSubscriptionIpc,
   initSubscriptionChildTracking,
@@ -191,6 +194,7 @@ import {
   resolveAiRun,
   subscriptionStreamCallbacks,
   withMeteredAccepted,
+  withSubscriptionOff,
   type AiRunTexts,
 } from './ai-run'
 import { createChunkCoalescer } from './stream-coalesce'
@@ -4031,6 +4035,15 @@ const TWIPS_PER_INCH = 1440
 
 const SETTINGS_PATH = () => userDataPath('ai-settings.json')
 
+/**
+ * The only write of the settings file: keys and tokens go to disk sealed
+ * (decision 0063), and fields a newer build wrote stay as they are.
+ */
+function writeAiSettingsFile(settings: unknown): void {
+  const stored = readJson<unknown>(SETTINGS_PATH(), {})
+  writeJsonAtomic(SETTINGS_PATH(), sealAiSecrets(withStoredUnknownFields(settings, stored)))
+}
+
 /** how long after start the key providers are first asked for their models */
 const KEY_MODEL_FIRST_LIST_DELAY_MS = 5000
 
@@ -4067,7 +4080,7 @@ function storedAiSettings(): AiSettings {
 function migratedNoticeVersion(raw: unknown): unknown {
   const next = withMigratedSubscriptionNoticeVersion(raw)
   if (!next) return raw
-  writeJsonAtomic(SETTINGS_PATH(), next)
+  writeAiSettingsFile(next)
   return next
 }
 
@@ -4092,7 +4105,7 @@ const keyModelRefresher = createKeyModelRefresher({
     const latest = storedAiSettings()
     const next = update(latest)
     if (next === latest) return
-    writeJsonAtomic(SETTINGS_PATH(), sealAiSecrets(next))
+    writeAiSettingsFile(next)
     broadcastAiSettingsChanged()
   },
 })
@@ -4108,10 +4121,7 @@ function writeRendererAiSettings(settings: unknown): boolean {
   // so the renderer's copy is sanitized before it touches disk.
   const sanitized = sanitizeAiSettings(settings)
   if (!sanitized) return false
-  writeJsonAtomic(
-    SETTINGS_PATH(),
-    sealAiSecrets(withStoredKeyModels(sanitized, storedAiSettings())),
-  )
+  writeAiSettingsFile(withStoredMainFields(sanitized, storedAiSettings()))
   broadcastAiSettingsChanged()
   keyModelRefresher.refreshChanged()
   return true
@@ -4146,9 +4156,14 @@ export function registerAiIpc(): void {
   ensureSubscriptionIpc(ipcMain, {
     getSettings: storedAiSettings,
     setMeteredAccepted: (provider: AiSubscriptionProviderId, accepted: boolean) => {
-      writeJsonAtomic(
-        SETTINGS_PATH(),
+      writeAiSettingsFile(
         withMeteredAccepted(readJson<unknown>(SETTINGS_PATH(), {}), provider, accepted),
+      )
+      broadcastAiSettingsChanged()
+    },
+    setSubscriptionOff: (provider: AiSubscriptionCliId, off: boolean) => {
+      writeAiSettingsFile(
+        withSubscriptionOff(readJson<unknown>(SETTINGS_PATH(), {}), provider, off),
       )
       broadcastAiSettingsChanged()
     },
@@ -4198,6 +4213,10 @@ export function registerAiIpc(): void {
   })
 
   ipcMain.handle('ai:codex-models', async (_event, cliPath: unknown) => {
+    // turned off in this app (decision 0114): Codex is not started for its list either
+    if (subscriptionOffIn(storedAiSettings(), 'codex')) {
+      throw new Error('Codex is turned off in this app')
+    }
     // the probe spawns the path directly, so it gets the same metacharacter and
     // existence check as the stored setting (anything else: auto-detect)
     return listCodexModels(sanitizeCliPath(cliPath))

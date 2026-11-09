@@ -795,9 +795,14 @@ export class TabManager {
   }
 
   /** Opens an HWP/HWPX file, or with no path a new blank document that has no file until it is saved */
-  openHwpTab(openPath?: string, options?: { untitledCopy?: { title: string } }): string {
+  openHwpTab(
+    openPath?: string,
+    options?: { untitledCopy?: { title: string; importedPdf?: boolean } },
+  ): string {
     const copy = options?.untitledCopy
-    const view = createHwpView(openPath, { untitledCopy: !!copy })
+    const view = createHwpView(openPath, {
+      untitledCopy: copy?.importedPdf ? { baseName: copy.title } : !!copy,
+    })
     const id = `t${this.nextId++}`
     this.shellWindow.contentView.addChildView(view)
     view.setVisible(false)

@@ -143,7 +143,7 @@ export const he = {
   aiToolMergeCells: 'טבלה {table} · מיזוג תאים',
   aiToolSplitCell: 'טבלה {table} · פיצול תא',
   aiToolTables: 'הטבלאות נבדקו · {count}',
-  aiToolLayout: 'הפריסה נבדקה · {count} תאים חורגים',
+  aiToolLayout: 'נבדקה גלישת תאים · {count}',
   aiToolReadTable: 'טבלה {table} נקראה',
   aiToolFillCells: 'טבלה {table} · מולאו {count} תאים',
   aiToolCheckBoxes: 'טבלה {table} · סומנו {count} תיבות',

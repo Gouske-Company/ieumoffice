@@ -2556,8 +2556,9 @@ export function createHwpSkill(deps: HwpSkillDeps): HwpSkill {
         const from = checked.from
         const scope =
           from.table === 1 && from.row === 1 ? '' : ` from table ${from.table}, row ${from.row}`
+        // `next` is the first row this call did not measure
         const until = checked.next
-          ? ` up to table ${checked.next.table}, row ${checked.next.row}`
+          ? `, stopping before table ${checked.next.table}, row ${checked.next.row}`
           : ''
         const head =
           lines.length === 0
@@ -2566,7 +2567,7 @@ export function createHwpSkill(deps: HwpSkillDeps): HwpSkill {
         const tail = [
           ...(checked.next
             ? [
-                `[more tables: call check_layout with from_table ${checked.next.table} and from_row ${checked.next.row}]`,
+                `[not finished: table ${checked.next.table} from row ${checked.next.row} on is not measured yet; call check_layout with from_table ${checked.next.table} and from_row ${checked.next.row}]`,
               ]
             : []),
           ...(checked.partial

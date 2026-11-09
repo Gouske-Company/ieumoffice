@@ -146,7 +146,7 @@ export const id = {
   aiToolMergeCells: 'Tabel {table} · sel digabung',
   aiToolSplitCell: 'Tabel {table} · sel dibagi',
   aiToolTables: 'Tabel diperiksa · {count}',
-  aiToolLayout: 'Tata letak diperiksa · {count} sel tidak muat',
+  aiToolLayout: 'Sel yang meluap diperiksa · {count}',
   aiToolReadTable: 'Tabel {table} dibaca',
   aiToolFillCells: 'Tabel {table} · {count} sel diisi',
   aiToolCheckBoxes: 'Tabel {table} · {count} kotak dicentang',

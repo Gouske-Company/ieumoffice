@@ -1480,11 +1480,28 @@ describe('tables that are already in the document', () => {
     const result = await call('check_layout', { from_table: 2, from_row: 30 })
     expect(bridge.checkLayout).toHaveBeenCalledWith(2, 30)
     expect(result.output.split('\n')).toEqual([
-      '1 cell(s) do not fit from table 2, row 30 up to table 3, row 1:',
+      '1 cell(s) do not fit from table 2, row 30, stopping before table 3, row 1:',
       'table 2, row 31, col 2 (page 3): the text runs 2.5 mm past the bottom of the cell and is cut off: 서울시 종로구',
-      '[more tables: call check_layout with from_table 3 and from_row 1]',
+      '[not finished: table 3 from row 1 on is not measured yet; call check_layout with from_table 3 and from_row 1]',
     ])
     expect(result.summary).toBe('aiToolLayout:{"count":1}')
+  })
+
+  it('names the row a call stopped before when it stops inside a table', async () => {
+    const { call } = setup({
+      checkLayout: vi.fn(async () => ({
+        tables: 1,
+        from: { table: 1, row: 1 },
+        cells: [],
+        measured: 120,
+        next: { table: 1, row: 41 },
+      })),
+    })
+    const result = await call('check_layout')
+    expect(result.output.split('\n')).toEqual([
+      "Every table cell's text fits, stopping before table 1, row 41 (120 cell(s) of 1 table(s) measured).",
+      '[not finished: table 1 from row 41 on is not measured yet; call check_layout with from_table 1 and from_row 41]',
+    ])
   })
 
   it('refuses a place to start from that is not a whole number from 1', async () => {

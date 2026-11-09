@@ -145,7 +145,7 @@ export const en = {
   aiToolMergeCells: 'Table {table} · cells merged',
   aiToolSplitCell: 'Table {table} · cell split',
   aiToolTables: 'Checked tables · {count}',
-  aiToolLayout: 'Checked the layout · {count} cells do not fit',
+  aiToolLayout: 'Checked for cut-off cells · {count}',
   aiToolReadTable: 'Read table {table}',
   aiToolFillCells: 'Table {table} · filled {count} cell(s)',
   aiToolCheckBoxes: 'Table {table} · ticked {count} box(es)',

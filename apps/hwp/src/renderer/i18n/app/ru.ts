@@ -147,7 +147,7 @@ export const ru = {
   aiToolMergeCells: 'Таблица {table} · объединение ячеек',
   aiToolSplitCell: 'Таблица {table} · разделение ячейки',
   aiToolTables: 'Таблицы проверены · {count}',
-  aiToolLayout: 'Макет проверен · не помещается ячеек: {count}',
+  aiToolLayout: 'Переполнение ячеек проверено · {count}',
   aiToolReadTable: 'Таблица {table} прочитана',
   aiToolFillCells: 'Таблица {table} · заполнено ячеек: {count}',
   aiToolCheckBoxes: 'Таблица {table} · отмечено флажков: {count}',

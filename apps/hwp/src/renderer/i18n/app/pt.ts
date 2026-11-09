@@ -148,7 +148,7 @@ export const pt = {
   aiToolMergeCells: 'Tabela {table} · células mescladas',
   aiToolSplitCell: 'Tabela {table} · célula dividida',
   aiToolTables: 'Tabelas verificadas · {count}',
-  aiToolLayout: 'Layout verificado · {count} células não cabem',
+  aiToolLayout: 'Transbordamento de células verificado · {count}',
   aiToolReadTable: 'Tabela {table} lida',
   aiToolFillCells: 'Tabela {table} · {count} célula(s) preenchida(s)',
   aiToolCheckBoxes: 'Tabela {table} · {count} caixa(s) marcada(s)',

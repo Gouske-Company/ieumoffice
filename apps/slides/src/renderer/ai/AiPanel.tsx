@@ -543,6 +543,14 @@ export function AiPanel({
     cards: skillCards,
     busy,
     send: (text, use) => runWith(text, undefined, undefined, use),
+    // a template skill called in a deck with content asks where to run
+    hasContent: () => deckEmpty === false,
+    // a template copy that brought the asking document: it goes in as an attachment
+    attach: async (paths) => {
+      const added = await window.desktop.addAttachmentPaths(paths)
+      mergeAttachments(added)
+      return (added?.accepted.length ?? 0) > 0
+    },
     onTaken: () => {
       if (!open) onExpand?.()
     },

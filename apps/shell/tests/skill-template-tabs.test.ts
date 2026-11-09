@@ -111,7 +111,7 @@ describe('opening a template skill in a new tab', () => {
       text: 'for Friday',
       chips,
     })
-    expect(result).toEqual({ ok: true, tabId: 't1' })
+    expect(result).toEqual({ ok: true, tabId: 't1', attached: false })
     expect(opened).toHaveLength(1)
     const copy = opened[0]!
     expect(copy.editor).toBe('hwp')
@@ -138,6 +138,65 @@ describe('opening a template skill in a new tab', () => {
     await templates.openTemplate({ skillId: 'app:letter', text: 'x', chips: [] })
     await templates.openTemplate({ skillId: 'app:gone', text: 'x', chips: [] }, 7)
     expect(followed).toEqual([[101, 7]])
+  })
+
+  it('brings the asking tab’s saved document along for the new tab to attach', async () => {
+    const asked: number[] = []
+    const { templates } = setup({
+      currentDocumentOf: async (openerId) => {
+        asked.push(openerId)
+        return { path: 'C:/docs/notes.docx' }
+      },
+    })
+    const result = await templates.openTemplate(
+      { skillId: 'app:letter', text: 'fill it', chips: [], withCurrent: true },
+      7,
+    )
+    expect(result).toEqual({ ok: true, tabId: 't1', attached: true })
+    expect(asked).toEqual([7])
+    expect(templates.takeHandoff('hwp', 101)?.attach).toEqual(['C:/docs/notes.docx'])
+  })
+
+  it('opens nothing for a document never saved or with unsaved changes', async () => {
+    const { templates, opened } = setup({ currentDocumentOf: async () => 'unsaved' })
+    const result = await templates.openTemplate(
+      { skillId: 'app:letter', text: 'x', chips: [], withCurrent: true },
+      7,
+    )
+    expect(result).toEqual({ ok: false, reason: 'unsaved' })
+    expect(opened).toEqual([])
+    expect(queuedSkillHandoffs()).toEqual([])
+    // no way to tell which document asked: nothing is attached either
+    const noSource = setup()
+    expect(
+      await noSource.templates.openTemplate(
+        { skillId: 'app:letter', text: 'x', chips: [], withCurrent: true },
+        7,
+      ),
+    ).toEqual({ ok: false, reason: 'unsaved' })
+  })
+
+  it('attaches nothing in an editor without attachments, and says so', async () => {
+    const asked: number[] = []
+    const { templates } = setup({
+      templateFileOf: async () => ({
+        ok: true,
+        path: '/skills/letter/assets/letter.hwpx',
+        fileName: 'letter.md',
+        title: 'Letter',
+      }),
+      currentDocumentOf: async (openerId) => {
+        asked.push(openerId)
+        return { path: 'C:/docs/notes.docx' }
+      },
+    })
+    const result = await templates.openTemplate(
+      { skillId: 'app:letter', text: 'x', chips: [], withCurrent: true },
+      7,
+    )
+    expect(result).toEqual({ ok: true, tabId: 't1', attached: false })
+    expect(asked).toEqual([])
+    expect(templates.takeHandoff('markdown', 101)?.attach).toBeUndefined()
   })
 
   it('opens nothing and says so when the template file is missing', async () => {

@@ -153,6 +153,8 @@ export type UserSkillsFailReason =
   | 'not-allowed'
   /** a template preview's original may withhold something: it is not saved as it is */
   | 'redacted'
+  /** the asking document was never saved or has unsaved changes: it is not attached */
+  | 'unsaved'
   | 'invalid'
   | 'cancelled'
   /** another import or update is running for this window */
@@ -286,6 +288,12 @@ export interface UserSkillTemplateOpenInput {
   text: string
   /** every chip the request carried; the receiving panel reads their skills */
   chips: HandoffSkillChip[]
+  /**
+   * Bring the asking tab's document along as an attachment of the new tab.
+   * Refused with `unsaved` when that document was never saved or has unsaved
+   * changes (docs/security.md "저장하지 않은 파일은 읽지 않는다").
+   */
+  withCurrent?: boolean | undefined
 }
 
 /** Open the current document's copy in a template preview tab (spec 5.6) */
@@ -462,7 +470,12 @@ export function templateOpenInputOf(value: unknown): UserSkillTemplateOpenInput 
   const request = text(value.text, USER_SKILL_HANDOFF_TEXT_MAX)
   const chips = chipsOf(value.chips)
   if (!skillId || request === undefined || !chips) return undefined
-  return { skillId, text: request, chips }
+  return {
+    skillId,
+    text: request,
+    chips,
+    ...(value.withCurrent === true ? { withCurrent: true } : {}),
+  }
 }
 
 /** Largest plain-data proposal or draft a preview carries */

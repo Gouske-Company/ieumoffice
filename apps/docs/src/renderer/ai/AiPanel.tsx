@@ -72,7 +72,7 @@ import { redactTextBetween, type RedactableNode } from './redact-view'
 import { ATTACHMENT_IMAGE_EXTS } from '../../shared/ipc'
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model'
 import { captureRollbackSnapshot, restoreRollbackSnapshot } from './rollback-snapshot'
-import { countWords, findNumId, type NumIds } from './protocol'
+import { countWords, findNumId, isBlankDocument, type NumIds } from './protocol'
 import { DOC_NAV_SCHEME, navigateToBlock, parseDocNavHref } from './doc-nav'
 import {
   markDocSeen,
@@ -607,6 +607,14 @@ export function AiPanel({
     cards: skillCards,
     busy,
     send: (text, use) => runWith(text, text, undefined, undefined, use),
+    // a template skill called in a document with content asks where to run
+    hasContent: () => !isBlankDocument(editorRef.current),
+    // a template copy that brought the asking document: it goes in as an attachment
+    attach: async (paths) => {
+      const added = await window.desktop.addAttachmentPaths(paths)
+      mergeAttachments(added)
+      return (added?.accepted.length ?? 0) > 0
+    },
     onTaken: () => {
       if (!open) onExpand?.()
     },

@@ -87,6 +87,7 @@ import {
   parseHeadlessExportArgv,
   setHeadlessMode,
   setOpenFilesSource,
+  fileHasUnsavedChanges,
   setOpenPathProbe,
   type HeadlessArgvParse,
   showOpenDialogWithMemory,
@@ -9526,6 +9527,15 @@ const templateTabs = createTemplateTabs({
   // a skill template's copy follows the project of the panel that asked (spec 6)
   copyOpenedFor: (contents, openerId) =>
     followOpenerProject(contents, { kind: 'window', webContentsId: openerId }),
+  // "Open a new document from the template" in a document with content: the
+  // asking tab's file goes along only when it is saved without unsaved changes
+  // (docs/security.md "저장하지 않은 파일은 읽지 않는다")
+  currentDocumentOf: async (openerId) => {
+    const filePath =
+      tabManager?.describeWebContents(openerId)?.filePath ?? detachedDocumentFor(openerId)?.filePath
+    if (!filePath) return 'unsaved'
+    return (await fileHasUnsavedChanges(filePath)) ? 'unsaved' : { path: filePath }
+  },
   focusTab: (tabId) => {
     const manager = tabManager
     if (!manager || !manager.list().some((tab) => tab.id === tabId)) return false

@@ -20,6 +20,13 @@ const zh = {
   handoffNotSent: '无法读取转交的技能，请求未发送',
   documentUnreadable: '无法读取当前文档',
   untitled: '无标题',
+  chooseWhere: '当前文档已有内容。要在哪里进行？',
+  runHere: '在当前文档中进行',
+  openNewWithCurrent: '用模板新建文档（附上当前文档）',
+  needsSave: '需要先保存当前文档才能附到新文档中。保存后请再点一次。',
+  openWithoutAttach: '不附加直接打开',
+  notAttachedEditor: '打开此模板的编辑器不接受附件，因此没有附上当前文档',
+  attachFailed: '无法附上转交的文档，请求未发送',
 }
 
 export const SKILL_TEMPLATE_STRINGS = defineStrings({
@@ -40,6 +47,14 @@ export const SKILL_TEMPLATE_STRINGS = defineStrings({
     handoffNotSent: 'A handed-over skill could not be read, so the request was not sent',
     documentUnreadable: 'The current document could not be read',
     untitled: 'Untitled',
+    chooseWhere: 'This document already has content. Where should the skill work?',
+    runHere: 'Do it in this document',
+    openNewWithCurrent: 'New document from the template (attach this one)',
+    needsSave: 'Save this document first to attach it to the new document, then press again.',
+    openWithoutAttach: 'Open without attaching',
+    notAttachedEditor:
+      'The editor this template opens in takes no attachments, so this document was not attached',
+    attachFailed: 'The handed-over document could not be attached, so the request was not sent',
   },
   ja: {
     takenOver: '新しいタブでテンプレートを使って作業します',
@@ -57,6 +72,15 @@ export const SKILL_TEMPLATE_STRINGS = defineStrings({
     handoffNotSent: '引き継いだスキルを読めなかったため、依頼は送信していません',
     documentUnreadable: '現在の文書を読み取れませんでした',
     untitled: '無題',
+    chooseWhere: 'この文書にはすでに内容があります。どこで作業しますか？',
+    runHere: 'この文書で行う',
+    openNewWithCurrent: 'テンプレートで新しい文書を開く（この文書を添付）',
+    needsSave:
+      '新しい文書に添付するには、先にこの文書を保存してください。保存してからもう一度押してください。',
+    openWithoutAttach: '添付せずに開く',
+    notAttachedEditor:
+      'このテンプレートを開くエディターは添付を受け付けないため、この文書は添付していません',
+    attachFailed: '引き継いだ文書を添付できなかったため、依頼は送信していません',
   },
   ko: {
     takenOver: '새 탭에서 양식으로 작업합니다',
@@ -74,6 +98,13 @@ export const SKILL_TEMPLATE_STRINGS = defineStrings({
     handoffNotSent: '넘겨받은 스킬을 읽지 못해 요청을 보내지 않았습니다',
     documentUnreadable: '지금 문서를 읽지 못했습니다',
     untitled: '제목 없음',
+    chooseWhere: '지금 문서에 내용이 있습니다. 어디에서 할까요?',
+    runHere: '지금 문서에서 하기',
+    openNewWithCurrent: '양식으로 새 문서 열기(지금 문서 붙임)',
+    needsSave: '새 문서에 붙이려면 지금 문서를 먼저 저장해야 합니다. 저장한 뒤 다시 누르세요.',
+    openWithoutAttach: '붙이지 않고 열기',
+    notAttachedEditor: '이 양식을 여는 편집기는 첨부를 받지 않아 지금 문서를 붙이지 않았습니다',
+    attachFailed: '넘겨받은 문서를 붙이지 못해 요청을 보내지 않았습니다',
   },
   fr: {
     takenOver: 'Travail avec le modèle dans un nouvel onglet',
@@ -92,6 +123,15 @@ export const SKILL_TEMPLATE_STRINGS = defineStrings({
     handoffNotSent: 'Une compétence transmise n’a pas pu être lue : la demande n’a pas été envoyée',
     documentUnreadable: 'Impossible de lire le document actuel',
     untitled: 'Sans titre',
+    chooseWhere: 'Ce document contient déjà du contenu. Où appliquer la compétence ?',
+    runHere: 'Le faire dans ce document',
+    openNewWithCurrent: 'Nouveau document à partir du modèle (joindre celui-ci)',
+    needsSave:
+      'Enregistrez d’abord ce document pour le joindre au nouveau, puis appuyez à nouveau.',
+    openWithoutAttach: 'Ouvrir sans joindre',
+    notAttachedEditor:
+      'L’éditeur qui ouvre ce modèle n’accepte pas de pièces jointes : ce document n’a pas été joint',
+    attachFailed: 'Le document transmis n’a pas pu être joint, la demande n’a donc pas été envoyée',
   },
   de: {
     takenOver: 'Die Vorlage wird in einem neuen Tab bearbeitet',
@@ -111,6 +151,16 @@ export const SKILL_TEMPLATE_STRINGS = defineStrings({
       'Ein übergebener Skill konnte nicht gelesen werden, die Anfrage wurde nicht gesendet',
     documentUnreadable: 'Das aktuelle Dokument konnte nicht gelesen werden',
     untitled: 'Unbenannt',
+    chooseWhere: 'Dieses Dokument hat bereits Inhalt. Wo soll der Skill arbeiten?',
+    runHere: 'In diesem Dokument ausführen',
+    openNewWithCurrent: 'Neues Dokument aus der Vorlage (dieses anhängen)',
+    needsSave:
+      'Speichern Sie dieses Dokument zuerst, um es an das neue Dokument anzuhängen, und klicken Sie dann erneut.',
+    openWithoutAttach: 'Ohne Anhang öffnen',
+    notAttachedEditor:
+      'Der Editor dieser Vorlage nimmt keine Anhänge an, daher wurde dieses Dokument nicht angehängt',
+    attachFailed:
+      'Das übergebene Dokument konnte nicht angehängt werden, daher wurde die Anfrage nicht gesendet',
   },
   es: {
     takenOver: 'Se trabaja con la plantilla en una pestaña nueva',
@@ -128,6 +178,14 @@ export const SKILL_TEMPLATE_STRINGS = defineStrings({
     handoffNotSent: 'No se pudo leer una habilidad recibida, así que no se envió la solicitud',
     documentUnreadable: 'No se pudo leer el documento actual',
     untitled: 'Sin título',
+    chooseWhere: 'Este documento ya tiene contenido. ¿Dónde quieres aplicar la habilidad?',
+    runHere: 'Hacerlo en este documento',
+    openNewWithCurrent: 'Documento nuevo desde la plantilla (adjuntar este)',
+    needsSave: 'Guarda primero este documento para adjuntarlo al nuevo y vuelve a pulsar.',
+    openWithoutAttach: 'Abrir sin adjuntar',
+    notAttachedEditor:
+      'El editor que abre esta plantilla no admite adjuntos, así que este documento no se adjuntó',
+    attachFailed: 'No se pudo adjuntar el documento recibido, así que la solicitud no se envió',
   },
   th: {
     takenOver: 'กำลังทำงานกับแม่แบบในแท็บใหม่',
@@ -145,6 +203,13 @@ export const SKILL_TEMPLATE_STRINGS = defineStrings({
     handoffNotSent: 'อ่านสกิลที่ส่งต่อมาไม่ได้ จึงไม่ได้ส่งคำขอ',
     documentUnreadable: 'อ่านเอกสารปัจจุบันไม่ได้',
     untitled: 'ไม่มีชื่อ',
+    chooseWhere: 'เอกสารนี้มีเนื้อหาอยู่แล้ว จะให้ทำที่ไหน',
+    runHere: 'ทำในเอกสารนี้',
+    openNewWithCurrent: 'เปิดเอกสารใหม่จากแม่แบบ (แนบเอกสารนี้)',
+    needsSave: 'ต้องบันทึกเอกสารนี้ก่อนจึงจะแนบไปกับเอกสารใหม่ได้ บันทึกแล้วกดอีกครั้ง',
+    openWithoutAttach: 'เปิดโดยไม่แนบ',
+    notAttachedEditor: 'ตัวแก้ไขที่เปิดแม่แบบนี้ไม่รับไฟล์แนบ จึงไม่ได้แนบเอกสารนี้',
+    attachFailed: 'แนบเอกสารที่ส่งต่อมาไม่ได้ จึงไม่ได้ส่งคำขอ',
   },
   id: {
     takenOver: 'Bekerja dengan templat di tab baru',
@@ -163,6 +228,14 @@ export const SKILL_TEMPLATE_STRINGS = defineStrings({
     handoffNotSent: 'Skill yang diteruskan tidak dapat dibaca, jadi permintaan tidak dikirim',
     documentUnreadable: 'Dokumen saat ini tidak dapat dibaca',
     untitled: 'Tanpa judul',
+    chooseWhere: 'Dokumen ini sudah berisi. Di mana keterampilan dijalankan?',
+    runHere: 'Kerjakan di dokumen ini',
+    openNewWithCurrent: 'Dokumen baru dari templat (lampirkan dokumen ini)',
+    needsSave: 'Simpan dokumen ini dulu agar bisa dilampirkan ke dokumen baru, lalu tekan lagi.',
+    openWithoutAttach: 'Buka tanpa melampirkan',
+    notAttachedEditor:
+      'Editor yang membuka templat ini tidak menerima lampiran, jadi dokumen ini tidak dilampirkan',
+    attachFailed: 'Dokumen yang diteruskan tidak bisa dilampirkan, jadi permintaan tidak dikirim',
   },
   ru: {
     takenOver: 'Работа с шаблоном идёт в новой вкладке',
@@ -180,6 +253,15 @@ export const SKILL_TEMPLATE_STRINGS = defineStrings({
     handoffNotSent: 'Не удалось прочитать переданный навык, поэтому запрос не отправлен',
     documentUnreadable: 'Не удалось прочитать текущий документ',
     untitled: 'Без названия',
+    chooseWhere: 'В этом документе уже есть содержимое. Где применить навык?',
+    runHere: 'Сделать в этом документе',
+    openNewWithCurrent: 'Новый документ из шаблона (приложить этот)',
+    needsSave:
+      'Сначала сохраните этот документ, чтобы приложить его к новому, затем нажмите ещё раз.',
+    openWithoutAttach: 'Открыть без вложения',
+    notAttachedEditor:
+      'Редактор этого шаблона не принимает вложения, поэтому этот документ не приложен',
+    attachFailed: 'Не удалось приложить переданный документ, поэтому запрос не отправлен',
   },
   ar: {
     takenOver: 'يجري العمل على القالب في علامة تبويب جديدة',
@@ -197,6 +279,13 @@ export const SKILL_TEMPLATE_STRINGS = defineStrings({
     handoffNotSent: 'تعذّرت قراءة مهارة محوّلة، لذا لم يُرسل الطلب',
     documentUnreadable: 'تعذّرت قراءة المستند الحالي',
     untitled: 'بلا عنوان',
+    chooseWhere: 'يحتوي هذا المستند على محتوى بالفعل. أين تريد تطبيق المهارة؟',
+    runHere: 'التنفيذ في هذا المستند',
+    openNewWithCurrent: 'مستند جديد من القالب (إرفاق هذا المستند)',
+    needsSave: 'احفظ هذا المستند أولًا لإرفاقه بالمستند الجديد، ثم اضغط مرة أخرى.',
+    openWithoutAttach: 'فتح دون إرفاق',
+    notAttachedEditor: 'المحرر الذي يفتح هذا القالب لا يقبل المرفقات، لذلك لم يُرفق هذا المستند',
+    attachFailed: 'تعذّر إرفاق المستند المُسلَّم، لذلك لم يُرسل الطلب',
   },
   pt: {
     takenOver: 'O trabalho com o modelo continua numa nova aba',
@@ -215,6 +304,14 @@ export const SKILL_TEMPLATE_STRINGS = defineStrings({
       'Não foi possível ler uma habilidade recebida, por isso o pedido não foi enviado',
     documentUnreadable: 'Não foi possível ler o documento atual',
     untitled: 'Sem título',
+    chooseWhere: 'Este documento já tem conteúdo. Onde aplicar a habilidade?',
+    runHere: 'Fazer neste documento',
+    openNewWithCurrent: 'Novo documento a partir do modelo (anexar este)',
+    needsSave: 'Salve este documento primeiro para anexá-lo ao novo e clique novamente.',
+    openWithoutAttach: 'Abrir sem anexar',
+    notAttachedEditor:
+      'O editor que abre este modelo não aceita anexos, por isso este documento não foi anexado',
+    attachFailed: 'Não foi possível anexar o documento recebido, por isso o pedido não foi enviado',
   },
   it: {
     takenOver: 'Si lavora con il modello in una nuova scheda',
@@ -233,6 +330,15 @@ export const SKILL_TEMPLATE_STRINGS = defineStrings({
       'Non è stato possibile leggere un’abilità ricevuta, quindi la richiesta non è stata inviata',
     documentUnreadable: 'Impossibile leggere il documento attuale',
     untitled: 'Senza titolo',
+    chooseWhere: 'Questo documento ha già dei contenuti. Dove applicare la skill?',
+    runHere: 'Farlo in questo documento',
+    openNewWithCurrent: 'Nuovo documento dal modello (allega questo)',
+    needsSave: 'Salva prima questo documento per allegarlo al nuovo, poi premi di nuovo.',
+    openWithoutAttach: 'Apri senza allegare',
+    notAttachedEditor:
+      'L’editor che apre questo modello non accetta allegati, quindi questo documento non è stato allegato',
+    attachFailed:
+      'Non è stato possibile allegare il documento passato, quindi la richiesta non è stata inviata',
   },
   pl: {
     takenOver: 'Praca z szablonem trwa w nowej karcie',
@@ -251,6 +357,15 @@ export const SKILL_TEMPLATE_STRINGS = defineStrings({
       'Nie udało się odczytać przekazanej umiejętności, więc prośba nie została wysłana',
     documentUnreadable: 'Nie udało się odczytać bieżącego dokumentu',
     untitled: 'Bez tytułu',
+    chooseWhere: 'Ten dokument ma już treść. Gdzie zastosować umiejętność?',
+    runHere: 'Zrób to w tym dokumencie',
+    openNewWithCurrent: 'Nowy dokument z szablonu (dołącz ten)',
+    needsSave:
+      'Najpierw zapisz ten dokument, aby dołączyć go do nowego, a potem naciśnij ponownie.',
+    openWithoutAttach: 'Otwórz bez dołączania',
+    notAttachedEditor:
+      'Edytor, w którym otwiera się ten szablon, nie przyjmuje załączników, więc ten dokument nie został dołączony',
+    attachFailed: 'Nie udało się dołączyć przekazanego dokumentu, więc prośba nie została wysłana',
   },
   cs: {
     takenOver: 'Práce se šablonou pokračuje na nové kartě',
@@ -268,6 +383,15 @@ export const SKILL_TEMPLATE_STRINGS = defineStrings({
     handoffNotSent: 'Předanou dovednost se nepodařilo přečíst, proto žádost nebyla odeslána',
     documentUnreadable: 'Aktuální dokument se nepodařilo přečíst',
     untitled: 'Bez názvu',
+    chooseWhere: 'Tento dokument už má obsah. Kde se má dovednost použít?',
+    runHere: 'Udělat v tomto dokumentu',
+    openNewWithCurrent: 'Nový dokument ze šablony (přiložit tento)',
+    needsSave:
+      'Nejprve tento dokument uložte, aby ho šlo přiložit k novému, a pak stiskněte znovu.',
+    openWithoutAttach: 'Otevřít bez přílohy',
+    notAttachedEditor:
+      'Editor, ve kterém se tato šablona otevírá, nepřijímá přílohy, proto tento dokument nebyl přiložen',
+    attachFailed: 'Předaný dokument se nepodařilo přiložit, proto požadavek nebyl odeslán',
   },
   nl: {
     takenOver: 'Er wordt in een nieuw tabblad met de sjabloon gewerkt',
@@ -287,6 +411,15 @@ export const SKILL_TEMPLATE_STRINGS = defineStrings({
       'Een doorgegeven vaardigheid kon niet worden gelezen, dus het verzoek is niet verzonden',
     documentUnreadable: 'Het huidige document kon niet worden gelezen',
     untitled: 'Naamloos',
+    chooseWhere: 'Dit document heeft al inhoud. Waar moet de vaardigheid werken?',
+    runHere: 'In dit document doen',
+    openNewWithCurrent: 'Nieuw document uit de sjabloon (dit document bijvoegen)',
+    needsSave: 'Sla dit document eerst op om het bij het nieuwe te voegen en druk dan opnieuw.',
+    openWithoutAttach: 'Openen zonder bijlage',
+    notAttachedEditor:
+      'De editor die deze sjabloon opent, accepteert geen bijlagen, dus dit document is niet bijgevoegd',
+    attachFailed:
+      'Het doorgegeven document kon niet worden bijgevoegd, dus het verzoek is niet verzonden',
   },
   ms: {
     takenOver: 'Kerja dengan templat diteruskan dalam tab baharu',
@@ -304,6 +437,15 @@ export const SKILL_TEMPLATE_STRINGS = defineStrings({
     handoffNotSent: 'Kemahiran yang diserahkan tidak dapat dibaca, jadi permintaan tidak dihantar',
     documentUnreadable: 'Dokumen semasa tidak dapat dibaca',
     untitled: 'Tanpa tajuk',
+    chooseWhere: 'Dokumen ini sudah ada kandungan. Di mana kemahiran patut dijalankan?',
+    runHere: 'Buat dalam dokumen ini',
+    openNewWithCurrent: 'Dokumen baharu daripada templat (lampirkan dokumen ini)',
+    needsSave:
+      'Simpan dokumen ini dahulu untuk melampirkannya pada dokumen baharu, kemudian tekan sekali lagi.',
+    openWithoutAttach: 'Buka tanpa melampirkan',
+    notAttachedEditor:
+      'Editor yang membuka templat ini tidak menerima lampiran, jadi dokumen ini tidak dilampirkan',
+    attachFailed: 'Dokumen yang diserahkan tidak dapat dilampirkan, jadi permintaan tidak dihantar',
   },
   he: {
     takenOver: 'העבודה עם התבנית ממשיכה בכרטיסייה חדשה',
@@ -321,6 +463,13 @@ export const SKILL_TEMPLATE_STRINGS = defineStrings({
     handoffNotSent: 'לא ניתן היה לקרוא מיומנות שהועברה, ולכן הבקשה לא נשלחה',
     documentUnreadable: 'לא ניתן היה לקרוא את המסמך הנוכחי',
     untitled: 'ללא כותרת',
+    chooseWhere: 'במסמך הזה כבר יש תוכן. איפה להפעיל את המיומנות?',
+    runHere: 'לעשות במסמך הזה',
+    openNewWithCurrent: 'מסמך חדש מהתבנית (לצרף את המסמך הזה)',
+    needsSave: 'כדי לצרף את המסמך הזה למסמך החדש יש לשמור אותו קודם, ואז ללחוץ שוב.',
+    openWithoutAttach: 'לפתוח בלי לצרף',
+    notAttachedEditor: 'העורך שפותח את התבנית הזו לא מקבל קבצים מצורפים, ולכן המסמך הזה לא צורף',
+    attachFailed: 'לא ניתן היה לצרף את המסמך שהועבר, ולכן הבקשה לא נשלחה',
   },
   hi: {
     takenOver: 'टेम्पलेट के साथ काम नए टैब में हो रहा है',
@@ -338,6 +487,15 @@ export const SKILL_TEMPLATE_STRINGS = defineStrings({
     handoffNotSent: 'सौंपा गया कौशल पढ़ा नहीं जा सका, इसलिए अनुरोध नहीं भेजा गया',
     documentUnreadable: 'मौजूदा दस्तावेज़ पढ़ा नहीं जा सका',
     untitled: 'शीर्षकहीन',
+    chooseWhere: 'इस दस्तावेज़ में पहले से सामग्री है। स्किल कहाँ चलाएँ?',
+    runHere: 'इसी दस्तावेज़ में करें',
+    openNewWithCurrent: 'टेम्पलेट से नया दस्तावेज़ (यह दस्तावेज़ संलग्न करें)',
+    needsSave:
+      'इसे नए दस्तावेज़ में संलग्न करने के लिए पहले यह दस्तावेज़ सहेजें, फिर दोबारा दबाएँ।',
+    openWithoutAttach: 'संलग्न किए बिना खोलें',
+    notAttachedEditor:
+      'यह टेम्पलेट जिस संपादक में खुलता है वह संलग्नक नहीं लेता, इसलिए यह दस्तावेज़ संलग्न नहीं किया गया',
+    attachFailed: 'सौंपा गया दस्तावेज़ संलग्न नहीं हो सका, इसलिए अनुरोध नहीं भेजा गया',
   },
   'zh-TW': {
     takenOver: '將在新分頁中使用範本工作',
@@ -355,6 +513,13 @@ export const SKILL_TEMPLATE_STRINGS = defineStrings({
     handoffNotSent: '無法讀取轉交的技能，請求未送出',
     documentUnreadable: '無法讀取目前的文件',
     untitled: '未命名',
+    chooseWhere: '目前文件已有內容。要在哪裡進行？',
+    runHere: '在目前文件中進行',
+    openNewWithCurrent: '用範本開新文件（附上目前文件）',
+    needsSave: '需要先儲存目前文件才能附到新文件中。儲存後請再按一次。',
+    openWithoutAttach: '不附加直接開啟',
+    notAttachedEditor: '開啟此範本的編輯器不接受附件，因此沒有附上目前文件',
+    attachFailed: '無法附上轉交的文件，要求未送出',
   },
   vi: {
     takenOver: 'Đang làm việc với mẫu trong một thẻ mới',
@@ -372,6 +537,14 @@ export const SKILL_TEMPLATE_STRINGS = defineStrings({
     handoffNotSent: 'Không đọc được kỹ năng được chuyển sang nên yêu cầu chưa được gửi',
     documentUnreadable: 'Không đọc được tài liệu hiện tại',
     untitled: 'Không có tiêu đề',
+    chooseWhere: 'Tài liệu này đã có nội dung. Bạn muốn dùng kỹ năng ở đâu?',
+    runHere: 'Làm trong tài liệu này',
+    openNewWithCurrent: 'Tài liệu mới từ mẫu (đính kèm tài liệu này)',
+    needsSave: 'Hãy lưu tài liệu này trước để đính kèm vào tài liệu mới, rồi bấm lại.',
+    openWithoutAttach: 'Mở mà không đính kèm',
+    notAttachedEditor:
+      'Trình soạn thảo mở mẫu này không nhận tệp đính kèm nên tài liệu này chưa được đính kèm',
+    attachFailed: 'Không đính kèm được tài liệu được chuyển sang nên yêu cầu chưa được gửi',
   },
 })
 

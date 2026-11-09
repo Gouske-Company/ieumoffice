@@ -44,7 +44,13 @@ export interface TemplateDocument {
 
 /** The calls of `window.aiOfficeUserSkills` the template flow uses */
 export interface SkillTemplateBridge {
-  openTemplate(input: { skillId: string; text: string; chips: SkillChipRef[] }): Promise<unknown>
+  openTemplate(input: {
+    skillId: string
+    text: string
+    chips: SkillChipRef[]
+    /** the asking tab's saved document goes along as the new tab's attachment */
+    withCurrent?: boolean
+  }): Promise<unknown>
   openPreview(input: {
     bytes: Uint8Array
     fileName: string
@@ -114,15 +120,27 @@ export function chipRefForSkill(skill: { id: string; name: string; title: string
   return { id: skill.id, source, title }
 }
 
-export type TemplateOpenResult = { ok: true; tabId: string } | { ok: false; reason: string }
+export type TemplateOpenResult =
+  | {
+      ok: true
+      tabId: string
+      /** the asking document went along (false: not asked, or the editor takes no attachments) */
+      attached: boolean
+    }
+  | { ok: false; reason: string }
 
 /** An `openTemplate` answer that crossed the preload boundary */
 export function templateOpenResultOf(raw: unknown): TemplateOpenResult {
   if (isRecord(raw) && raw.ok === true && typeof raw.tabId === 'string' && raw.tabId) {
-    return { ok: true, tabId: raw.tabId }
+    return { ok: true, tabId: raw.tabId, attached: raw.attached === true }
   }
   const reason = isRecord(raw) && typeof raw.reason === 'string' ? raw.reason : 'failed'
   return { ok: false, reason }
+}
+
+/** The asking document was never saved or has unsaved changes: it cannot go along */
+export function isUnsavedCurrent(reason: string): boolean {
+  return reason === 'unsaved'
 }
 
 /** The template file is not there (deleted, or the skill went away): nothing is sent */
@@ -239,6 +257,8 @@ export interface HandedRequest {
   text: string
   chips: SkillChipRef[]
   preview?: HandedPreview | undefined
+  /** the asking tab's saved document, attached before the request is sent */
+  attach?: string[] | undefined
 }
 
 /** A taken hand-off as the panel reads it; null for none or a malformed one */
@@ -280,7 +300,16 @@ export function handedRequestOf(raw: unknown, target: TemplateEditor): HandedReq
       }
     }
   }
-  return { id: raw.id, text: raw.text, chips, ...(preview ? { preview } : {}) }
+  const attach = Array.isArray(raw.attach)
+    ? raw.attach.filter((p): p is string => typeof p === 'string' && p.length > 0).slice(0, 20)
+    : []
+  return {
+    id: raw.id,
+    text: raw.text,
+    chips,
+    ...(preview ? { preview } : {}),
+    ...(attach.length > 0 ? { attach } : {}),
+  }
 }
 
 /**

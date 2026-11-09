@@ -203,6 +203,7 @@
 
 ## 화면
 
+- **엑셀 칸에서 자음을 치고 한자 키로 특수문자를 고르면 자음이 두 번 들어간다(#443).** Microsoft 한국어 입력기는 한자 키를 누르면 조합 중인 글자를 확정하고, 그 글자 위에서 조합을 다시 연다(Firefox 버그 1213589에서도 같은 동작이 보고됐다). 보통 입력 칸은 브라우저가 그 글자를 바꿔 주지만, Univer는 숨은 입력 칸을 사건마다 비우고 새 조합을 늘 커서 자리에 넣는다. → `apps/sheets/src/renderer/hanja-composition-restart.ts`가 한자 키 뒤의 새 조합만 확정한 글자를 덮도록 범위를 넓힌다. 사건 순서는 입력기를 실제로 눌러 기록한 것이 아니라 Chromium·입력기 동작에서 재구성한 것이다. 실제 Windows에서 다르게 보이면 `compositionend`·`compositionstart`·`compositionupdate`의 순서와 `data`, 그 앞 `keydown`의 `key`·`code`·`keyCode`를 기록해 시험의 순서를 고친다.
 - **워드 리본이 선택을 옮겨도 그대로다.** Tiptap 3의 `useEditor`는 거래마다 React를 다시 그리지 않는다(`shouldRerenderOnTransaction` 기본값). 워드 `App.tsx`에서는 거래마다 새 객체를 넣는 `setHistState`가 App을, 따라서 리본(글꼴 이름·크기, 굵게 등)을 다시 그리는 계기다. → 이 갱신을 "값이 같으면 건너뛰기"로 바꾸지 않는다. 다시 그리기를 줄이려면 리본이 쓰는 값을 따로 구독하게 바꾼 뒤에 한다(`docs-font-combos` e2e가 잡는다).
 
 - **슬라이드 글자의 띄어쓰기가 사라지고 간격·높이가 들쭉날쭉하다.** 글자 위치는 메인 프로세스가 실제 글꼴 파일로 재서 정하고, 캔버스는 같은 이름을 CSS로 찾아 그린다. Windows의 Chromium이 그 이름을 못 찾으면 맑은 고딕 같은 대체 글꼴로 그려 폭이 어긋난다. `나눔스퀘어 Bold`처럼 굵은 파일이 따로 붙인 이름(PowerPoint 글꼴 목록에 보이는 이름)이 그렇다. Chromium은 이름 끝의 Light·Medium·ExtraBold 등은 떼고 찾아 주지만 Bold는 떼지 않는다. → 그런 이름은 측정한 파일을 그 이름의 개인 글꼴(FontFace)로 등록해 그리게 한다(`fonts.ts`의 "Family Weight" 등록). 새 이름 유형을 의심할 때는 Electron 창에서 `measureText`로 `'<이름>', monospace`와 `monospace`의 폭이 다른지 보면 Chromium이 그 이름을 찾는지 알 수 있다.

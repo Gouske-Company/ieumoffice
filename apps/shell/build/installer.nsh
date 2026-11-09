@@ -48,6 +48,27 @@
   DeleteRegKey SHELL_CONTEXT "Software\Classes\${GENOFFICE_ODT_PROGID}"
 !macroend
 
+; .ods is offered in Explorer's "Open with" for the same reason: it opens as a
+; converted .xlsx copy that saves as .xlsx (decision 0118), so taking over the
+; user's ODS program would hide that the original is not what gets written
+; back. The spreadsheet opens in the Sheets tab, so the ProgId borrows the
+; spreadsheet icon the installer already places for .xlsx.
+!define GENOFFICE_ODS_PROGID "IeumOffice.OpenDocumentSpreadsheet"
+
+!macro GenOfficeRegisterOpenWithOds
+  WriteRegStr SHELL_CONTEXT "Software\Classes\${GENOFFICE_ODS_PROGID}" "" "OpenDocument Spreadsheet"
+  WriteRegStr SHELL_CONTEXT "Software\Classes\${GENOFFICE_ODS_PROGID}\DefaultIcon" "" "$INSTDIR\resources\xlsx.ico"
+  WriteRegStr SHELL_CONTEXT "Software\Classes\${GENOFFICE_ODS_PROGID}\shell\open\command" "" '"$appExe" "%1"'
+  WriteRegNone SHELL_CONTEXT "Software\Classes\.ods\OpenWithProgids" "${GENOFFICE_ODS_PROGID}"
+!macroend
+
+!macro GenOfficeUnregisterOpenWithOds
+  ; Only our value and our ProgId: the .ods key, its default value and other
+  ; programs' OpenWithProgids entries belong to whoever wrote them.
+  DeleteRegValue SHELL_CONTEXT "Software\Classes\.ods\OpenWithProgids" "${GENOFFICE_ODS_PROGID}"
+  DeleteRegKey SHELL_CONTEXT "Software\Classes\${GENOFFICE_ODS_PROGID}"
+!macroend
+
 ; .hwp, .hwpx, .xmind, .epub and .vsdx are offered in Explorer's "Open with" and
 ; never made the default, for the same reason as .odt above: a
 ; win.fileAssociations entry would also write the extension's default value and
@@ -227,6 +248,7 @@
   !insertmacro GenOfficeRegisterShellNew "xlsx" "IeumOffice.ExcelWorkbook"
   !insertmacro GenOfficeRegisterShellNew "pptx" "IeumOffice.PowerPointPresentation"
   !insertmacro GenOfficeRegisterOpenWithOdt
+  !insertmacro GenOfficeRegisterOpenWithOds
   !insertmacro GenOfficeRegisterOpenWithHwp
   !insertmacro GenOfficeRegisterOpenWithHwpx
   !insertmacro GenOfficeRegisterOpenWithMindmap
@@ -244,6 +266,7 @@
   !insertmacro GenOfficeUnregisterShellNew "xlsx" "IeumOffice.ExcelWorkbook"
   !insertmacro GenOfficeUnregisterShellNew "pptx" "IeumOffice.PowerPointPresentation"
   !insertmacro GenOfficeUnregisterOpenWithOdt
+  !insertmacro GenOfficeUnregisterOpenWithOds
   !insertmacro GenOfficeUnregisterOpenWithHwp
   !insertmacro GenOfficeUnregisterOpenWithHwpx
   !insertmacro GenOfficeUnregisterOpenWithMindmap

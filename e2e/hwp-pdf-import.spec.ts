@@ -67,8 +67,10 @@ test('PDF to HWP imports the PDF into a new untitled Hangul tab', async () => {
       )
       .toContain('Imported from a PDF page')
 
-    // a new document named after the PDF, with no file until its first save
-    const titles = launched.page.locator('.tab-bar .tab-item:not(.tab-home) .tab-title')
+    // a new document named after the PDF, with no file until its first save. With an argv
+    // document the first window can be the editor view, so find the shell renderer itself
+    const shell = await waitForPageWithUrl(launched.app, 'shell/out')
+    const titles = shell.locator('.tab-bar .tab-item:not(.tab-home) .tab-title')
     await expect(titles).toHaveText(['Field notes.pdf', 'Field notes'])
     expect(Buffer.compare(await readFile(pdfPath), original)).toBe(0)
   } finally {

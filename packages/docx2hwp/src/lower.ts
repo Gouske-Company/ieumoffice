@@ -893,6 +893,7 @@ function tableOf(cx: Cx, table: TableModel, where: string): Table {
     }),
     cells,
     repeatHeader: table.repeatHeaderRows?.[0] === true,
+    align: table.align ?? 'left',
   }
 }
 
@@ -907,8 +908,8 @@ function columnWidths(cx: Cx, table: TableModel, colCount: number): HwpUnit[] {
   return twips.map((w) => hwpFromTwips(w))
 }
 
-function cellBody(cx: Cx, cell: TableCell, where: string): Story {
-  const paras: Block[] = cell.richParas
+function cellBody(cx: Cx, cell: TableCell, where: string): Para[] {
+  const paras: Para[] = cell.richParas
     ? cell.richParas.map((p, i) =>
         paraOf(
           { kind: 'body' },
@@ -925,14 +926,20 @@ function cellBody(cx: Cx, cell: TableCell, where: string): Story {
       )
   const nested = cell.nestedTables ?? []
   if (nested.length === 0) return paras
-  // a nested table sits after the cell paragraphs that precede it in Word
+  // the engine builds no table inside a cell: a nested table's paragraphs take
+  // its place, after the cell paragraphs that precede it in Word
   const out = [...paras]
   nested
     .map((table, i) => ({ table, at: cell.nestedTableAnchors?.[i] ?? paras.length, i }))
     .sort((a, b) => b.at - a.at || b.i - a.i)
-    .forEach(({ table, at, i }) => out.splice(at, 0, tableOf(cx, table, `${where}/t${i}`)))
+    .forEach(({ table, at, i }) => {
+      cx.ledger.note('nested_table', `${where}/t${i}`)
+      out.splice(at, 0, ...flattened(tableOf(cx, table, `${where}/t${i}`)))
+    })
   return out
 }
+
+const flattened = (table: Table): Para[] => table.cells.flatMap((cell) => cell.body)
 
 // ---------------------------------------------------------------- header and footer
 

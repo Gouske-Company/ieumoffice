@@ -134,6 +134,8 @@ export interface Table {
   /** covering cells only, in row order; merged-away grid places are absent */
   readonly cells: readonly Cell[]
   readonly repeatHeader: boolean
+  /** a Hangul table placed like a character follows its paragraph's alignment */
+  readonly align: 'left' | 'center' | 'right'
 }
 
 export interface Cell {
@@ -150,7 +152,8 @@ export interface Cell {
     readonly bottom: HwpUnit
     readonly left: HwpUnit
   }
-  readonly body: Story
+  /** paragraphs only: a nested table arrives flattened into them */
+  readonly body: readonly Para[]
 }
 
 export interface CellBorders {

@@ -264,6 +264,25 @@ describe('lowering rules', () => {
     ])
   })
 
+  it('flattens a nested table into its cell, where Word put it, and says so', async () => {
+    const nested = { rows: [[{ paras: ['in 1'] }, { paras: ['in 2'] }]] }
+    const { plan, losses } = lower(
+      await withBlocks([
+        {
+          type: 'table',
+          table: {
+            rows: [
+              [{ paras: ['before', 'after'], nestedTables: [nested], nestedTableAnchors: [1] }],
+            ],
+          },
+        },
+      ]),
+    )
+    const table = plan.body[0] as Table
+    expect(texts(table.cells[0].body)).toEqual(['before', 'in 1', 'in 2', 'after'])
+    expect(losses).toEqual([{ feature: 'nested_table', kind: 'changed', count: 1 }])
+  })
+
   it('writes a table of contents line as text with a right tab', async () => {
     const { plan, losses } = lower(
       await withBlocks([

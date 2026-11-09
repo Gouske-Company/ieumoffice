@@ -17,6 +17,7 @@ export const LOSS_FEATURES = {
   watermark: 'dropped',
   hidden_text: 'dropped',
   picture: 'dropped',
+  table: 'dropped',
   note: 'dropped',
   page_border: 'dropped',
   para_border: 'dropped',

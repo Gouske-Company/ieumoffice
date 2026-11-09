@@ -41,7 +41,7 @@ import { SET_ROW_IS_AUTO_HEIGHT_COMMAND } from './autofit-multi-row'
 import { CELL_HIDDEN_KEY, CELL_LOCKED_KEY, effectiveSheetProtection } from './sheet-protection'
 import { fullColumnSpans, fullRowSpans } from './autofit-selection'
 import { applyFormatPainterClick } from './format-painter'
-import { nextSheetName } from './op-executor'
+import { nextSheetName } from './new-sheet-name'
 import { handleInsertNotePicture } from './note-picture-actions'
 import {
   comboSeriesSetDefaults,

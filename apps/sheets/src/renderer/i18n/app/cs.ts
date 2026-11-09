@@ -1564,4 +1564,8 @@ export const cs = {
   appSpellUnavailable: 'Kontrola pravopisu není v tomto okně k dispozici.',
   appSpellReplaceAll: 'Nahradit vše za „{suggestion}“',
   appSpellChangedAll: 'Opraveno {count} buněk se slovem „{word}“.',
+
+  // ── ODS import ──
+  appOdsImportNotice: 'Soubor ODS byl otevřen jako kopie xlsx. Uložením se zapíše soubor xlsx.',
+  appOdsFormulasDropped: 'U {count} vzorců byly ponechány pouze hodnoty.',
 } satisfies Record<keyof typeof zh, string>

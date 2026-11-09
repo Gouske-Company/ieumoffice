@@ -3352,7 +3352,10 @@ export function registerSheetsIpc(): void {
       const selection = await openFileDialog(event, {
         properties: ['openFile'],
         filters: [
-          { name: tm('filterSpreadsheets'), extensions: ['xlsx', 'xlsm', 'xls', 'csv', 'tsv'] },
+          {
+            name: tm('filterSpreadsheets'),
+            extensions: ['xlsx', 'xlsm', 'xls', 'csv', 'tsv', 'ods'],
+          },
         ],
       })
       if (selection.canceled || !selection.filePaths[0]) return null
@@ -3390,6 +3393,8 @@ export function registerSheetsIpc(): void {
       recoveryIdentity: converted?.recoveryIdentity ?? prepared.recoveryIdentity,
       recoveryOriginalPath: converted?.recoveryOriginalPath ?? prepared.recoveryOriginalPath,
       unsavedRestore: prepared.unsavedRestore,
+      odsConverted: prepared.odsConverted,
+      formulasDropped: prepared.formulasDropped,
     })
     // The sidecar open itself can also outlive the tab after the pre-open
     // check. Close the newly registered session instead of stranding it in
@@ -5223,6 +5228,10 @@ async function openWorkbookSession(
     recoveryIdentity?: RecoveryIdentity | undefined
     recoveryOriginalPath?: string | undefined
     unsavedRestore?: boolean | undefined
+    /// Opened from an .ods conversion: the footer says saving writes an .xlsx
+    /// and how many formulas were kept as values.
+    odsConverted?: boolean | undefined
+    formulasDropped?: number | undefined
     /// A save's output already opened by the sidecar: it is this session's
     /// snapshot as it stands, so neither the copy nor the open is repeated.
     staged?: { snapshotPath: string; opened: SidecarOpenResult } | undefined
@@ -5241,6 +5250,8 @@ async function openWorkbookSession(
     recoveryIdentity,
     recoveryOriginalPath,
     unsavedRestore,
+    odsConverted,
+    formulasDropped,
     staged,
   } = options ?? {}
   // Snapshot first, then the sidecar opens the snapshot (not the live path):
@@ -5303,6 +5314,8 @@ async function openWorkbookSession(
       fileBytes: snapshotStat.size,
       readOnly: false,
       needsSaveAs: suggestSaveAs !== undefined,
+      ...(odsConverted ? { odsConverted: true } : {}),
+      ...(formulasDropped === undefined ? {} : { formulasDropped }),
       ...(unsavedNew ? { unsavedNew: true } : {}),
       ...(csvSourcePath === undefined ? {} : { csvPath: csvSourcePath }),
       ...(emptyCsv ? { emptyCsv: true } : {}),
@@ -5353,17 +5366,19 @@ function legacyCsvCharset(): string | undefined {
   return byLang[getUiLang()]
 }
 
-/// .xls open path: an HTML table export is read here, a real container goes to
-/// the sidecar. Excel sniffs content over the extension, which is why these
-/// mislabelled exports open there instead of being called broken files.
+/// .xls and .ods open path: an HTML table export is read here, a real container
+/// goes to the sidecar. Excel sniffs content over the extension, which is why
+/// these mislabelled exports open there instead of being called broken files.
+/// Returns the formulas the conversion could not translate (0 for the HTML path).
 async function convertLegacyImport(
   client: XlsxSidecarClient,
   path: string,
   targetPath: string,
-): Promise<void> {
+): Promise<number> {
   const conversion = await convertLegacyWorkbook(client, path, targetPath, legacyCsvCharset())
-  if (conversion === 'html-too-large') throw new Error(tm('errFileTooLarge'))
-  if (conversion === 'html-no-table') throw new Error(tm('errHtmlNoTable'))
+  if (conversion.kind === 'html-too-large') throw new Error(tm('errFileTooLarge'))
+  if (conversion.kind === 'html-no-table') throw new Error(tm('errHtmlNoTable'))
+  return conversion.formulasDropped
 }
 
 /** a CFB container: an encrypted .xlsx/.xlsm, or any .xls */
@@ -5501,9 +5516,13 @@ interface PreparedWorkbookOpen {
   recoveryIdentity?: RecoveryIdentity
   recoveryOriginalPath?: string
   unsavedRestore?: boolean
+  /// The copy came from an .ods: the document keeps saying that saving writes
+  /// an .xlsx, and how many formulas the conversion kept as values only.
+  odsConverted?: boolean
+  formulasDropped?: number
 }
 
-/// .xls and .tsv open as a converted copy in the temp dir; the session
+/// .xls, .ods and .tsv open as a converted copy in the temp dir; the session
 /// remembers the original's .xlsx sibling as the Save As default. .csv converts
 /// the same way but keeps its file identity, so Save writes values back to it.
 /// Resolves null when an encrypted file's open was cancelled or refused.
@@ -5567,7 +5586,7 @@ async function prepareWorkbookForOpen(
   // An encrypted file never has a recovery copy: it is not written for one.
   const encrypted = await prepareEncryptedWorkbook(client, path, extension, parent)
   if (encrypted !== undefined) return encrypted
-  if (extension !== 'csv' && extension !== 'tsv' && extension !== 'xls') {
+  if (extension !== 'csv' && extension !== 'tsv' && extension !== 'xls' && extension !== 'ods') {
     // Unsaved work from a lost session is settled before the file's content
     // loads (recoveredOpenFor). Restoring opens the copy with restoreTarget
     // pointing back at the original, so a plain Save writes straight back
@@ -5586,6 +5605,7 @@ async function prepareWorkbookForOpen(
   await mkdir(directory, { recursive: true })
   const openPath = join(directory, `${stem}.xlsx`)
   let emptyCsv = false
+  let formulasDropped = 0
   try {
     if (extension === 'csv' || extension === 'tsv') {
       const csvStat = await stat(path)
@@ -5604,16 +5624,17 @@ async function prepareWorkbookForOpen(
       emptyCsv = converted.empty
       await writeFile(openPath, converted.buffer)
     } else {
-      await convertLegacyImport(client, path, openPath)
+      formulasDropped = await convertLegacyImport(client, path, openPath)
     }
   } catch (error) {
     await cleanupImportTempDirectory(app.getPath('temp'), directory)
     throw error
   }
   // CSV keeps its file identity: Save writes the values back to the original
-  // .csv (Excel's behavior), so no Save As detour is suggested. Legacy .xls and
-  // view-only .tsv route the first save through Save As to a fresh .xlsx —
-  // writing values back to a .tsv would need a tab serializer this path lacks.
+  // .csv (Excel's behavior), so no Save As detour is suggested. Legacy .xls,
+  // .ods and view-only .tsv route the first save through Save As to a fresh
+  // .xlsx — writing values back to a .tsv would need a tab serializer this
+  // path lacks, and an .ods cannot hold the workbook bytes at all.
   return extension === 'csv'
     ? {
         openPath,
@@ -5622,7 +5643,12 @@ async function prepareWorkbookForOpen(
         csvSourcePath: path,
         ...(emptyCsv ? { emptyCsv: true } : {}),
       }
-    : { openPath, importTempDir: directory, suggestSaveAs: path.replace(/\.[^.]+$/, '.xlsx') }
+    : {
+        openPath,
+        importTempDir: directory,
+        suggestSaveAs: path.replace(/\.[^.]+$/, '.xlsx'),
+        ...(extension === 'ods' ? { odsConverted: true, formulasDropped } : {}),
+      }
 }
 
 /** shell-injected items appended to the File menu (e.g. Back to Home) */

@@ -831,6 +831,12 @@ export const workbookFileSchema = z
     /// Converted .xls import: the first save opens a Save As dialog,
     /// so background flows (AutoSave) must not trigger mode 'save'.
     needsSaveAs: z.boolean().optional(),
+    /// Opened from an .ods import: the copy is an .xlsx, so the first save is a
+    /// Save As to the original's .xlsx sibling and the footer says so.
+    odsConverted: z.literal(true).optional(),
+    /// Formulas the .ods conversion could not translate; those cells kept their
+    /// value only. Absent for every other open.
+    formulasDropped: z.number().int().nonnegative().optional(),
     /// The shell's "New spreadsheet" before its first save: still needsSaveAs
     /// for Ctrl+S, but AutoSave and the recovery copy keep running (a quiet
     /// save writes the backing temp file in place, no dialog).

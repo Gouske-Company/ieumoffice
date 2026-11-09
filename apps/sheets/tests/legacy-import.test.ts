@@ -51,7 +51,10 @@ describe('convertLegacyWorkbook', () => {
   it('reads an HTML table export without asking the sidecar to open it', async () => {
     await writeFile(source, EXCEL_HTML)
 
-    await expect(convertLegacyWorkbook(client, source, target)).resolves.toBe('html')
+    await expect(convertLegacyWorkbook(client, source, target)).resolves.toEqual({
+      kind: 'html',
+      formulasDropped: 0,
+    })
     expect(calls).toHaveLength(0)
 
     const zip = await JSZip.loadAsync(await readFile(target))
@@ -74,7 +77,10 @@ describe('convertLegacyWorkbook', () => {
     ])
     await writeFile(source, encoded)
 
-    await expect(convertLegacyWorkbook(client, source, target)).resolves.toBe('html')
+    await expect(convertLegacyWorkbook(client, source, target)).resolves.toEqual({
+      kind: 'html',
+      formulasDropped: 0,
+    })
     const zip = await JSZip.loadAsync(await readFile(target))
     const sheet = await zip.file('xl/worksheets/sheet1.xml')?.async('text')
     expect(sheet).toContain('<t xml:space="preserve">가나다</t>')
@@ -83,14 +89,36 @@ describe('convertLegacyWorkbook', () => {
   it('leaves real legacy workbooks to the sidecar converter', async () => {
     await writeFile(source, Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1, 0, 0]))
 
-    await expect(convertLegacyWorkbook(client, source, target)).resolves.toBe('workbook')
+    await expect(convertLegacyWorkbook(client, source, target)).resolves.toEqual({
+      kind: 'workbook',
+      // the stub conversion reports none: older sidecars do not report the field
+      formulasDropped: 0,
+    })
     expect(calls).toEqual([{ path: source, targetPath: target }])
+  })
+
+  it('carries the formulas an .ods conversion could not translate', async () => {
+    await writeFile(source, Buffer.from('ods-original-bytes'))
+    const odsClient = {
+      async convertWorkbook(input: { path: string; targetPath: string }): Promise<unknown> {
+        calls.push(input)
+        return { sheets: 1, cells: 4, formulasDropped: 3 }
+      },
+    }
+
+    await expect(convertLegacyWorkbook(odsClient, source, target)).resolves.toEqual({
+      kind: 'workbook',
+      formulasDropped: 3,
+    })
   })
 
   it('reports a web page without a table instead of opening an empty grid', async () => {
     await writeFile(source, '<html><body><p>안내문</p></body></html>')
 
-    await expect(convertLegacyWorkbook(client, source, target)).resolves.toBe('html-no-table')
+    await expect(convertLegacyWorkbook(client, source, target)).resolves.toEqual({
+      kind: 'html-no-table',
+      formulasDropped: 0,
+    })
     expect(calls).toHaveLength(0)
   })
 })

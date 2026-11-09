@@ -1568,4 +1568,8 @@ export const id = {
   appSpellUnavailable: 'Pemeriksaan ejaan tidak tersedia di jendela ini.',
   appSpellReplaceAll: 'Ganti semua dengan "{suggestion}"',
   appSpellChangedAll: '{count} sel dengan "{word}" telah diperbaiki.',
+
+  // ── ODS import ──
+  appOdsImportNotice: 'ODS dibuka sebagai salinan xlsx. Menyimpan akan menulis file xlsx.',
+  appOdsFormulasDropped: 'Pada {count} rumus, hanya nilainya yang dipertahankan.',
 } satisfies Record<keyof typeof zh, string>

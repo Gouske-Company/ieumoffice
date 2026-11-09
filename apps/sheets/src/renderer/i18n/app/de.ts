@@ -1625,4 +1625,9 @@ export const de = {
   appSpellUnavailable: 'Die Rechtschreibprüfung ist in diesem Fenster nicht verfügbar.',
   appSpellReplaceAll: 'Alle durch „{suggestion}“ ersetzen',
   appSpellChangedAll: '{count} Zellen mit „{word}“ korrigiert.',
+
+  // ── ODS import ──
+  appOdsImportNotice:
+    'Die ODS-Datei wurde als xlsx-Kopie geöffnet. Beim Speichern wird eine xlsx-Datei geschrieben.',
+  appOdsFormulasDropped: 'Bei {count} Formeln blieben nur die Werte erhalten.',
 } satisfies Record<keyof typeof zh, string>

@@ -20,7 +20,7 @@ const MAX_ROW_CELL_PARAGRAPHS = 3
  * node_modules; the packaged app has no node_modules and ships it under
  * Resources/wasm (apps/shell/electron-builder.cjs), like the PDF engines.
  */
-function rhwpWasmPath(): string {
+export function rhwpWasmPath(): string {
   const fromEnv = process.env.GENOFFICE_RHWP_WASM
   if (fromEnv) return fromEnv
   try {

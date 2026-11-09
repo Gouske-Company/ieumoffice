@@ -159,6 +159,14 @@ describe('partitionDropPayload', () => {
     expect(result.unsupportedExts).toEqual([])
   })
 
+  it('treats a dropped .ods as openable (the spreadsheet tab converts it), not as unsupported', () => {
+    const result = partitionDropPayload(['/data/budget.ods', 'C:/x/BUDGET.ODS', 'z.odp'])
+    expect(result.supported).toEqual(['/data/budget.ods', 'C:/x/BUDGET.ODS'])
+    expect(result.unsupportedExts).toEqual(['odp'])
+    expect(OPENABLE_DOC_RE.test('a.ods')).toBe(true)
+    expect(KNOWN_UNSUPPORTED_DOC_RE.test('a.ods')).toBe(false)
+  })
+
   it('routes dropped mind maps, a FreeMind / Freeplane map included, as openable', () => {
     const result = partitionDropPayload(['/maps/plan.xmind', '/maps/PLAN.MM', '/maps/plan.mmap'])
     expect(result.supported).toEqual(['/maps/plan.xmind', '/maps/PLAN.MM'])

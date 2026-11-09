@@ -151,7 +151,7 @@ struct RowRecord {
 fn parse_worksheet(worksheet: Node) -> ParsedSheet {
     let Some(table) = worksheet.children().find(|node| is_element(*node, "Table")) else {
         return ParsedSheet {
-            xml: worksheet_document("A1:A1", "", "", ""),
+            xml: worksheet_document("A1:A1", "", "", "", ""),
             cells: 0,
         };
     };
@@ -316,7 +316,7 @@ fn parse_worksheet(worksheet: Node) -> ParsedSheet {
     };
 
     ParsedSheet {
-        xml: worksheet_document(&dimension, &columns_xml, &sheet_data, &tail),
+        xml: worksheet_document(&dimension, "", &columns_xml, &sheet_data, &tail),
         cells: count,
     }
 }

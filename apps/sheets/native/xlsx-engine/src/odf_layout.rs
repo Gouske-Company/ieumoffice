@@ -24,7 +24,7 @@ use crate::xml_util::{attribute_value, read_zip_string, zip_entry};
 /// Excel's own limits; a repeat count that runs past them is clamped rather
 /// than trusted. LibreOffice writes a trailing `table:number-rows-repeated`
 /// of 1,048,576 on a sheet's empty tail.
-const MAX_ROW: u32 = 1_048_576;
+pub(crate) const MAX_ROW: u32 = 1_048_576;
 const MAX_COLUMN: u32 = 16_384;
 
 /// One sheet's layout as ODF stores it, in 0-based Excel coordinates.

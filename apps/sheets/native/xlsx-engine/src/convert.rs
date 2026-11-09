@@ -43,6 +43,32 @@ struct SheetStyles {
     rows: HashMap<u32, u16>,
 }
 
+/// Row heights for one sheet: sizes the file sets row by row, spans too wide to
+/// expand into one entry per row, and the sheet default a grid-wide span stood
+/// for.
+#[derive(Default)]
+struct RowHeights {
+    explicit: HashMap<u32, (u16, bool)>,
+    /// `(first, last, twips)` of a repeated span that is kept as a range; the
+    /// writer consults it for the rows it emits.
+    spans: Vec<(u32, u32, u16)>,
+    /// `sheetFormatPr/@defaultRowHeight` in points, when a span stood for the
+    /// sheet's own height rather than for a set of edited rows.
+    default_points: Option<f64>,
+}
+
+impl RowHeights {
+    /// The height `row` carries, an explicit entry winning over a wide span.
+    fn height(&self, row: u32) -> Option<(u16, bool)> {
+        self.explicit.get(&row).copied().or_else(|| {
+            self.spans
+                .iter()
+                .find(|(first, last, _)| (*first..=*last).contains(&row))
+                .map(|(_, _, twips)| (*twips, true))
+        })
+    }
+}
+
 pub struct ConvertResult {
     pub sheets: usize,
     pub cells: usize,
@@ -167,16 +193,28 @@ pub fn convert_to_xlsx(source: &Path, target: &Path) -> Result<ConvertResult, Si
         // hand, but it still differs from the sheet default: a title row in a
         // large font keeps its height, as an .xlsx keeps its ht without
         // customHeight.
-        let heights: HashMap<u32, (u16, bool)> = match sheet_binary {
-            Some(sheet) => sheet
-                .row_heights
-                .iter()
-                .filter(|(_, twips, custom)| {
-                    *custom || sheet.default_row_twips.is_some_and(|default| default != *twips)
-                })
-                .map(|(row, twips, custom)| (u32::from(*row), (*twips, *custom)))
-                .collect(),
-            None => layout.map(odf_row_heights).unwrap_or_default(),
+        let used_rows = match (range.start(), range.end()) {
+            (Some(start), Some(end)) => Some((start.0, end.0)),
+            _ => None,
+        };
+        let heights: RowHeights = match sheet_binary {
+            Some(sheet) => RowHeights {
+                explicit: sheet
+                    .row_heights
+                    .iter()
+                    .filter(|(_, twips, custom)| {
+                        *custom
+                            || sheet
+                                .default_row_twips
+                                .is_some_and(|default| default != *twips)
+                    })
+                    .map(|(row, twips, custom)| (u32::from(*row), (*twips, *custom)))
+                    .collect(),
+                ..RowHeights::default()
+            },
+            None => layout
+                .map(|layout| odf_row_heights(layout, used_rows))
+                .unwrap_or_default(),
         };
         let mut tail = match &mut workbook {
             Sheets::Xls(reader) => {
@@ -346,20 +384,33 @@ fn odf_cols_xml(layout: &OdsSheetLayout) -> String {
     format!("<cols>{entries}</cols>")
 }
 
-/// Row heights as OOXML twips (1/20 point), the unit `worksheet_xml` writes
-/// `ht` in. A height the file set is by definition a custom one.
-fn odf_row_heights(layout: &OdsSheetLayout) -> HashMap<u32, (u16, bool)> {
-    let mut heights = HashMap::new();
+/// Row heights from the spans `odf_layout` resolved, as OOXML twips (1/20
+/// point), the unit `worksheet_xml` writes `ht` in. A height the file sets is
+/// by definition a custom one.
+///
+/// A span repeated across thousands of rows is not expanded into one entry per
+/// row — that would write a `row` element for most of the grid. When it covers
+/// the sheet's empty tail (or reaches the last grid row) it is the sheet's own
+/// default height and goes out through `sheetFormatPr`; when it sits over rows
+/// with data it is kept as a range the writer applies to the rows it emits.
+fn odf_row_heights(layout: &OdsSheetLayout, used: Option<(u32, u32)>) -> RowHeights {
+    let mut heights = RowHeights::default();
     for (first, last, points) in &layout.row_heights {
-        // A height repeated over an unreasonable number of rows is the
-        // sheet's default rather than an edit, and expanding it would write a
-        // `row` element for most of the grid.
+        let twips = (points * 20.0).round().clamp(0.0, f64::from(u16::MAX)) as u16;
         if last.saturating_sub(*first) >= MAX_REPEATED_STYLE_ROWS {
+            let outside_used = match used {
+                Some((start, end)) => *last < start || *first > end,
+                None => true,
+            };
+            if *last >= odf_layout::MAX_ROW - 1 || outside_used {
+                heights.default_points = Some(*points);
+            } else {
+                heights.spans.push((*first, *last, twips));
+            }
             continue;
         }
-        let twips = (points * 20.0).round().clamp(0.0, f64::from(u16::MAX)) as u16;
         for row in *first..=*last {
-            heights.insert(row, (twips, true));
+            heights.explicit.insert(row, (twips, true));
         }
     }
     heights
@@ -433,8 +484,8 @@ fn duration_serial(text: &str) -> Option<f64> {
 
 /// The strings a spreadsheet stores as an error result. An ODF package keeps
 /// an error cell as `office:value-type="string"` holding one of these, so the
-/// formula cell that carries one is written back as an error rather than as
-/// text a dependent formula would read as a string.
+/// cell is written back as an error rather than as text a dependent formula
+/// would read as a string.
 fn is_error_literal(text: &str) -> bool {
     matches!(
         text,
@@ -652,7 +703,7 @@ fn worksheet_xml(
     formulas: &HashMap<(u32, u32), Option<String>>,
     columns: &str,
     tail: &str,
-    heights: &HashMap<u32, (u16, bool)>,
+    heights: &RowHeights,
     styles: &SheetStyles,
     odf: bool,
 ) -> (String, usize) {
@@ -665,11 +716,8 @@ fn worksheet_xml(
         let formula = formulas
             .get(&absolute)
             .and_then(|entry| entry.as_deref());
-        // A cell the source gave a formula is also where an ODF error result
-        // hides, whether the formula survived the translation or not.
-        let formula_cell = formulas.contains_key(&absolute);
         let style = styles.cells.get(&absolute).copied();
-        if let Some(cell) = cell_xml(absolute, value, formula, formula_cell, style, odf) {
+        if let Some(cell) = cell_xml(absolute, value, formula, style, odf) {
             cells += 1;
             rows.entry(absolute.0).or_default().push((absolute.1, cell));
         }
@@ -698,8 +746,8 @@ fn worksheet_xml(
             ));
         }
     }
-    for row in heights.keys() {
-        rows.entry(u32::from(*row)).or_default();
+    for row in heights.explicit.keys() {
+        rows.entry(*row).or_default();
     }
     // A formatted empty cell (borders, a fill) has no value for calamine to
     // report; it exists only through its style.
@@ -721,6 +769,14 @@ fn worksheet_xml(
     for row in styles.rows.keys() {
         rows.entry(*row).or_default();
     }
+    // A wide span that none of the written rows fall in would vanish; keep its
+    // first row so the height is still carried, one element rather than one
+    // per line of the span.
+    for (first, last, _) in &heights.spans {
+        if !rows.keys().any(|row| (*first..=*last).contains(row)) {
+            rows.entry(*first).or_default();
+        }
+    }
 
     let mut row_numbers: Vec<u32> = rows.keys().copied().collect();
     row_numbers.sort_unstable();
@@ -728,13 +784,13 @@ fn worksheet_xml(
     for row in row_numbers {
         let mut line = rows.remove(&row).unwrap_or_default();
         line.sort_unstable_by_key(|(column, _)| *column);
-        let height = match heights.get(&row) {
+        let height = match heights.height(row) {
             // a hand-set height goes out with the custom flag; the sheet
             // default the file echoed back stays with the reader
             Some((twips, true)) => {
-                format!(r#" ht="{:.2}" customHeight="1""#, f64::from(*twips) / 20.0)
+                format!(r#" ht="{:.2}" customHeight="1""#, f64::from(twips) / 20.0)
             }
-            Some((twips, false)) => format!(r#" ht="{:.2}""#, f64::from(*twips) / 20.0),
+            Some((twips, false)) => format!(r#" ht="{:.2}""#, f64::from(twips) / 20.0),
             None => String::new(),
         };
         let row_style = match styles.rows.get(&row) {
@@ -756,14 +812,24 @@ fn worksheet_xml(
         ),
         _ => "A1:A1".into(),
     };
-    (worksheet_document(&dimension, columns, &body, tail), cells)
+    // A height repeated across the sheet's empty tail is the sheet's own
+    // default, not an edit to each of those rows.
+    let sheet_format = match heights.default_points {
+        Some(points) => {
+            format!(r#"<sheetFormatPr defaultRowHeight="{points:.2}" customHeight="1"/>"#)
+        }
+        None => String::new(),
+    };
+    (
+        worksheet_document(&dimension, &sheet_format, columns, &body, tail),
+        cells,
+    )
 }
 
 fn cell_xml(
     position: (u32, u32),
     value: &Data,
     formula: Option<&str>,
-    formula_cell: bool,
     style: Option<u16>,
     odf: bool,
 ) -> Option<String> {
@@ -782,10 +848,11 @@ fn cell_xml(
             }
             format!(r#"<c {head}>{formula_xml}</c>"#)
         }
-        // An ODF error is an `office:value-type="string"` cell holding the
-        // error text; written back as text, a dependent formula would read a
-        // string where the source had `#DIV/0!`.
-        Data::String(text) if odf && formula_cell && is_error_literal(text) => format!(
+        // An ODF cell stores an error as `office:value-type="string"` holding
+        // the error text, with or without a formula in front of it (pasting
+        // values leaves only the text). Written back as a string, a dependent
+        // formula would read text where the source had `#DIV/0!`.
+        Data::String(text) if odf && is_error_literal(text) => format!(
             r#"<c {head} t="e">{formula_xml}<v>{}</v></c>"#,
             escape_xml(text),
         ),
@@ -1364,6 +1431,102 @@ mod tests {
         assert!(sheet.contains(r#"<row r="1" ht="43.20" customHeight="1">"#), "{sheet}");
         // Rows the file does not size stay implicit.
         assert!(!sheet.contains(r#"<row r="2""#), "{sheet}");
+    }
+
+    #[test]
+    fn a_string_that_is_an_error_literal_becomes_an_error_cell() {
+        let body = concat!(
+            r#"<table:table table:name="Errors">"#,
+            r#"<table:table-row>"#,
+            // A pasted value: the error text with no formula behind it.
+            r##"<table:table-cell office:value-type="string" office:string-value="#N/A"><text:p>#N/A</text:p></table:table-cell>"##,
+            r##"<table:table-cell office:value-type="string" office:string-value="#DIV/0!"><text:p>#DIV/0!</text:p></table:table-cell>"##,
+            // Text that merely mentions an error is still text.
+            r#"<table:table-cell office:value-type="string"><text:p>see #N/A here</text:p></table:table-cell>"#,
+            r#"</table:table-row>"#,
+            r#"</table:table>"#,
+        );
+        let dir = tempfile::tempdir().unwrap();
+        let source = dir.path().join("errors.ods");
+        write_ods_fixture(&source, "", body);
+        let target = dir.path().join("converted.xlsx");
+        convert_to_xlsx(&source, &target).unwrap();
+
+        let sheet = read_entry(&target, "xl/worksheets/sheet1.xml");
+        assert!(
+            sheet.contains(r#"<c r="A1" t="e"><v>#N/A</v></c>"#),
+            "{sheet}"
+        );
+        assert!(
+            sheet.contains(r#"<c r="B1" t="e"><v>#DIV/0!</v></c>"#),
+            "{sheet}"
+        );
+        assert!(
+            sheet.contains(
+                r#"<c r="C1" t="inlineStr"><is><t xml:space="preserve">see #N/A here</t></is></c>"#
+            ),
+            "{sheet}"
+        );
+    }
+
+    #[test]
+    fn keeps_a_row_height_repeated_over_a_span_too_wide_to_expand() {
+        let styles = r#"<style:style style:name="ro1" style:family="table-row"><style:table-row-properties style:row-height="1in"/></style:style>"#;
+        let body = concat!(
+            r#"<table:table table:name="Tall">"#,
+            r#"<table:table-row>"#,
+            r#"<table:table-cell office:value-type="float" office:value="1"><text:p>1</text:p></table:table-cell>"#,
+            r#"</table:table-row>"#,
+            // Five thousand empty rows at a hand-set height: one `row` element
+            // per line would put the most of the grid into the file.
+            r#"<table:table-row table:style-name="ro1" table:number-rows-repeated="5000"><table:table-cell/></table:table-row>"#,
+            r#"</table:table>"#,
+        );
+        let dir = tempfile::tempdir().unwrap();
+        let source = dir.path().join("tall.ods");
+        write_ods_fixture(&source, styles, body);
+        let target = dir.path().join("converted.xlsx");
+        convert_to_xlsx(&source, &target).unwrap();
+
+        let sheet = read_entry(&target, "xl/worksheets/sheet1.xml");
+        // 1in is 72 points. The span covers the sheet's empty tail, so the
+        // height is the sheet's default rather than an edit to each row — but
+        // it must not be dropped.
+        assert!(
+            sheet.contains(r#"<sheetFormatPr defaultRowHeight="72.00" customHeight="1"/>"#),
+            "{sheet}"
+        );
+        assert!(!sheet.contains(r#"<row r="5001""#), "{sheet}");
+    }
+
+    #[test]
+    fn carries_a_row_height_repeated_over_rows_that_hold_data() {
+        let styles = r#"<style:style style:name="ro1" style:family="table-row"><style:table-row-properties style:row-height="1in"/></style:style>"#;
+        let body = concat!(
+            r#"<table:table table:name="Tall">"#,
+            r#"<table:table-row table:style-name="ro1" table:number-rows-repeated="5000">"#,
+            r#"<table:table-cell office:value-type="float" office:value="1"><text:p>1</text:p></table:table-cell>"#,
+            r#"</table:table-row>"#,
+            r#"</table:table>"#,
+        );
+        let dir = tempfile::tempdir().unwrap();
+        let source = dir.path().join("tall-data.ods");
+        write_ods_fixture(&source, styles, body);
+        let target = dir.path().join("converted.xlsx");
+        convert_to_xlsx(&source, &target).unwrap();
+
+        let sheet = read_entry(&target, "xl/worksheets/sheet1.xml");
+        // The span sits over rows that hold data, so the rows that matter keep
+        // the height; the writer never expands the span past them.
+        assert!(
+            sheet.contains(r#"<row r="1" ht="72.00" customHeight="1">"#),
+            "{sheet}"
+        );
+        assert!(
+            sheet.contains(r#"<row r="5000" ht="72.00" customHeight="1">"#),
+            "{sheet}"
+        );
+        assert!(!sheet.contains(r#"<row r="5001""#), "{sheet}");
     }
 
     #[test]

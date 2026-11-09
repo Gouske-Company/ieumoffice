@@ -390,6 +390,40 @@ describe('keys the main process takes first and hands back (Ctrl+Shift+S, Ctrl+S
     expect(outside.win.__ieumHancomKey!('ctrl-shift-h')).toBe(false)
   })
 
+  it("copies and cuts a selected table or picture for a Mac's Cmd+C/X, not for Ctrl+C/X", () => {
+    // macOS runs an untaken Cmd+C/X as webContents.copy()/cut(); the page's copy and
+    // cut events carry no selected table, so the studio's edit command does it (issue #311)
+    for (const selected of ['table', 'picture'] as const) {
+      const win: { __ieumHancomKey?: (name: string) => boolean } = {}
+      const dispatcher = { isEnabled: vi.fn(() => true), dispatch: vi.fn(() => true) }
+      const ih = {
+        cursor: {
+          isInCellSelectionMode: () => false,
+          isInTableObjectSelection: () => selected === 'table',
+          isInPictureObjectSelection: () => selected === 'picture',
+        },
+      }
+      installHancomMainKeys(win, () => ih, dispatcher)
+      // elsewhere the resent key reaches the studio's own keydown, which does the same
+      expect(win.__ieumHancomKey!('ctrl-c'), selected).toBe(false)
+      expect(win.__ieumHancomKey!('ctrl-x'), selected).toBe(false)
+      expect(dispatcher.dispatch, selected).not.toHaveBeenCalled()
+      expect(win.__ieumHancomKey!('cmd-c'), selected).toBe(true)
+      expect(win.__ieumHancomKey!('cmd-x'), selected).toBe(true)
+      expect(
+        dispatcher.dispatch.mock.calls.map((call) => call[0]),
+        selected,
+      ).toEqual(['edit:copy', 'edit:cut'])
+    }
+  })
+
+  it("leaves a Mac's Cmd+C/X on text to the page's copy and cut", () => {
+    const { win, dispatcher } = studio([], false)
+    expect(win.__ieumHancomKey!('cmd-c')).toBe(false)
+    expect(win.__ieumHancomKey!('cmd-x')).toBe(false)
+    expect(dispatcher.dispatch).not.toHaveBeenCalled()
+  })
+
   it('says no to a key it does not know and to an editor that throws', () => {
     const { win } = studio([], false)
     expect(win.__ieumHancomKey!('ctrl-shift-x')).toBe(false)

@@ -25,12 +25,13 @@ import { ptFromHwp } from './units'
 const SECTION = 0
 
 /**
- * Body paragraphs per section while writing. Every paragraph format call lays
- * out its whole section again, so one long section makes the conversion
- * quadratic (a 1,000 paragraph document took 42 s, in sections of 200 under
- * 7 s); the sections are joined into one at the end.
+ * Body paragraphs per section while writing. Every paragraph format or style
+ * call lays out its whole section again, even in batch mode, so one long
+ * section makes the conversion quadratic (1,000 paragraphs took 42 s); the
+ * sections are joined into one at the end. Of 50, 100, 200 and 400, sections
+ * of 100 were fastest on both 100-page test documents.
  */
-export const SECTION_CHUNK = 200
+export const SECTION_CHUNK = 100
 
 /** the engine's seven font slots; Hangul, Hanja and Japanese take the East Asian face */
 const EAST_ASIAN_SLOTS: ReadonlySet<number> = new Set([0, 2, 3])

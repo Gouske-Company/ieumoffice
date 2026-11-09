@@ -621,6 +621,7 @@ fn handle_request(
                 to_json_value(serde_json::json!({
                     "sheets": result.sheets,
                     "cells": result.cells,
+                    "formulasDropped": result.formulas_dropped,
                 }))
             })
         }
@@ -999,5 +1000,36 @@ mod tests {
             .unwrap();
         assert!(!response.ok);
         assert_eq!(response.error.unwrap().code, "recalc_busy");
+    }
+
+    /// `convert_workbook` answers with the ODF formula loss it took, so the
+    /// window can say how many cells came over as values only (decision 0118).
+    #[test]
+    fn convert_workbook_reports_dropped_formulas() {
+        let dir = tempfile::tempdir().unwrap();
+        let source = dir.path().join("book.xlsx");
+        write_workbook(&source);
+        let target = dir.path().join("converted.xlsx");
+        let request = serde_json::json!({
+            "version": 1,
+            "requestId": "c1",
+            "command": "convert_workbook",
+            "path": source,
+            "targetPath": target,
+        });
+        let result = expect_ok(
+            handle_line(
+                &request.to_string(),
+                &mut WorkbookSessions::new(),
+                &RecalcWorker::new(),
+                &CancelledRequests::new(),
+                &InFlightRequest::new(),
+                &Arc::new(Mutex::new(BufWriter::new(io::stdout()))),
+            )
+            .unwrap(),
+        );
+        assert_eq!(result["sheets"], serde_json::json!(1));
+        assert_eq!(result["cells"], serde_json::json!(2));
+        assert_eq!(result["formulasDropped"], serde_json::json!(0));
     }
 }

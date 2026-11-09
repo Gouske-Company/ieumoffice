@@ -27,6 +27,8 @@ mod visuals;
 mod cell_images;
 mod escher;
 pub mod external_links;
+mod odf_formula;
+mod odf_layout;
 mod refs;
 mod sparklines;
 mod table_styles;

@@ -105,6 +105,8 @@ pub(crate) fn convert_to_xlsx(source: &Path, target: &Path) -> Result<ConvertRes
     Ok(ConvertResult {
         sheets: sheets.len(),
         cells,
+        // XML spreadsheets carry no OpenFormula, so nothing is translated away.
+        formulas_dropped: 0,
     })
 }
 

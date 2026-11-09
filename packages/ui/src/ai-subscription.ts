@@ -256,7 +256,12 @@ function cliCardView(
   if (status.signingIn) return signingInCardView(status, terminalWindows, options)
   const view = connectionCardView(status, terminalWindows)
   if (status.state === 'not-installed' && !terminalWindows) {
-    return { ...view, noteKeys: [], actions: ['install-help'], links: ['install-help'] }
+    return {
+      ...view,
+      noteKeys: desktopAppNoteOf(status.provider),
+      actions: ['install-help'],
+      links: ['install-help'],
+    }
   }
   if (view.detailKey && subscriptionStatusErrorKind(status) === 'needs-update') {
     // the copy a Linux terminal under WSL updates is not the one Windows runs;
@@ -428,6 +433,10 @@ function connectionCardView(
   }
 }
 
+function desktopAppNoteOf(provider: AiSubscriptionProviderId): AiSubscriptionStringKey[] {
+  return provider === 'claude-code' ? ['claudeDesktopNote'] : []
+}
+
 function connectionCardParts(
   status: AiSubscriptionStatus,
   terminalWindows: boolean,
@@ -441,7 +450,7 @@ function connectionCardParts(
         ...base,
         tone: 'neutral',
         statusKey: 'cardNotInstalled',
-        noteKeys: ['installNote', 'installReturnNote'],
+        noteKeys: [...desktopAppNoteOf(status.provider), 'installNote', 'installReturnNote'],
         actions: ['install', 'install-help'],
       }
     case 'signed-out': {
@@ -514,7 +523,7 @@ function connectionCardParts(
         ...base,
         tone: 'error',
         statusKey: 'cardError',
-        noteKeys: [],
+        noteKeys: kind === 'needs-update' ? desktopAppNoteOf(status.provider) : [],
         ...(outdated
           ? { detailKey: 'cardErrNeedsUpdateVersion', detailParams: outdated }
           : { detailKey: STATUS_ERROR_KEYS[kind ?? 'failed'] }),

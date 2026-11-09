@@ -22,18 +22,22 @@ Een vaardigheid is een set werkinstructies voor de AI. Leg iets wat je steeds op
 - Een ingebouwde vaardigheid wordt verborgen in plaats van verwijderd: kies **Verbergen**. **Weer tonen** onderaan de lijst haalt hem terug zoals hij in het begin was.
 - Wil je een ingebouwde vaardigheid of een vaardigheid uit een ander programma aanpassen, kies dan **Kopiëren naar mijn vaardigheden**. De kopie verschijnt bij mijn vaardigheden en het origineel gaat uit.
 - Exporteer je een vaardigheid met een sjabloon, dan gaat het sjabloondocument ook mee in de zip. Controleer vóór het exporteren dat het document geen persoonsgegevens bevat.
+- **Meerdere exporteren** boven aan de pagina zet de vaardigheden die je aanvinkt in één zip-bestand, een map per vaardigheid. Wie de zip krijgt, voegt die toe zoals elke andere vaardigheids-zip en kan kiezen welke vaardigheden eruit te installeren.
 
 ## Een vaardigheid toevoegen
 
 1. Klik in **Instellingen ▸ Vaardigheden** op **Toevoegen**.
-2. Kies **Uit een map**, **Uit een zip-bestand** of **Via een GitHub-link**. Voor GitHub vul je het adres van een openbare repository of `owner/repo` in en klik je op **Zoeken**.
-3. Bekijk de gevonden vaardigheden in het voorbeeld. Je ziet het aantal en de grootte van de bestanden, of er scripts in zitten, de webadressen in de tekst en het licentiebestand.
+2. Kies **Uit een map**, **Uit een zip-bestand**, **Uit geplakte tekst** of **Via een GitHub-link**. Voor geplakte tekst plak je de hele `SKILL.md`, vanaf de eerste regel `---`, en klik je op **Voorbeeld**. Voor GitHub vul je het adres van een openbare repository, `owner/repo` of de pagina van een vaardigheid op skills.sh in en klik je op **Zoeken**.
+3. Bekijk de gevonden vaardigheden in het voorbeeld. Je ziet het aantal en de grootte van de bestanden, of er scripts in zitten, de webadressen in de tekst, het licentiebestand en de regels om te lezen voordat je installeert.
 4. Vink alleen de vaardigheden aan die je wilt installeren en klik op **Installeren**. Geïnstalleerde vaardigheden staan meteen aan.
 
 Onder het voorbeeld staat altijd: "Installeer alleen vaardigheden uit bronnen die je vertrouwt. Een vaardigheid geeft de AI instructies en kan in het agentvenster scripts uitvoeren". Lees een vaardigheid uit een onbekende bron door voordat je hem installeert.
 
 - Staat er bij mijn vaardigheden al een met dezelfde naam, kies dan op die rij **Vervangen** of **Overslaan**.
+- Je kunt het zip-bestand van een vaardigheid of een `SKILL.md`-bestand ook op een willekeurig GenOffice-venster neerzetten. **Instellingen ▸ Vaardigheden** opent dan met hetzelfde voorbeeld. Een zip telt als vaardigheid als `SKILL.md` op het hoogste niveau staat of elke map op het hoogste niveau er een bevat; met elke andere zip gebeurt niets. Een `SKILL.md`-bestand komt alleen binnen: zet een vaardigheid met meer bestanden in een zip.
+- **Regels om te lezen voordat je installeert** zijn regels die de AI vragen eerdere instructies te negeren, iets voor je verborgen te houden of instructies van een extern adres te halen, en `../`-paden die buiten de vaardigheidsmap wijzen. Bij elke regel staan het bestand en het regelnummer. Ze houden de installatie niet tegen, en een vaardigheid zonder zulke regels is daarom nog niet veilig.
 - Bij het downloaden van GitHub maakt GenOffice alleen verbinding met `github.com`, `api.github.com` en `codeload.github.com`, en stuurt het geen aanmeldgegevens mee. Is het archief te groot of komt het niet door de veiligheidscontroles, dan wordt er niets geïnstalleerd.
+- De pagina van een vaardigheid op skills.sh (`https://skills.sh/owner/repo/skill`) wordt gelezen als die vaardigheid in de GitHub-repository `owner/repo`. GenOffice maakt geen verbinding met skills.sh.
 - **Nieuwe vaardigheid** opent een lege editor waarin je zelf de naam, beschrijving en instructies schrijft.
 
 ## Op updates controleren

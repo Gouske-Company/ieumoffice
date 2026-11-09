@@ -95,7 +95,7 @@ export const en = {
   githubLabel: 'GitHub address',
   githubPlaceholder: 'https://github.com/owner/repo',
   githubHint:
-    'Public repositories only. Paste a repository, folder or SKILL.md address, or "owner/repo".',
+    'Public repositories only. Enter the address of a repository, a folder or a SKILL.md, "owner/repo", or a skill\'s page on skills.sh.',
   githubFind: 'Find',
   githubFetching: 'Downloading from GitHub…',
   importReading: 'Reading the skills…',
@@ -139,4 +139,28 @@ export const en = {
   failEmptyBody: 'Enter the instructions',
   failBadName: 'The name does not fit the rules',
   failGeneric: 'That did not work. Try again',
+  addPaste: 'From pasted text',
+  pasteTitle: 'Add by pasting text',
+  pasteLabel: 'SKILL.md text',
+  pasteHint:
+    'Paste the whole SKILL.md text, starting with the --- line and the name: and description: lines below it.',
+  pastePreview: 'Preview',
+  pasteNotSkill:
+    'This is not skill text. It has to start with a --- line followed by a name: line.',
+  previewFromText: 'Skills found in the pasted text: {n}',
+  previewFromSkillFile: 'Skills found in the SKILL.md file: {n}',
+  previewWarnings: 'Lines worth reading before you install: {n}',
+  previewWarningsNote:
+    'These lines matched a short list of patterns. A skill with no lines here is not therefore safe.',
+  previewWarningAt: '{file}, line {line}',
+  warnIgnoreInstructions: 'Asks the AI to ignore earlier instructions',
+  warnHideFromUser: 'Asks the AI to keep something from you',
+  warnRemoteInstructions: 'Asks the AI to take instructions from an outside address',
+  warnParentPath: 'A ../ path that points outside the skill folder',
+  exportSeveral: 'Export several',
+  bundleTitle: 'Export skills together',
+  bundleIntro:
+    'The skills you tick go into one zip file, a folder per skill. Whoever gets it can drop the zip on an app window, or use Add ▸ From a zip file.',
+  bundleSelectLabel: 'Include {title}',
+  bundleExport: 'Export ({n})',
 } satisfies Record<keyof typeof zh, string>

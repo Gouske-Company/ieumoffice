@@ -93,7 +93,7 @@ export const ja = {
   githubLabel: 'GitHub のアドレス',
   githubPlaceholder: 'https://github.com/所有者/リポジトリ',
   githubHint:
-    '公開リポジトリのみ対応しています。リポジトリ、フォルダー、SKILL.md のアドレス、または「所有者/リポジトリ」を貼り付けてください。',
+    '公開リポジトリのみ対応しています。リポジトリ、フォルダー、SKILL.md のアドレス、「所有者/リポジトリ」、または skills.sh のスキルのページを貼り付けてください。',
   githubFind: '検索',
   githubFetching: 'GitHub からダウンロード中…',
   importReading: 'スキルを読み込み中…',
@@ -137,4 +137,28 @@ export const ja = {
   failEmptyBody: '本文を入力してください',
   failBadName: '名前がルールに合っていません',
   failGeneric: 'うまくいきませんでした。もう一度お試しください',
+  addPaste: '貼り付けたテキストから',
+  pasteTitle: 'テキストを貼り付けて追加',
+  pasteLabel: 'SKILL.md のテキスト',
+  pasteHint:
+    'SKILL.md のテキスト全体を、--- の行とその下の name:、description: の行から貼り付けてください。',
+  pastePreview: 'プレビュー',
+  pasteNotSkill:
+    'スキルのテキストではありません。先頭が --- の行で、その下に name: の行が必要です。',
+  previewFromText: '貼り付けたテキスト内に {n} 件のスキルが見つかりました',
+  previewFromSkillFile: 'SKILL.md ファイル内に {n} 件のスキルが見つかりました',
+  previewWarnings: 'インストール前に読んでおきたい行 {n} 件',
+  previewWarningsNote:
+    'いくつかの決まったパターンに当てはまった行です。ここに行がひとつもなくても、安全なスキルとは限りません。',
+  previewWarningAt: '{file} の {line} 行目',
+  warnIgnoreInstructions: 'AI に前の指示を無視するよう求める文',
+  warnHideFromUser: 'AI に何かをあなたに隠すよう求める文',
+  warnRemoteInstructions: 'AI に外部のアドレスから指示を受け取るよう求める文',
+  warnParentPath: 'スキルフォルダーの外を指す ../ パス',
+  exportSeveral: '複数をエクスポート',
+  bundleTitle: 'スキルをまとめてエクスポート',
+  bundleIntro:
+    'チェックを入れたスキルを、スキルごとのフォルダーにして 1 つの zip ファイルにまとめます。受け取った人は、その zip をアプリのウィンドウにドロップするか、追加 ▸ zip ファイルから で取り込めます。',
+  bundleSelectLabel: '{title} を含める',
+  bundleExport: 'エクスポート ({n} 件)',
 } satisfies Record<keyof typeof zh, string>

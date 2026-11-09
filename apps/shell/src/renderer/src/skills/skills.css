@@ -445,6 +445,40 @@
   word-break: break-all;
 }
 
+.skl-line-warnings {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--danger-border);
+  border-radius: 8px;
+  background: var(--danger-bg);
+}
+
+.skl-line-warnings-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.skl-line-warnings ul {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding-inline-start: 16px;
+  font-size: 12px;
+  color: var(--text);
+}
+
+.skl-line-warnings code {
+  display: block;
+  font-size: 11px;
+  color: var(--text-secondary);
+  word-break: break-all;
+}
+
 .skl-collision {
   display: flex;
   flex-wrap: wrap;

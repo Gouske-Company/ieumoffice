@@ -94,7 +94,7 @@ export const hi = {
   githubLabel: 'GitHub पता',
   githubPlaceholder: 'https://github.com/मालिक/रिपॉज़िटरी',
   githubHint:
-    'सिर्फ़ सार्वजनिक रिपॉज़िटरी। किसी रिपॉज़िटरी, फ़ोल्डर या SKILL.md का पता, या "मालिक/रिपॉज़िटरी" चिपकाएँ।',
+    'सिर्फ़ सार्वजनिक रिपॉज़िटरी। किसी रिपॉज़िटरी, फ़ोल्डर या SKILL.md का पता, "मालिक/रिपॉज़िटरी", या skills.sh पर किसी कौशल का पेज चिपकाएँ।',
   githubFind: 'खोजें',
   githubFetching: 'GitHub से डाउनलोड हो रहा है…',
   importReading: 'कौशल पढ़े जा रहे हैं…',
@@ -137,4 +137,28 @@ export const hi = {
   failEmptyBody: 'निर्देश लिखें',
   failBadName: 'नाम नियमों के अनुसार नहीं है',
   failGeneric: 'यह नहीं हो सका। फिर से कोशिश करें',
+  addPaste: 'चिपकाए गए टेक्स्ट से',
+  pasteTitle: 'टेक्स्ट चिपकाकर जोड़ें',
+  pasteLabel: 'SKILL.md का टेक्स्ट',
+  pasteHint:
+    'SKILL.md का पूरा टेक्स्ट चिपकाएँ, --- वाली पंक्ति और उसके नीचे की name: और description: पंक्तियों से शुरू करके।',
+  pastePreview: 'पूर्वावलोकन',
+  pasteNotSkill:
+    'यह कौशल का टेक्स्ट नहीं है। इसकी शुरुआत --- वाली पंक्ति से होनी चाहिए, जिसके बाद name: वाली पंक्ति हो।',
+  previewFromText: 'चिपकाए गए टेक्स्ट में {n} कौशल मिले',
+  previewFromSkillFile: 'SKILL.md फ़ाइल में {n} कौशल मिले',
+  previewWarnings: 'इंस्टॉल करने से पहले पढ़ने लायक पंक्तियाँ: {n}',
+  previewWarningsNote:
+    'ये पंक्तियाँ पैटर्न की एक छोटी सूची से मेल खाती हैं। अगर यहाँ कोई पंक्ति नहीं है, तो इसका मतलब यह नहीं कि कौशल सुरक्षित है।',
+  previewWarningAt: '{file}, पंक्ति {line}',
+  warnIgnoreInstructions: 'AI से पिछले निर्देशों को अनदेखा करने को कहता है',
+  warnHideFromUser: 'AI से आपसे कुछ छिपाने को कहता है',
+  warnRemoteInstructions: 'AI से किसी बाहरी पते से निर्देश लेने को कहता है',
+  warnParentPath: '../ वाला पथ जो कौशल फ़ोल्डर के बाहर इशारा करता है',
+  exportSeveral: 'कई निर्यात करें',
+  bundleTitle: 'कौशल एक साथ निर्यात करें',
+  bundleIntro:
+    'आप जिन कौशलों पर टिक करते हैं, वे एक zip फ़ाइल में जाते हैं, हर कौशल का अपना फ़ोल्डर। जिसे यह मिले, वह zip को ऐप की विंडो पर छोड़ सकता है, या जोड़ें ▸ zip फ़ाइल से इस्तेमाल कर सकता है।',
+  bundleSelectLabel: '{title} शामिल करें',
+  bundleExport: 'निर्यात करें ({n})',
 } satisfies Record<keyof typeof zh, string>

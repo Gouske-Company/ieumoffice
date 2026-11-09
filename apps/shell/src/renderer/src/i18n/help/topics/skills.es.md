@@ -22,18 +22,22 @@ Una habilidad es un conjunto de instrucciones de trabajo para la IA. Anote una s
 - Una habilidad integrada se oculta en lugar de eliminarse: elija **Ocultar**. **Volver a mostrar**, al final de la lista, la recupera tal como era al principio.
 - Para cambiar una habilidad integrada o una de otro programa, elija **Copiar a mis habilidades**. La copia aparece en mis habilidades y la original se desactiva.
 - Al exportar una habilidad con plantilla, el documento de plantilla también va en el zip. Compruebe que el documento no contenga información personal antes de exportarlo.
+- **Exportar varias**, arriba en la página, pone las habilidades que marque en un solo archivo zip, con una carpeta por habilidad. Quien recibe el zip lo añade igual que cualquier zip de habilidades y puede elegir cuáles de sus habilidades instalar.
 
 ## Añadir una habilidad
 
 1. En **Configuración ▸ Habilidades**, haga clic en **Añadir**.
-2. Elija **Desde una carpeta**, **Desde un archivo zip** o **Desde un enlace de GitHub**. Para GitHub, escriba la dirección de un repositorio público o `owner/repo` y haga clic en **Buscar**.
-3. Revise en la vista previa las habilidades encontradas. Muestra el número y el tamaño de los archivos, si hay scripts, las direcciones web que aparecen en el texto y el archivo de licencia.
+2. Elija **Desde una carpeta**, **Desde un archivo zip**, **Desde texto pegado** o **Desde un enlace de GitHub**. Para el texto pegado, pegue el `SKILL.md` completo, desde su primera línea `---`, y haga clic en **Vista previa**. Para GitHub, escriba la dirección de un repositorio público, `owner/repo` o la página de una habilidad en skills.sh, y haga clic en **Buscar**.
+3. Revise en la vista previa las habilidades encontradas. Muestra el número y el tamaño de los archivos, si hay scripts, las direcciones web que aparecen en el texto, el archivo de licencia y las líneas que conviene leer antes de instalar.
 4. Marque solo las habilidades que quiera instalar y haga clic en **Instalar**. Las habilidades instaladas quedan activadas desde el principio.
 
 Debajo de la vista previa siempre se lee: «Instala habilidades solo de fuentes de confianza. Una habilidad da instrucciones a la IA y, en la ventana del agente, puede ejecutar scripts.» Lea una habilidad de origen desconocido antes de instalarla.
 
 - Si mis habilidades ya tiene una con el mismo nombre, elija **Reemplazar** u **Omitir** en esa fila.
+- También puede soltar el archivo zip de una habilidad o un archivo `SKILL.md` en cualquier ventana de GenOffice. Se abre **Configuración ▸ Habilidades** con la misma vista previa. Un zip cuenta como habilidad cuando `SKILL.md` está en su nivel superior o cada carpeta del nivel superior contiene uno; cualquier otro zip se deja como está. Un archivo `SKILL.md` llega solo: ponga en un zip una habilidad que tenga más archivos.
+- **Líneas que conviene leer antes de instalar**: son las líneas que piden a la IA que ignore las instrucciones anteriores, que le oculte algo o que siga instrucciones de una dirección externa, y las rutas `../` que apuntan fuera de la carpeta de la habilidad. Cada una muestra su archivo y su línea. No impiden la instalación, y una habilidad sin estas líneas no es segura por eso.
 - Al descargar desde GitHub, GenOffice solo se conecta a `github.com`, `api.github.com` y `codeload.github.com`, y no envía ningún dato de inicio de sesión. Si el archivo comprimido es demasiado grande o no supera las comprobaciones de seguridad, no se instala nada.
+- La página de una habilidad en skills.sh (`https://skills.sh/owner/repo/skill`) se lee como esa habilidad del repositorio de GitHub `owner/repo`. GenOffice no se conecta a skills.sh.
 - **Nueva habilidad** abre un editor vacío donde usted mismo escribe el nombre, la descripción y las instrucciones.
 
 ## Buscar actualizaciones

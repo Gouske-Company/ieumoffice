@@ -1,0 +1,26 @@
+{
+  "name": "@genoffice/docx2hwp",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "description": "Word (.docx) to Hangul (.hwp / .hwpx): the docx-engine model rebuilt through the rhwp engine, with a report of what could not be carried",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@genoffice/docx-engine": "*",
+    "@rhwp/core": "file:../../vendor/rhwp-core"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "jszip": "^3.10.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.12"
+  }
+}

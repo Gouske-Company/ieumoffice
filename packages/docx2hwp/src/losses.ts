@@ -21,6 +21,7 @@ export const LOSS_FEATURES = {
   page_border: 'dropped',
   para_border: 'dropped',
   line_numbers: 'dropped',
+  protection: 'dropped',
   hyperlink: 'changed',
   section: 'changed',
   columns: 'changed',

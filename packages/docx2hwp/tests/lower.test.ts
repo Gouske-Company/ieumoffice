@@ -264,13 +264,18 @@ describe('lowering rules', () => {
     ])
   })
 
-  it('flattens a nested table into its cell, where Word put it, and says so', async () => {
-    const nested = { rows: [[{ paras: ['in 1'] }, { paras: ['in 2'] }]] }
+  it('keeps a nested table where Word put it, its percent widths of the cell', async () => {
+    const nested = {
+      rows: [[{ paras: ['in 1'] }, { paras: ['in 2'] }]],
+      widthPct: 50,
+      colWidthsPct: [50, 50],
+    }
     const { plan, losses } = lower(
       await withBlocks([
         {
           type: 'table',
           table: {
+            colWidthsTwips: [4000],
             rows: [
               [{ paras: ['before', 'after'], nestedTables: [nested], nestedTableAnchors: [1] }],
             ],
@@ -278,9 +283,43 @@ describe('lowering rules', () => {
         },
       ]),
     )
-    const table = plan.body[0] as Table
-    expect(texts(table.cells[0].body)).toEqual(['before', 'in 1', 'in 2', 'after'])
-    expect(losses).toEqual([{ feature: 'nested_table', kind: 'changed', count: 1 }])
+    const [cell] = (plan.body[0] as Table).cells
+    expect(texts(cell.body)).toEqual(['before', '[table]', 'after'])
+    const inner = cell.body[1] as Table
+    expect(inner.cells.map((c) => texts(c.body))).toEqual([['in 1'], ['in 2']])
+    // half of the cell inside Word's 0.08 inch side margins (4000 - 2 * 108 twips), in halves
+    expect(inner.colWidths).toEqual([4730, 4730])
+    expect(losses).toEqual([])
+  })
+
+  it('narrows a nested table wider than its cell to fit inside the cell margins', async () => {
+    const nested = { rows: [[{ paras: ['a'] }, { paras: ['b'] }]], colWidthsTwips: [3000, 1000] }
+    const { plan } = lower(
+      await withBlocks([
+        {
+          type: 'table',
+          table: { colWidthsTwips: [4000], rows: [[{ paras: [''], nestedTables: [nested] }]] },
+        },
+      ]),
+    )
+    const inner = (plan.body[0] as Table).cells[0].body[1] as Table
+    // 4000 - 2 * 108 twips, shared 3 : 1, in halves
+    expect(inner.colWidths).toEqual([14190, 4730])
+  })
+
+  it('says so when Word nests tables deeper than docx-engine reads them', async () => {
+    // twelve tables, each in the last: docx-engine reads eight and hands the other four over
+    // as one table of plain paragraphs
+    const nested = (story: readonly Block[]): Table | undefined =>
+      story.find((b): b is Table => b.kind === 'table')
+    let table = nested(lower(await parse(`${FIXTURES}/deep.docx`)).plan.body)
+    let tables = 0
+    for (; table; table = nested(table.cells[0].body)) tables++
+    expect(tables).toBe(9)
+    expect(lower(await parse(`${FIXTURES}/deep.docx`)).losses).toEqual([
+      { feature: 'nested_table', kind: 'changed', count: 1 },
+    ])
+    expect(lower(await parse(`${FIXTURES}/nested.docx`)).losses).toEqual([])
   })
 
   it('writes a table of contents line as text with a right tab', async () => {

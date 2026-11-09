@@ -56,7 +56,6 @@ import {
   ratioPercent,
   rgbOf,
   spacingPercent,
-  type HwpUnit,
 } from './units'
 
 /** Hangul's own body face: kept for a slot the Word run leaves empty */
@@ -66,6 +65,11 @@ export const DEFAULT_FACE = '함초롬바탕'
 const AUTO_SPACING_TWIPS = 280
 /** Word's default cell margins: 0.08 inch left and right, none above and below */
 const WORD_CELL_MARGIN_LR = 108
+/**
+ * docx-engine's table nesting cap (MAX_TABLE_NEST_DEPTH): a table this deep
+ * arrives as one 1×1 table holding the plain paragraphs of everything below
+ */
+const WORD_NESTING_CAP = 8
 /** Hangul numbering has seven levels */
 const MAX_LEVEL = 6
 
@@ -149,7 +153,8 @@ const BLOCK_LOWERINGS: { [T in BlockType]: (cx: Cx, block: WordBlock, where: str
     paragraph: (cx, block, where) => paragraphBlocks(cx, block, where),
     heading: (cx, block, where) => paragraphBlocks(cx, block, where),
     listItem: (cx, block, where) => paragraphBlocks(cx, block, where),
-    table: (cx, block, where) => (block.table ? [tableOf(cx, block.table, where)] : []),
+    table: (cx, block, where) =>
+      block.table ? [tableOf(cx, block.table, where, cx.bodyTwips, 0)] : [],
     image: (cx, block, where) => imageBlocks(cx, block, where),
     passthrough: (cx, block, where) => passthroughBlocks(cx, block, where),
   }
@@ -800,8 +805,22 @@ function borderOf(cx: Cx, border: CellBorder | undefined, where: string): Border
   }
 }
 
-function tableOf(cx: Cx, table: TableModel, where: string): Table {
+/**
+ * `widthTwips` is the room the table sits in: the body, or a cell inside its
+ * margins; `depth` is 0 for a body table. A table in a cell is narrowed to fit
+ * that room: Word lets it reach into the cell margins, Hangul keeps it inside
+ * them and cuts off the rest. A body table keeps Word's width, as Hangul lets
+ * it run into the page margin.
+ */
+function tableOf(
+  cx: Cx,
+  table: TableModel,
+  where: string,
+  widthTwips: number,
+  depth: number,
+): Table {
   const { ledger } = cx
+  if (depth >= WORD_NESTING_CAP) ledger.note('nested_table', where)
   if (table.floatPos || table.floatSide || (table.cellSpacingTwips ?? 0) > 0 || table.bidiVisual) {
     ledger.note('table_layout', where)
   }
@@ -821,6 +840,7 @@ function tableOf(cx: Cx, table: TableModel, where: string): Table {
     1,
     ...grid.map((row) => row.reduce((n, c) => n + Math.max(1, c.cell.colSpan ?? 1), 0)),
   )
+  const colTwips = columnTwips(table, colCount, widthTwips, depth > 0)
   const rowSpanAt = (r: number, col: number): number => {
     let span = 1
     for (let below = r + 1; below < grid.length; below++) {
@@ -857,6 +877,10 @@ function tableOf(cx: Cx, table: TableModel, where: string): Table {
         ledger.note('text_direction', cellWhere)
       if (cell.anchoredBoxes?.length) ledger.note('textbox', cellWhere)
       const margins = { ...table.cellMarTwips, ...cell.cellMarTwips }
+      const marginLeft = margins.left ?? WORD_CELL_MARGIN_LR
+      const marginRight = margins.right ?? WORD_CELL_MARGIN_LR
+      const innerTwips =
+        colTwips.slice(col, col + colSpan).reduce((sum, w) => sum + w, 0) - marginLeft - marginRight
       const gap = cell.gridGap === true
       cells.push({
         row: r,
@@ -883,16 +907,16 @@ function tableOf(cx: Cx, table: TableModel, where: string): Table {
         padding: {
           top: hwpFromTwips(margins.top ?? 0),
           bottom: hwpFromTwips(margins.bottom ?? 0),
-          left: hwpFromTwips(margins.left ?? WORD_CELL_MARGIN_LR),
-          right: hwpFromTwips(margins.right ?? WORD_CELL_MARGIN_LR),
+          left: hwpFromTwips(marginLeft),
+          right: hwpFromTwips(marginRight),
         },
-        body: gap ? [] : cellBody(cx, cell, cellWhere),
+        body: gap ? [] : cellBody(cx, cell, cellWhere, Math.max(1, innerTwips), depth + 1),
       })
     }
   })
   return {
     kind: 'table',
-    colWidths: columnWidths(cx, table, colCount),
+    colWidths: colTwips.map((w) => hwpFromTwips(w)),
     rowHeights: table.rows.map((_, r) => {
       const twips = table.rowHeightsTwips?.[r]
       return twips ? hwpFromTwips(twips) : null
@@ -903,18 +927,35 @@ function tableOf(cx: Cx, table: TableModel, where: string): Table {
   }
 }
 
-function columnWidths(cx: Cx, table: TableModel, colCount: number): HwpUnit[] {
-  const tableTwips = table.widthPct ? (cx.bodyTwips * table.widthPct) / 100 : cx.bodyTwips
+function columnTwips(
+  table: TableModel,
+  colCount: number,
+  widthTwips: number,
+  fit: boolean,
+): number[] {
+  const tableTwips = table.widthPct ? (widthTwips * table.widthPct) / 100 : widthTwips
   const twips =
     table.colWidthsTwips?.length === colCount && !table.widthPct
       ? table.colWidthsTwips
       : table.colWidthsPct?.length === colCount
         ? table.colWidthsPct.map((pct) => (tableTwips * pct) / 100)
         : Array.from({ length: colCount }, () => tableTwips / colCount)
-  return twips.map((w) => hwpFromTwips(w))
+  const total = twips.reduce((sum, w) => sum + w, 0)
+  if (!fit || total <= widthTwips) return twips
+  return twips.map((w) => (w * widthTwips) / total)
 }
 
-function cellBody(cx: Cx, cell: TableCell, where: string): Para[] {
+/**
+ * The cell's paragraphs with its nested tables between them, where Word put
+ * each; `depth` is that of the nested tables.
+ */
+function cellBody(
+  cx: Cx,
+  cell: TableCell,
+  where: string,
+  widthTwips: number,
+  depth: number,
+): Block[] {
   const paras: Para[] = cell.richParas
     ? cell.richParas.map((p, i) =>
         paraOf(
@@ -930,22 +971,20 @@ function cellBody(cx: Cx, cell: TableCell, where: string): Para[] {
           text ? [{ kind: 'text', text, chars: plainChars() }] : [],
         ),
       )
-  const nested = cell.nestedTables ?? []
-  if (nested.length === 0) return paras
-  // a nested table's paragraphs take its place, after the cell paragraphs that
-  // precede it in Word (the engine's createTableInCellByPath could build it; not yet)
-  const out = [...paras]
+  const out: Block[] = [...paras]
+  const nested = (cell.nestedTables ?? []).map((table, i) => ({
+    table,
+    at: cell.nestedTableAnchors?.[i] ?? paras.length,
+    i,
+  }))
   nested
-    .map((table, i) => ({ table, at: cell.nestedTableAnchors?.[i] ?? paras.length, i }))
+    // from the last anchor back, so earlier anchors still count paragraphs only
     .sort((a, b) => b.at - a.at || b.i - a.i)
     .forEach(({ table, at, i }) => {
-      cx.ledger.note('nested_table', `${where}/t${i}`)
-      out.splice(at, 0, ...flattened(tableOf(cx, table, `${where}/t${i}`)))
+      out.splice(at, 0, tableOf(cx, table, `${where}/t${i}`, widthTwips, depth))
     })
   return out
 }
-
-const flattened = (table: Table): Para[] => table.cells.flatMap((cell) => cell.body)
 
 // ---------------------------------------------------------------- header and footer
 

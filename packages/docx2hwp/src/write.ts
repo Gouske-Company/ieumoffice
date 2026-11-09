@@ -116,7 +116,7 @@ export function writePlan(
   ] as const) {
     if (!story) continue
     call('header or footer', () => doc.createHeaderFooter(SECTION, header, 0))
-    writeStory(cx, opsOf(doc, { kind: 'hf', sec: SECTION, header }), story)
+    writeStory(cx, opsOf(doc, { kind: 'hf', sec: SECTION, header }), story, null)
   }
 }
 
@@ -141,22 +141,41 @@ function writeBody(cx: WriteContext, body: Story, chunk: number): void {
       ops = opsOf(doc, { kind: 'body', sec })
       cursor.moveTo(ops)
     }
-    writeBlock(cx, ops, cursor, block)
+    writeBlock(cx, cursor, block, cursor)
   })
   for (let s = sec; s > SECTION; s--) call('section', () => doc.mergeSection(s))
   cursor.moveTo(opsOf(doc, { kind: 'body', sec: SECTION }))
   cursor.close()
 }
 
-function writeStory(cx: WriteContext, ops: PlaceOps, story: Story): void {
+/** `body` is where tables are built: null in a header or footer, which holds none */
+function writeStory(
+  cx: WriteContext,
+  ops: PlaceOps,
+  story: Story,
+  body: ParagraphCursor | null,
+): void {
   const cursor = new ParagraphCursor(ops)
-  for (const block of story) writeBlock(cx, ops, cursor, block)
+  for (const block of story) writeBlock(cx, cursor, block, body)
   cursor.close()
 }
 
-function writeBlock(cx: WriteContext, ops: PlaceOps, cursor: ParagraphCursor, block: Block): void {
-  if (block.kind === 'para') writePara(cx, ops, cursor.start(paraShaping(cx, block)), block)
-  else writeTable(cx, ops, cursor.start(tableShaping(cx, block)), block)
+function writeBlock(
+  cx: WriteContext,
+  cursor: ParagraphCursor,
+  block: Block,
+  body: ParagraphCursor | null,
+): void {
+  if (block.kind === 'para') {
+    writePara(cx, cursor.ops, cursor.start(paraShaping(cx, block)), block)
+  } else if (!body) {
+    cx.ledger.note('table', `${placeKey(cursor.ops.place)}/p${cursor.ops.count() - 1}`)
+  } else if (cursor === body) {
+    const { p, control } = buildTable(cx, body, block)
+    if (control === null) cx.ledger.note('table', `${placeKey(body.ops.place)}/p${p}`)
+  } else {
+    writeCellTable(cx, cursor, block, body)
+  }
 }
 
 function paraShaping(cx: WriteContext, para: Para): Shaping {
@@ -239,12 +258,7 @@ function writeObject(
 
 /** an engine refusal of one object is reported; the document goes on */
 function refusable(cx: WriteContext, feature: LossFeature, where: string, write: () => void): void {
-  try {
-    write()
-  } catch (err) {
-    if (!(err instanceof EngineCallError)) throw err
-    cx.ledger.note(feature, where)
-  }
+  if (refused(write)) cx.ledger.note(feature, where)
 }
 
 /**
@@ -278,23 +292,25 @@ function writeNote(
 // ---------------------------------------------------------------- tables
 
 /**
- * The table's frame comes from the engine's HTML paste: spans, widths, row
- * heights and borders, with empty cells. Cell content then goes through the
- * same paragraph writer as everything else, and fills are set per cell so the
- * table itself carries none.
+ * Builds the table in a new body paragraph. The frame comes from the
+ * engine's HTML paste: spans, widths, row heights and borders, with empty
+ * cells. Cell content then goes through the same paragraph writer as
+ * everything else, and fills are set per cell so the table itself carries
+ * none. `control` is null when the engine refused the paste.
  */
-function writeTable(cx: WriteContext, ops: PlaceOps, p: number, table: Table): void {
-  const where = `${placeKey(ops.place)}/p${p}`
-  const paste = ops.pasteTable
-  if (!paste) return cx.ledger.note('table', where)
+function buildTable(
+  cx: WriteContext,
+  body: ParagraphCursor,
+  table: Table,
+): { p: number; control: number | null } {
   const doc = cx.doc
+  const ops = body.ops
   const sec = ops.place.sec
-  let control: number
-  try {
-    control = paste(p, skeletonHtml(table))
-  } catch (err) {
-    if (!(err instanceof EngineCallError)) throw err
-    return cx.ledger.note('table', where)
+  const p = body.start(tableShaping(cx, table))
+  // the paragraph may already hold controls (a section's own, at its start)
+  const control = (JSON.parse(doc.getControlTextPositions(sec, p)) as unknown[]).length
+  if (refused(() => call('table', () => doc.pasteHtml(sec, p, 0, skeletonHtml(table))))) {
+    return { p, control: null }
   }
   // the paste gives the paragraph its own shape: the table's alignment goes on after it
   ops.applyPara(p, tableParaJson(table))
@@ -314,7 +330,7 @@ function writeTable(cx: WriteContext, ops: PlaceOps, p: number, table: Table): v
       para: p,
       step: { controlIndex: control, cellIndex, cellParaIndex: 0 },
     }
-    writeStory(cx, opsOf(doc, place), cell.body)
+    writeStory(cx, opsOf(doc, place), cell.body, body)
     call('cell properties', () =>
       doc.setCellProperties(sec, p, control, cellIndex, cellJson(cell, table)),
     )
@@ -323,6 +339,57 @@ function writeTable(cx: WriteContext, ops: PlaceOps, p: number, table: Table): v
     call('table properties', () =>
       doc.setTableProperties(sec, p, control, JSON.stringify({ repeatHeader: true })),
     )
+  }
+  return { p, control }
+}
+
+/**
+ * A table inside a cell is built in the body after everything written so
+ * far, copied, removed from the body and pasted into the cell paragraph. The
+ * engine sets spans, borders, fills and cell margins only on a top-level
+ * table (it has no by-path call for them), so every table is built at the
+ * top level; one nested deeper is moved into its host before the host moves.
+ * When the engine refuses, the table's paragraphs stand in the cell instead.
+ */
+function writeCellTable(
+  cx: WriteContext,
+  cursor: ParagraphCursor,
+  table: Table,
+  body: ParagraphCursor,
+): void {
+  const doc = cx.doc
+  const sec = body.ops.place.sec
+  const where = `${placeKey(cursor.ops.place)}/p${cursor.ops.count() - 1}`
+  const { p, control } = buildTable(cx, body, table)
+  let copied = false
+  if (control !== null) {
+    copied = !refused(() => call('copy table', () => doc.copyControl(sec, p, '', control)))
+    call('table', () => doc.deleteTableControl(sec, p, control))
+  }
+  body.drop(p)
+  const paste = cursor.ops.pasteControl
+  if (copied && paste) {
+    const q = cursor.start(tableShaping(cx, table))
+    if (!refused(() => paste(q))) return
+    cursor.drop(q)
+  }
+  cx.ledger.note('nested_table', where)
+  for (const para of flattened(table)) writeBlock(cx, cursor, para, body)
+}
+
+const flattened = (table: Table): Para[] =>
+  table.cells.flatMap((cell) =>
+    cell.body.flatMap((block) => (block.kind === 'para' ? [block] : flattened(block))),
+  )
+
+/** runs one object's engine call: true when the engine refused it */
+function refused(run: () => unknown): boolean {
+  try {
+    run()
+    return false
+  } catch (err) {
+    if (!(err instanceof EngineCallError)) throw err
+    return true
   }
 }
 

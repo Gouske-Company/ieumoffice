@@ -1582,4 +1582,8 @@ export const ko = {
   appSpellUnavailable: '이 창에서는 맞춤법 검사를 사용할 수 없습니다.',
   appSpellReplaceAll: '모두 "{suggestion}"(으)로 바꾸기',
   appSpellChangedAll: '"{word}"을(를) {count}곳 수정했습니다.',
+
+  // ── ODS import ──
+  appOdsImportNotice: 'ODS를 xlsx 사본으로 열었습니다. 저장하면 xlsx로 저장됩니다.',
+  appOdsFormulasDropped: '수식 {count}개는 값만 남겼습니다.',
 } satisfies Record<keyof typeof zh, string>

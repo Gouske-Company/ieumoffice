@@ -1524,4 +1524,8 @@ export const ar = {
   appSpellUnavailable: 'التدقيق الإملائي غير متاح في هذه النافذة.',
   appSpellReplaceAll: 'استبدال الكل بـ «{suggestion}»',
   appSpellChangedAll: 'تم تصحيح {count} خلية تحتوي على «{word}».',
+
+  // ── ODS import ──
+  appOdsImportNotice: 'تم فتح ملف ODS كنسخة xlsx. سيؤدي الحفظ إلى حفظ ملف xlsx.',
+  appOdsFormulasDropped: 'تم الاحتفاظ بقيم {count} من الصيغ فقط دون صيغها.',
 } satisfies Record<keyof typeof zh, string>

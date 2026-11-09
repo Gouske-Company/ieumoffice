@@ -1523,4 +1523,8 @@ export const th = {
   appSpellUnavailable: 'การตรวจการสะกดไม่พร้อมใช้งานในหน้าต่างนี้',
   appSpellReplaceAll: 'แทนที่ทั้งหมดด้วย "{suggestion}"',
   appSpellChangedAll: 'แก้ไขแล้ว {count} เซลล์ของ "{word}"',
+
+  // ── ODS import ──
+  appOdsImportNotice: 'เปิด ODS เป็นสำเนา xlsx การบันทึกจะเขียนไฟล์ xlsx',
+  appOdsFormulasDropped: 'เก็บไว้เฉพาะค่าใน {count} สูตร',
 } satisfies Record<keyof typeof zh, string>

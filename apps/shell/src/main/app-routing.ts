@@ -5,7 +5,10 @@ import type { DocumentTabKind } from '../shared/tabs-api'
 const DOCX_RE = /\.docx$/i
 // OpenDocument text opens in the Word tab too (apps/docs docFormatOfPath picks the format)
 const ODT_RE = /\.odt$/i
-const XLSX_RE = /\.(xlsx|xlsm|xls|csv|tsv)$/i
+// .ods opens as a converted .xlsx copy in the spreadsheet tab (decision 0119);
+// ODS_RE lets the rename gate tell the ODF package from the other sheet forms
+const ODS_RE = /\.ods$/i
+const XLSX_RE = /\.(xlsx|xlsm|xls|csv|tsv|ods)$/i
 const PPTX_RE = /\.pptx$/i
 const PDF_RE = /\.pdf$/i
 const HTML_RE = /\.html?$/i
@@ -23,6 +26,7 @@ const TEXT_RE = /\.(md|markdown|txt|json)$/i
 export {
   DOCX_RE,
   ODT_RE,
+  ODS_RE,
   XLSX_RE,
   PPTX_RE,
   PDF_RE,
@@ -66,6 +70,9 @@ export function renameStaysInApp(from: string, newName: string): boolean {
   // .docx and .odt share the Word tab but not the bytes: renaming one into the
   // other leaves a file the Word editor reads as corrupt
   if (current === 'docs' && ODT_RE.test(from) !== ODT_RE.test(newName)) return false
+  // .ods is its own container (an ODF package, opened as a converted .xlsx
+  // copy), so renaming it into or out of any other sheet form breaks the file
+  if (current === 'sheets' && ODS_RE.test(from) !== ODS_RE.test(newName)) return false
   // each diagram form keeps its own bytes (XML, a picture holding it, a Visio
   // drawing), and so does each map form (.xmind, an imported .mm): renaming one
   // into another leaves a file that no longer opens

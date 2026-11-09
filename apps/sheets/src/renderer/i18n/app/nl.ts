@@ -1605,4 +1605,9 @@ export const nl = {
   appSpellUnavailable: 'Spellingcontrole is niet beschikbaar in dit venster.',
   appSpellReplaceAll: 'Alle vervangen door "{suggestion}"',
   appSpellChangedAll: '{count} cellen met "{word}" gecorrigeerd.',
+
+  // ── ODS import ──
+  appOdsImportNotice:
+    'Het ODS-bestand is geopend als een xlsx-kopie. Opslaan schrijft een xlsx-bestand.',
+  appOdsFormulasDropped: 'Van {count} formules zijn alleen de waarden behouden.',
 } satisfies Record<keyof typeof zh, string>

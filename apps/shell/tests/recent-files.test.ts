@@ -19,6 +19,8 @@ describe('matchesExtFamily', () => {
     expect(matchesExtFamily('txt', 'md')).toBe(true)
     expect(matchesExtFamily('json', 'md')).toBe(true)
     expect(matchesExtFamily('csv', 'xlsx')).toBe(true)
+    // an OpenDocument spreadsheet is a spreadsheet in the sidebar filters too
+    expect(matchesExtFamily('ods', 'xlsx')).toBe(true)
     expect(matchesExtFamily('htm', 'html')).toBe(true)
   })
 
@@ -37,6 +39,7 @@ describe('matchesExtFamily', () => {
     expect(matchesExtFamily('svg', 'drawio')).toBe(false)
     expect(matchesExtFamily('png', 'drawio')).toBe(false)
     expect(matchesExtFamily('xlsx', 'docx')).toBe(false)
+    expect(matchesExtFamily('ods', 'docx')).toBe(false)
     expect(matchesExtFamily('png', 'xlsx')).toBe(false)
     expect(matchesExtFamily('png', 'md')).toBe(false)
   })

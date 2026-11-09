@@ -165,6 +165,8 @@ export const pl = {
     'Zalogowano się w przeglądarce, ale OpenAI nie przyjęło tego połączenia albo nie udało się sprawdzić jego odpowiedzi. Sprawdź, czy data i godzina na tym komputerze są prawidłowe, a potem naciśnij ponownie, aby zacząć od nowa.',
   chatgptLoginNetworkNote:
     'Nie udało się dokończyć logowania: nie można połączyć się z OpenAI albo nie otworzyła się przeglądarka. Sprawdź połączenie z internetem (także sieć firmową, VPN lub proxy), a potem naciśnij ponownie.',
+  chatgptLoginWorkspacePolicyNote:
+    'To konto ChatGPT należy do obszaru roboczego zarządzanego przez firmę lub szkołę, a OpenAI nie pozwala aplikacjom korzystać z planu ChatGPT obszaru roboczego. Administrator obszaru roboczego nie ma ustawienia, które pozwoliłoby na tę aplikację, więc ponowne logowanie nic nie da. Zaloguj się na osobiste konto ChatGPT (Go, Plus lub Pro) albo połącz się przez kartę Codex.',
   chatgptLoginNotAllowedNote:
     'Ta aplikacja nie dostała zgody na korzystanie z Twojego planu ChatGPT albo przeglądarka wróciła z logowania z błędem. Naciśnij ponownie, zaloguj się i wyraź zgodę na stronie zgody.',
   chatgptSigningInNote:

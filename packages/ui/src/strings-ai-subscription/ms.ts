@@ -165,6 +165,8 @@ export const ms = {
     'Anda sudah log masuk dalam pelayar, tetapi OpenAI tidak menerima sambungan ini, atau jawapannya tidak dapat disemak. Pastikan tarikh dan masa PC ini betul, kemudian tekan sekali lagi untuk bermula semula.',
   chatgptLoginNetworkNote:
     'Log masuk tidak dapat diselesaikan: OpenAI tidak dapat dihubungi atau tiada pelayar dibuka. Semak sambungan internet (termasuk rangkaian syarikat, VPN atau proksi), kemudian tekan sekali lagi.',
+  chatgptLoginWorkspacePolicyNote:
+    'Akaun ChatGPT ini tergolong ruang kerja yang diurus oleh syarikat atau sekolah, dan OpenAI tidak membenarkan aplikasi menggunakan pelan ChatGPT ruang kerja. Pentadbir ruang kerja tiada tetapan untuk membenarkan aplikasi ini, jadi log masuk semula tidak akan membantu. Log masuk dengan akaun ChatGPT peribadi (Go, Plus, atau Pro), atau sambung melalui kad Codex.',
   chatgptLoginNotAllowedNote:
     'Anda tidak membenarkan aplikasi ini menggunakan pelan ChatGPT anda, atau pelayar kembali daripada log masuk dengan kegagalan. Tekan sekali lagi, log masuk dan benarkan di halaman kebenaran.',
   chatgptSigningInNote:

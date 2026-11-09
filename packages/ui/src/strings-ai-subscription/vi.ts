@@ -162,6 +162,8 @@ export const vi = {
     'Bạn đã đăng nhập trong trình duyệt, nhưng OpenAI không chấp nhận kết nối này, hoặc không kiểm tra được phản hồi trả về. Hãy kiểm tra ngày giờ của máy tính này cho đúng, rồi nhấn lại để bắt đầu lại từ đầu.',
   chatgptLoginNetworkNote:
     'Không thể hoàn tất đăng nhập: không kết nối được tới OpenAI hoặc không mở được trình duyệt. Hãy kiểm tra kết nối internet (kể cả mạng công ty, VPN hoặc proxy), rồi nhấn lại.',
+  chatgptLoginWorkspacePolicyNote:
+    'Tài khoản ChatGPT này thuộc một không gian làm việc do công ty hoặc trường học quản lý, và OpenAI không cho phép ứng dụng dùng gói ChatGPT của không gian làm việc. Quản trị viên không gian làm việc không có cài đặt nào để cho phép ứng dụng này, nên đăng nhập lại sẽ không giúp được. Hãy đăng nhập bằng tài khoản ChatGPT cá nhân (Go, Plus hoặc Pro), hoặc kết nối qua thẻ Codex.',
   chatgptLoginNotAllowedNote:
     'Bạn chưa cho phép ứng dụng này dùng gói ChatGPT của bạn, hoặc trình duyệt quay lại từ bước đăng nhập với lỗi. Nhấn lại, đăng nhập rồi cho phép ở trang cấp quyền.',
   chatgptSigningInNote:

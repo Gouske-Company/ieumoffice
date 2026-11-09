@@ -123,9 +123,21 @@ describe('droppableFilePaths', () => {
 
 describe('partitionDropPayload', () => {
   it('rejects non-array payloads outright', () => {
-    expect(partitionDropPayload(null)).toEqual({ supported: [], unsupportedExts: [] })
-    expect(partitionDropPayload('a.docx')).toEqual({ supported: [], unsupportedExts: [] })
-    expect(partitionDropPayload({ 0: 'a.docx' })).toEqual({ supported: [], unsupportedExts: [] })
+    expect(partitionDropPayload(null)).toEqual({
+      supported: [],
+      skillFiles: [],
+      unsupportedExts: [],
+    })
+    expect(partitionDropPayload('a.docx')).toEqual({
+      supported: [],
+      skillFiles: [],
+      unsupportedExts: [],
+    })
+    expect(partitionDropPayload({ 0: 'a.docx' })).toEqual({
+      supported: [],
+      skillFiles: [],
+      unsupportedExts: [],
+    })
   })
 
   it('ignores non-string entries, whitespace-only strings, and duplicates', () => {
@@ -197,6 +209,21 @@ describe('partitionDropPayload', () => {
     const result = partitionDropPayload(['old.doc', 'x.pages', 'y.rtf', 'z.doc'])
     expect(result.supported).toEqual([])
     expect(result.unsupportedExts).toEqual(['doc', 'pages', 'rtf'])
+  })
+
+  it('sets SKILL.md files and zip files apart for the shell to look into', () => {
+    const result = partitionDropPayload([
+      '/dl/SKILL.md',
+      'C:\\dl\\skill.MD',
+      '/dl/pack.ZIP',
+      '/dl/report.docx',
+      '/dl/MY-SKILL.md',
+      '/dl/notes.md',
+    ])
+    expect(result.skillFiles).toEqual(['/dl/SKILL.md', 'C:\\dl\\skill.MD', '/dl/pack.ZIP'])
+    // any other .md is a markdown document
+    expect(result.supported).toEqual(['/dl/report.docx', '/dl/MY-SKILL.md', '/dl/notes.md'])
+    expect(result.unsupportedExts).toEqual([])
   })
 
   it('caps the number of openable files at 20', () => {

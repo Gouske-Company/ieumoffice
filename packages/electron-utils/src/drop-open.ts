@@ -26,6 +26,12 @@ export const OPENABLE_DOC_RE =
  *  Mirrors UNSUPPORTED_LAUNCH_RE in apps/shell/src/main/launch-paths.ts. */
 export const KNOWN_UNSUPPORTED_DOC_RE = /\.(doc|rtf|ppt|pps|odp|xlsb|pages|key|numbers)$/i
 
+/** Files that may hold skills: a `SKILL.md`, or a zip the shell looks into.
+ *  The shell decides; a zip that is not a skill zip is dropped silently like
+ *  any other unrecognized file. A `SKILL.md` goes to the skill preview, not
+ *  the markdown editor. */
+export const SKILL_DROP_RE = /(?:^|[\\/])skill\.md$|\.zip$/i
+
 /** upper bound on how many files one drop may ask to open */
 const MAX_DROPPED_FILES = 20
 
@@ -72,24 +78,30 @@ export function droppableFilePaths(
 
 /**
  * Sanitize + classify a raw IPC payload: strings only, trimmed, deduped,
- * capped, then split into directly-openable paths and known-unsupported
- * extensions (unique, first-seen order). Anything unrecognized (.png, .zip,
- * nonexistent junk from a hostile sender) falls out silently.
+ * capped, then split into directly-openable paths, files that may hold
+ * skills, and known-unsupported extensions (unique, first-seen order).
+ * Anything unrecognized (.png, nonexistent junk from a hostile sender) falls
+ * out silently.
  */
 export function partitionDropPayload(raw: unknown): {
   supported: string[]
+  skillFiles: string[]
   unsupportedExts: string[]
 } {
   const supported: string[] = []
+  const skillFiles: string[] = []
   const unsupportedExts: string[] = []
-  if (!Array.isArray(raw)) return { supported, unsupportedExts }
+  if (!Array.isArray(raw)) return { supported, skillFiles, unsupportedExts }
   const seen = new Set<string>()
   for (const entry of raw as unknown[]) {
     if (typeof entry !== 'string') continue
     const path = entry.trim()
     if (!path || seen.has(path)) continue
     seen.add(path)
-    if (OPENABLE_DOC_RE.test(path)) {
+    // first: a SKILL.md is also a markdown file, and goes to the skill preview
+    if (SKILL_DROP_RE.test(path)) {
+      if (skillFiles.length < MAX_DROPPED_FILES) skillFiles.push(path)
+    } else if (OPENABLE_DOC_RE.test(path)) {
       // keep scanning for unsupported entries even after hitting the open cap
       if (supported.length < MAX_DROPPED_FILES) supported.push(path)
     } else if (KNOWN_UNSUPPORTED_DOC_RE.test(path)) {
@@ -97,7 +109,7 @@ export function partitionDropPayload(raw: unknown): {
       if (!unsupportedExts.includes(ext)) unsupportedExts.push(ext)
     }
   }
-  return { supported, unsupportedExts }
+  return { supported, skillFiles, unsupportedExts }
 }
 
 /** Symbol.for keeps repeated installs idempotent when several bundled copies of
@@ -132,7 +144,9 @@ export function installDropOpenBridge(): void {
     if (!paths) return
     // only recognized documents ride along; stray images/folders are swallowed
     // here so they neither navigate the page nor produce open attempts
-    const payload = paths.filter((p) => OPENABLE_DOC_RE.test(p) || KNOWN_UNSUPPORTED_DOC_RE.test(p))
+    const payload = paths.filter(
+      (p) => OPENABLE_DOC_RE.test(p) || KNOWN_UNSUPPORTED_DOC_RE.test(p) || SKILL_DROP_RE.test(p),
+    )
     ev.preventDefault()
     if (payload.length === 0) return
     ipcRenderer.send(DROP_OPEN_CHANNEL, payload.slice(0, MAX_DROPPED_FILES))

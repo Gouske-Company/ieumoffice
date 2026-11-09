@@ -57,6 +57,10 @@ export interface UserSkillsBridge {
   importFolder(): Promise<UserSkillsResult<{ preview: UserSkillImportPreview }>>
   importZip(): Promise<UserSkillsResult<{ preview: UserSkillImportPreview }>>
   importGitHub(address: string): Promise<UserSkillsResult<{ preview: UserSkillImportPreview }>>
+  /** pasted SKILL.md text, previewed as one skill */
+  importText(text: string): Promise<UserSkillsResult<{ preview: UserSkillImportPreview }>>
+  /** the next skill file dropped on a window, previewed; `null` when none waits */
+  takeDropped(): Promise<UserSkillsResult<{ preview: UserSkillImportPreview | null }>>
   /** drop a previewed import, or stop the one running when no token is given */
   cancelImport(token?: string): Promise<void>
   install(
@@ -71,6 +75,8 @@ export interface UserSkillsBridge {
   exportInfo(id: string): Promise<UserSkillsResult<{ fileName: string; includesTemplate: boolean }>>
   /** asks where to save, then writes the zip */
   exportZip(id: string): Promise<UserSkillsResult<{ path: string }>>
+  /** asks where to save, then writes one zip with a folder per skill */
+  exportBundle(ids: string[]): Promise<UserSkillsResult<{ path: string }>>
   openFolder(id: string): Promise<UserSkillsResult>
   /** `use_skill`: an enabled skill's body and text files */
   aiRead(id: string): Promise<UserSkillsResult<{ skill: UserSkillAiRead }>>
@@ -107,6 +113,8 @@ export interface UserSkillsBridge {
   onPreviewEnded(listener: (ended: UserSkillPreviewEnded) => void): () => void
   /** the list or a state changed somewhere */
   onChanged(listener: () => void): () => void
+  /** a skill file was dropped on a window and waits for `takeDropped` */
+  onDropped(listener: () => void): () => void
 }
 
 const unavailable = { ok: false as const, reason: 'failed' as const }
@@ -154,6 +162,8 @@ export function userSkillsBridge(): UserSkillsBridge {
     importFolder: () => result(C.importFolder),
     importZip: () => result(C.importZip),
     importGitHub: (address) => result(C.importGitHub, String(address)),
+    importText: (text) => result(C.importText, String(text)),
+    takeDropped: () => result(C.takeDropped),
     cancelImport: async (token) => {
       await ipcRenderer.invoke(C.cancelImport, token).catch(() => undefined)
     },
@@ -173,6 +183,7 @@ export function userSkillsBridge(): UserSkillsBridge {
     },
     exportInfo: (id) => result(C.exportInfo, String(id)),
     exportZip: (id) => result(C.exportZip, String(id)),
+    exportBundle: (ids) => result(C.exportBundle, ids.map(String)),
     openFolder: (id) => result(C.openFolder, String(id)),
     aiRead: (id) => result(C.aiRead, String(id)),
     aiReadFile: (id, rel) => result(C.aiReadFile, String(id), String(rel)),
@@ -214,6 +225,13 @@ export function userSkillsBridge(): UserSkillsBridge {
       ipcRenderer.on(C.changed, handler)
       return () => {
         ipcRenderer.removeListener(C.changed, handler)
+      }
+    },
+    onDropped(listener) {
+      const handler = () => listener()
+      ipcRenderer.on(C.dropped, handler)
+      return () => {
+        ipcRenderer.removeListener(C.dropped, handler)
       }
     },
   }

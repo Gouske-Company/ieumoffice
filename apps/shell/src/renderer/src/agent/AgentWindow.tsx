@@ -65,6 +65,7 @@ import {
   type AgentLogEntry,
   type AgentLogState,
 } from './agent-log'
+import { agentStartErrorView, runErrorKey } from './start-error'
 
 const PROVIDER_LABEL: Record<AgentProvider, AgentStringKey> = {
   'claude-code': 'providerClaude',
@@ -112,26 +113,6 @@ const STATUS_LABEL: Record<'running' | 'done' | 'failed' | 'denied', AgentString
   failed: 'toolFailed',
   denied: 'toolDenied',
 }
-const START_ERROR: Record<string, AgentStringKey> = {
-  'bad-folder': 'errBadFolder',
-  'not-connected': 'errNotConnected',
-  'not-accepted': 'errNotAccepted',
-  'provider-blocked': 'providerBlocked',
-}
-const RUN_ERROR: Record<string, AgentStringKey> = {
-  'unsafe-tools': 'errUnsafeTools',
-  'sandbox-unavailable': 'errSandboxUnavailable',
-  'rate-limit': 'errRateLimit',
-  'signed-out': 'errSignedOut',
-  'metered-not-accepted': 'errMetered',
-  'needs-update': 'errNeedsUpdate',
-  'not-installed': 'errNotInstalled',
-  'off-in-app': 'errOffInApp',
-}
-
-function runErrorKey(kind: string | undefined): AgentStringKey {
-  return (kind && RUN_ERROR[kind]) || 'errGeneric'
-}
 
 /** The app's own tools that only read (`read_sheet`, `open_documents`, …), as either program names them */
 const APP_READ_TOOL = /(?:^|[:_])(?:read_[a-z]+|open_documents)$/
@@ -171,7 +152,7 @@ export function AgentWindow() {
   const [init, setInit] = useState<AgentInit | null>(null)
   const [prefs, setPrefs] = useState<AgentPrefs | null>(null)
   const [folder, setFolder] = useState('')
-  const [startError, setStartError] = useState<AgentStringKey | null>(null)
+  const [startError, setStartError] = useState<ReturnType<typeof agentStartErrorView> | null>(null)
   const [starting, setStarting] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [log, setLog] = useState<AgentLogState>(EMPTY_AGENT_LOG)
@@ -354,13 +335,13 @@ export function AgentWindow() {
     const result = await api.start({ provider: prefs.provider, mode: prefs.mode, folder })
     setStarting(false)
     if (!result.ok) {
-      setStartError(START_ERROR[result.reason] ?? runErrorKey(result.kind))
+      setStartError(agentStartErrorView(result.failure))
       // the main process refuses a program turned off since the window last looked as not
       // connected: look again, so the choice and the message say it is off in this app
-      if (result.reason === 'not-connected') {
+      if (result.failure.reason === 'not-connected') {
         const fresh = await api.getInit()
         setInit(fresh)
-        if (fresh.connections[prefs.provider] === 'off') setStartError('errOffInApp')
+        if (fresh.connections[prefs.provider] === 'off') setStartError({ key: 'errOffInApp' })
       }
       return
     }
@@ -889,7 +870,8 @@ export function AgentWindow() {
 
         {startError ? (
           <div className="agent-error" role="alert">
-            {t(startError)}
+            {t(startError.key)}
+            {startError.code ? <div>{t('errCode', { code: startError.code })}</div> : null}
           </div>
         ) : null}
       </div>

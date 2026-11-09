@@ -97,7 +97,7 @@ describe('the agent window and a program turned off in this app', () => {
   })
 
   it('shows the program as off as soon as the statuses change', async () => {
-    installApi(async () => ({ ok: false, reason: 'not-connected' }))
+    installApi(async () => ({ ok: false, failure: { reason: 'not-connected' } }))
     await render()
     expect(startButton().disabled).toBe(false)
     expect(text()).not.toContain(agentText('en', 'connOff'))
@@ -112,7 +112,7 @@ describe('the agent window and a program turned off in this app', () => {
   it('says off in this app when the start was refused for a program turned off meanwhile', async () => {
     installApi(async (): Promise<AgentStartResponse> => {
       connection = 'off'
-      return { ok: false, reason: 'not-connected' }
+      return { ok: false, failure: { reason: 'not-connected' } }
     })
     await render()
     await act(async () => startButton().click())
@@ -124,7 +124,7 @@ describe('the agent window and a program turned off in this app', () => {
   it('keeps "not connected" for a program that is signed out', async () => {
     installApi(async (): Promise<AgentStartResponse> => {
       connection = 'unavailable'
-      return { ok: false, reason: 'not-connected' }
+      return { ok: false, failure: { reason: 'not-connected' } }
     })
     await render()
     await act(async () => startButton().click())

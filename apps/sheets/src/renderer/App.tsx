@@ -473,6 +473,7 @@ import { installCopyAnimationIdle } from './copy-animation-idle'
 import { installNumberAsTextAlertSeverity } from './number-as-text-alert'
 import { installFormulaStreamHold } from './formula-stream-hold'
 import { installRichTextBidiFix } from './rich-text-bidi-fix'
+import { installHanjaCompositionRestart } from './hanja-composition-restart'
 import { installRtlTextDirectionFix } from './rtl-text-fix'
 import { installRtlGridMirror } from './rtl-grid-mirror'
 import { installVertAlignRender } from './vert-align-render'
@@ -2278,6 +2279,8 @@ export function App({
     // registers it; without this the View tab's toggle would silently no-op.
     installRightToLeftCommand(runtime)
     installRichTextBidiFix()
+    // The Hanja key on a composing letter (ㅁ → ※) must replace it, not type it twice (#443).
+    installHanjaCompositionRestart()
     // Excel's "Center Across Selection": center anchor text over its run of
     // blank same-format neighbors instead of folding it inside one cell.
     installCenterContinuousRender()

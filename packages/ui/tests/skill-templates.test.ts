@@ -122,6 +122,8 @@ function renderPanel(options: {
   setComposer?: (text: string) => void
   onTaken?: () => void
   onHandedRun?: (info: { preview: boolean }) => void
+  hasContent?: () => boolean | Promise<boolean>
+  attach?: (paths: string[]) => Promise<boolean>
 }): { current: () => Harness; rerender: (busy: boolean) => void } {
   let latest: Harness | null = null
   let busy = options.busy ?? false
@@ -141,6 +143,8 @@ function renderPanel(options: {
       setComposer: options.setComposer,
       onTaken: options.onTaken,
       onHandedRun: options.onHandedRun,
+      hasContent: options.hasContent,
+      attach: options.attach,
       bridge: options.bridge,
     })
     latest = { templates, cards }
@@ -235,6 +239,181 @@ describe('a chip whose skill has a template (spec 5.7, called by the person)', (
     })
     expect(bridge.openTemplate).toHaveBeenCalled()
     expect(bridge.takeHandoff).not.toHaveBeenCalled()
+  })
+})
+
+describe('a template skill called in a document that has content', () => {
+  const letter = chip('app:letter', 'Letter', { template: true })
+  const call = async (panel: ReturnType<typeof renderPanel>) => {
+    let taken: unknown
+    await act(async () => {
+      taken = await panel.current().templates.onTemplateSkill({
+        skill: letter,
+        chips: [letter, chip('app:tone', 'Tone')],
+        text: 'make the minutes',
+      })
+    })
+    return taken
+  }
+
+  it('opens nothing yet and asks where to run', async () => {
+    const { bridge } = templateBridge()
+    const setComposer = vi.fn()
+    const panel = renderPanel({ editor: 'docs', bridge, setComposer, hasContent: () => true })
+    expect(await call(panel)).toBe(true)
+    expect(bridge.openTemplate).not.toHaveBeenCalled()
+    expect(setComposer).toHaveBeenCalledWith('')
+    expect(text()).toContain('지금 문서에 내용이 있습니다')
+    expect(button('지금 문서에서 하기')).toBeTruthy()
+    expect(button('양식으로 새 문서 열기(지금 문서 붙임)')).toBeTruthy()
+  })
+
+  it('opens the copy at once in an empty document, as before', async () => {
+    const { bridge } = templateBridge()
+    const panel = renderPanel({ editor: 'docs', bridge, hasContent: () => false })
+    await call(panel)
+    expect(bridge.openTemplate).toHaveBeenCalledWith(
+      expect.not.objectContaining({ withCurrent: true }),
+    )
+    expect(text()).not.toContain('지금 문서에 내용이 있습니다')
+  })
+
+  it('runs the request here with every chip’s skill and tells the model so', async () => {
+    const { bridge } = templateBridge()
+    const send = vi.fn((_text: string, _use: SkillUse): boolean => true)
+    const panel = renderPanel({ editor: 'docs', bridge, send, hasContent: () => true })
+    await call(panel)
+    act(() => button('지금 문서에서 하기')!.click())
+    await flush()
+    expect(bridge.openTemplate).not.toHaveBeenCalled()
+    expect(send).toHaveBeenCalledTimes(1)
+    const [sentText, use] = send.mock.calls[0]!
+    expect(sentText).toBe('make the minutes')
+    expect(use.chips.map((c) => c.id)).toEqual(['app:letter', 'app:tone'])
+    expect(use.text).toContain('body of app:letter')
+    expect(use.text).toContain('body of app:tone')
+    expect(use.text).toContain('apply the skill to this document')
+    expect(text()).not.toContain('지금 문서에 내용이 있습니다')
+  })
+
+  it('keeps the choice when the send gate holds the request', async () => {
+    const { bridge } = templateBridge()
+    const send = vi.fn((): boolean => false)
+    const panel = renderPanel({ editor: 'docs', bridge, send, hasContent: () => true })
+    await call(panel)
+    act(() => button('지금 문서에서 하기')!.click())
+    await flush()
+    expect(send).toHaveBeenCalledTimes(1)
+    expect(button('지금 문서에서 하기')?.disabled).toBe(false)
+  })
+
+  it('opens the copy with this document along', async () => {
+    const { bridge } = templateBridge({
+      openTemplate: vi.fn(async (): Promise<unknown> => ({
+        ok: true,
+        tabId: 't9',
+        attached: true,
+      })),
+    })
+    const panel = renderPanel({ editor: 'docs', bridge, hasContent: () => true })
+    await call(panel)
+    act(() => button('양식으로 새 문서 열기(지금 문서 붙임)')!.click())
+    await flush()
+    expect(bridge.openTemplate).toHaveBeenCalledWith({
+      skillId: 'app:letter',
+      text: 'make the minutes',
+      chips: [
+        { id: 'app:letter', source: 'app', title: 'Letter' },
+        { id: 'app:tone', source: 'app', title: 'Tone' },
+      ],
+      withCurrent: true,
+    })
+    expect(text()).toContain('새 탭에서 양식으로 작업합니다')
+    expect(text()).not.toContain('첨부를 받지 않아')
+  })
+
+  it('says so when the template’s editor takes no attachments', async () => {
+    const { bridge } = templateBridge({
+      openTemplate: vi.fn(async (): Promise<unknown> => ({
+        ok: true,
+        tabId: 't9',
+        attached: false,
+      })),
+    })
+    const panel = renderPanel({ editor: 'docs', bridge, hasContent: () => true })
+    await call(panel)
+    act(() => button('양식으로 새 문서 열기(지금 문서 붙임)')!.click())
+    await flush()
+    expect(text()).toContain('첨부를 받지 않아 지금 문서를 붙이지 않았습니다')
+  })
+
+  it('asks for a save first for a document that is not saved, and can open without it', async () => {
+    const openTemplate = vi.fn(async (input: unknown): Promise<unknown> =>
+      (input as { withCurrent?: boolean }).withCurrent
+        ? { ok: false, reason: 'unsaved' }
+        : { ok: true, tabId: 't9' },
+    )
+    const { bridge } = templateBridge({ openTemplate })
+    const panel = renderPanel({ editor: 'docs', bridge, hasContent: () => true })
+    await call(panel)
+    act(() => button('양식으로 새 문서 열기(지금 문서 붙임)')!.click())
+    await flush()
+    expect(text()).toContain('지금 문서를 먼저 저장해야 합니다')
+    expect(text()).not.toContain('양식을 새 탭에 열지 못했습니다')
+    act(() => button('붙이지 않고 열기')!.click())
+    await flush()
+    expect(openTemplate).toHaveBeenLastCalledWith(
+      expect.not.objectContaining({ withCurrent: true }),
+    )
+    expect(text()).toContain('새 탭에서 양식으로 작업합니다')
+  })
+
+  it('never asks in the home ask panel, which has no document', async () => {
+    const { bridge } = templateBridge()
+    const panel = renderPanel({ editor: null, bridge, hasContent: () => true })
+    await call(panel)
+    expect(bridge.openTemplate).toHaveBeenCalled()
+  })
+})
+
+describe('a template copy that brought the asking document', () => {
+  const handoff = {
+    id: 'h1',
+    mode: 'skill',
+    target: 'docs',
+    text: 'make the minutes',
+    chips: [{ id: 'app:letter', source: 'app', title: 'Letter' }],
+    attach: ['C:/docs/notes.docx'],
+  }
+
+  it('attaches it through the panel, then sends once it is in the composer', async () => {
+    const order: string[] = []
+    const { bridge } = templateBridge({ takeHandoff: vi.fn(async (): Promise<unknown> => handoff) })
+    const attach = vi.fn(async (paths: string[]) => {
+      order.push(`attach:${paths.join(',')}`)
+      return true
+    })
+    const send = vi.fn((_text: string, _use: SkillUse): boolean => {
+      order.push('send')
+      return true
+    })
+    renderPanel({ editor: 'docs', bridge, attach, send })
+    await flush()
+    expect(order).toEqual(['attach:C:/docs/notes.docx', 'send'])
+    const [, use] = send.mock.calls[0]!
+    expect(use.text).toContain('body of app:letter')
+    expect(use.text).toContain('earlier document is attached')
+  })
+
+  it('sends nothing without it and leaves the request in the composer', async () => {
+    const { bridge } = templateBridge({ takeHandoff: vi.fn(async (): Promise<unknown> => handoff) })
+    const send = vi.fn()
+    const setComposer = vi.fn()
+    renderPanel({ editor: 'docs', bridge, attach: async () => false, send, setComposer })
+    await flush()
+    expect(send).not.toHaveBeenCalled()
+    expect(setComposer).toHaveBeenCalledWith('make the minutes')
+    expect(text()).toContain('넘겨받은 문서를 붙이지 못해 요청을 보내지 않았습니다')
   })
 })
 

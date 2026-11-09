@@ -85,6 +85,7 @@ Gdy tworzysz umiejętność w panelu AI edytora, bieżący dokument może dołą
 - Umiejętność z szablonem ma na liście oznaczenie **Zawiera szablon**.
 - Wywołaj ją jako etykietę i wyślij, a kopia szablonu otworzy się jako nowy dokument bez tytułu; AI w tej karcie zajmie się twoją prośbą. W pierwotnym panelu zostaje „Praca z szablonem trwa w nowej karcie” i **Przejdź do karty**.
 - Gdy AI samo wybierze umiejętność z szablonem, karta nie otwiera się od razu. Zamiast tego rozmowa pokazuje przycisk **Otwórz nowy dokument z tego szablonu**.
+- Wywołana w dokumencie, który ma już treść, najpierw pyta, gdzie pracować, zamiast od razu otwierać kartę. **Zrób to w tym dokumencie** zmienia bieżący dokument według umiejętności bez nowej karty (plik szablonu nie jest otwierany). **Nowy dokument z szablonu (dołącz ten)** otwiera kopię szablonu w nowej karcie i wysyła bieżący dokument do panelu AI tej karty jako załącznik. Żeby go dołączyć, bieżący dokument musi być zapisany. Jeśli nigdy nie był zapisany albo ma niezapisane zmiany, panel o tym mówi, a **Otwórz bez dołączania** otwiera kopię bez niego. Przycisk, który pojawia się, gdy AI sama użyje umiejętności z szablonem, także dołącza dokument z treścią. Edytory Markdown i PDF nie przyjmują załączników, więc do szablonu otwieranego w nich nic nie jest dołączane.
 - Miejsce nowego dokumentu zwykle wybierasz przy pierwszym zapisie. Edytory Markdown i HTML zapisują jednak jak dotąd do folderu domyślnego. Sam plik szablonu pozostaje bez zmian.
 
 ## Umiejętności ze skryptami

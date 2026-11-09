@@ -82,7 +82,9 @@ export interface UserSkillsBridge {
   agentNotice(): Promise<boolean>
   markAgentNoticeSeen(): Promise<void>
   /** a template skill's copy in a new tab, with the request handed over (spec 5.7) */
-  openTemplate(input: UserSkillTemplateOpenInput): Promise<UserSkillsResult<{ tabId: string }>>
+  openTemplate(
+    input: UserSkillTemplateOpenInput,
+  ): Promise<UserSkillsResult<{ tabId: string; attached: boolean }>>
   /** the current document's copy in a template preview tab (spec 5.6) */
   openPreview(
     input: UserSkillPreviewInput,

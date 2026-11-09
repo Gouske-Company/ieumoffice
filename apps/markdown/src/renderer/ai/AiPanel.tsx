@@ -320,6 +320,11 @@ export function AiPanel({
     cards: skillCards,
     busy,
     send: (text, use) => send(text, undefined, undefined, use),
+    // a template skill called in a document with content asks where to run
+    hasContent: () => {
+      const doc = deps.getSnapshot()
+      return doc.body.trim() !== '' || doc.frontmatter.trim() !== ''
+    },
     onTaken: onSkillHandoff,
     setComposer: setPrompt,
   })

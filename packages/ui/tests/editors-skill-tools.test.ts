@@ -91,6 +91,12 @@ describe.each(Object.entries(PANELS))('%s AI panel', (_name, panel) => {
       expect(templates).toMatch(/editor: '(docs|sheets|slides|pdf|markdown|html|mindmap|hwp)'/)
       expect(templates).toMatch(/send: /)
       expect(templates).toMatch(/busy/)
+      // a template skill in a document with content asks where to run
+      expect(templates).toMatch(/hasContent: /)
+      // a template copy can bring the asking document along where the panel takes attachments
+      const takesAttachments = !/apps\/(markdown|pdf)\//.test(panel.loop)
+      if (takesAttachments) expect(templates).toMatch(/attach: async \(paths\) => \{/)
+      else expect(templates).not.toMatch(/attach: /)
     }
     // the template lines sit after the chat's messages (sheets hands them to its chat view)
     expect(view).toContain(

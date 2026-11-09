@@ -53,6 +53,15 @@ describe('checks on what the panels send', () => {
     expect(templateOpenInputOf({ skillId: 'app:a', text: 1, chips: [] })).toBeUndefined()
   })
 
+  it('brings the asking document along only when asked with true', () => {
+    expect(
+      templateOpenInputOf({ skillId: 'app:a', text: 'x', chips: [], withCurrent: true }),
+    ).toEqual({ skillId: 'app:a', text: 'x', chips: [], withCurrent: true })
+    expect(
+      templateOpenInputOf({ skillId: 'app:a', text: 'x', chips: [], withCurrent: 'yes' }),
+    ).toEqual({ skillId: 'app:a', text: 'x', chips: [] })
+  })
+
   it('reads a preview: bytes, names, the request, the redaction answer and the card', () => {
     const input = {
       bytes: new Uint8Array([1, 2]),

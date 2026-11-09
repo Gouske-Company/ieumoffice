@@ -505,13 +505,19 @@ Nothing in this list is uploaded by the app.
   another PC.
 - **The crash record** (`crash-log.jsonl` in the data folder): one line each
   time an editor's page process, the graphics process or another helper
-  process ends abnormally, or the app meets an unexpected error, and one line
-  when the PC runs short of memory while an AI request is running (at most
-  every 10 minutes). A line holds the time, what ended, the reason word
+  process ends abnormally, or the app meets an unexpected error, one line
+  when the PC or the app's main process runs short of memory (at most every
+  10 minutes), and one line at the next start when the app's main process
+  ended without closing normally. A line holds the time, what ended, the reason word
   Chromium reports (such as `crashed` or `oom`), the exit code, which editor it
   was (such as `docs`), and memory figures in whole megabytes: the app's own
-  memory use, the PC's free and total memory, and how many AI requests and AI
-  programs were running. When an agent session cannot start, one line holds
+  memory use, the main process's own memory and its JavaScript heap against
+  that heap's limit, the PC's free and total memory, how many AI requests and
+  AI programs were running, and, for a main process that ended, how many
+  minutes it had been running and how long ago it last wrote its figures. To
+  make that last line possible, the running app writes the same memory figures
+  and two times to `crash-heartbeat.json` in the data folder every 30 seconds
+  and marks the file when it closes. When an agent session cannot start, one line holds
   the time, the program (`codex` or `claude-code`), a short code for the
   failure (such as `refused thread.start -32600`) and the error's type (such
   as `Error:EACCES`); the agent window shows the same code. It holds no

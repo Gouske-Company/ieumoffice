@@ -102,6 +102,31 @@ describe('crashLine', () => {
     })
   })
 
+  it("writes a main-gone line with the main process's figures and the run's minutes", () => {
+    const line = crashLine(
+      {
+        kind: 'main-gone',
+        mainMB: 3900,
+        heapMB: 3600,
+        heapLimitMB: 4096,
+        upMin: 42,
+        beatAgeMin: 1,
+        freeMB: 300,
+      },
+      AT,
+    )
+    expect(JSON.parse(line)).toEqual({
+      at: '2026-10-15T01:02:03.000Z',
+      kind: 'main-gone',
+      freeMB: 300,
+      mainMB: 3900,
+      heapMB: 3600,
+      heapLimitMB: 4096,
+      upMin: 42,
+      beatAgeMin: 1,
+    })
+  })
+
   it('ignores fields it does not know', () => {
     const entry = { kind: 'renderer', reason: 'crashed', url: 'docs://x/?file=a.docx' } as never
     expect(crashLine(entry, AT)).not.toContain('a.docx')

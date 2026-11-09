@@ -37,6 +37,7 @@ vi.mock('../src/main/renderer-disposal', () => ({
 }))
 
 import {
+  isHeapShort,
   isLowMemory,
   memoryFigures,
   shouldPromptForGoneRenderer,
@@ -234,6 +235,13 @@ describe('memory figures', () => {
     expect(figures.freeMB).toBeGreaterThanOrEqual(0)
   })
 
+  it("adds the main process's own memory and its heap against the heap's limit", () => {
+    const figures = memoryFigures({ aiStreams: () => 0, cliChildren: () => 0 })
+    expect(figures.mainMB).toBeGreaterThan(0)
+    expect(figures.heapMB).toBeGreaterThan(0)
+    expect(figures.heapLimitMB).toBeGreaterThan(figures.heapMB ?? 0)
+  })
+
   it('counts a PC as short of memory below 512 MB or 8% of its memory', () => {
     expect(isLowMemory(400, 8000)).toBe(true)
     expect(isLowMemory(600, 8000)).toBe(true)
@@ -241,29 +249,44 @@ describe('memory figures', () => {
     expect(isLowMemory(1200, 16000)).toBe(true)
     expect(isLowMemory(1400, 16000)).toBe(false)
   })
+
+  it('counts the main heap as short past 85% of its limit', () => {
+    expect(isHeapShort(3500, 4096)).toBe(true)
+    expect(isHeapShort(3400, 4096)).toBe(false)
+    expect(isHeapShort(10, 0)).toBe(false)
+  })
 })
 
 describe('low-memory watch', () => {
   afterEach(() => vi.useRealTimers())
 
-  it('records only while an AI request runs, at most once per cooldown', () => {
+  const roomy = { freeMB: 4000, totalMB: 8000, heapMB: 200, heapLimitMB: 4096 }
+
+  it('records a short PC with no AI request running, at most once per cooldown', () => {
     vi.useFakeTimers()
-    let streams = 0
+    let probe = roomy
     let clock = 0
     const stop = startLowMemoryWatch({
-      aiStreams: () => streams,
-      memory: () => ({ appMB: 3000, freeMB: 200, totalMB: 8000, aiStreams: streams }),
+      probe: () => probe,
+      memory: () => ({ appMB: 3000, freeMB: 200, totalMB: 8000, aiStreams: 0 }),
       sampleMs: 1000,
       cooldownMs: 60_000,
       now: () => clock,
     })
     vi.advanceTimersByTime(1000)
     expect(lines()).toEqual([])
-    streams = 1
+    probe = { ...roomy, freeMB: 200 }
     clock = 1000
     vi.advanceTimersByTime(1000)
     expect(lines()).toEqual([
-      expect.objectContaining({ kind: 'low-memory', freeMB: 200, totalMB: 8000, aiStreams: 1 }),
+      expect.objectContaining({
+        kind: 'low-memory',
+        reason: 'pc',
+        freeMB: 200,
+        totalMB: 8000,
+        appMB: 3000,
+        aiStreams: 0,
+      }),
     ])
     clock = 30_000
     vi.advanceTimersByTime(1000)
@@ -274,15 +297,33 @@ describe('low-memory watch', () => {
     stop()
   })
 
-  it('stays quiet while the PC has memory to spare', () => {
+  it("records the main process's heap nearing its limit while the PC has room", () => {
     vi.useFakeTimers()
+    const memory = vi.fn(() => ({ appMB: 4200, mainMB: 3900, heapMB: 3600, heapLimitMB: 4096 }))
     const stop = startLowMemoryWatch({
-      aiStreams: () => 1,
-      memory: () => ({ freeMB: 4000, totalMB: 8000 }),
+      probe: () => ({ ...roomy, heapMB: 3600 }),
+      memory,
       sampleMs: 1000,
     })
+    vi.advanceTimersByTime(1000)
+    expect(lines()).toEqual([
+      expect.objectContaining({
+        kind: 'low-memory',
+        reason: 'main-heap',
+        heapMB: 3600,
+        heapLimitMB: 4096,
+      }),
+    ])
+    stop()
+  })
+
+  it('stays quiet, and skips the full figures, while there is memory to spare', () => {
+    vi.useFakeTimers()
+    const memory = vi.fn(() => ({}))
+    const stop = startLowMemoryWatch({ probe: () => roomy, memory, sampleMs: 1000 })
     vi.advanceTimersByTime(5000)
     expect(lines()).toEqual([])
+    expect(memory).not.toHaveBeenCalled()
     stop()
   })
 })

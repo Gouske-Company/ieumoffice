@@ -316,9 +316,38 @@ export const MAIN_PROCESS_KEYS = {
     copyCellBlock(ih, true)
     return true
   },
+  // Cmd+C/X on macOS. An untaken key there becomes webContents.copy()/cut(): macOS copies only
+  // through the menu's roles, never from a resent key. Those reach the page's copy and cut
+  // events, which carry selected text but not a table selected as an object; the studio copies
+  // an object only from its own keydown, the key that is resent elsewhere. So these take a cell
+  // block as Ctrl+C/X do, and a selected picture or table through the edit command that keydown
+  // runs (issue #311).
+  'cmd-c': (ih, dispatcher) =>
+    MAIN_PROCESS_KEYS['ctrl-c'](ih) || copyObject(ih, dispatcher, 'edit:copy'),
+  'cmd-x': (ih, dispatcher) =>
+    MAIN_PROCESS_KEYS['ctrl-x'](ih) || copyObject(ih, dispatcher, 'edit:cut'),
 }
 
-const FOCUSED_FRAME_KEYS = new Set(['ctrl-c', 'ctrl-x', 'ctrl-e', 'ctrl-tab', 'ctrl-shift-tab'])
+/** A picture or table selected as an object goes through the studio's edit command. */
+function copyObject(ih, dispatcher, commandId) {
+  const cursor = ih?.cursor
+  if (!cursor?.isInPictureObjectSelection?.() && !cursor?.isInTableObjectSelection?.()) {
+    return false
+  }
+  // the studio's keydown takes the key even when the command cannot run (a form), so does this
+  dispatcher.dispatch(commandId)
+  return true
+}
+
+const FOCUSED_FRAME_KEYS = new Set([
+  'ctrl-c',
+  'ctrl-x',
+  'cmd-c',
+  'cmd-x',
+  'ctrl-e',
+  'ctrl-tab',
+  'ctrl-shift-tab',
+])
 
 /** Opens the window function the main process asks; see MAIN_PROCESS_KEYS. */
 export function installHancomMainKeys(win, getInputHandler, dispatcher) {

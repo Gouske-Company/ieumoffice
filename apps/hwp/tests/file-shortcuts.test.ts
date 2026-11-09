@@ -282,6 +282,37 @@ describe('keys that are Hangul table keys where the caret is', () => {
     },
   )
 
+  it.each([
+    ['darwin', ['cmd-c', 'cmd-x']],
+    ['win32', ['ctrl-c', 'ctrl-x']],
+  ] as const)(
+    'asks the editor for its own Cmd+C/X on a Mac, where a selected table needs them (%s)',
+    async (platform, asked) => {
+      // the page's copy event (webContents.copy) carries no table selected as an
+      // object; elsewhere the resent key reaches the editor's keydown (issue #311)
+      const real = process.platform
+      Object.defineProperty(process, 'platform', { value: platform })
+      try {
+        const mod =
+          platform === 'darwin' ? { meta: true, control: false } : { meta: false, control: true }
+        const names: string[] = []
+        for (const code of ['KeyC', 'KeyX'] as const) {
+          const body = withEditorFrame(true) as FakeContents & Record<string, unknown>
+          Object.assign(body, { copy: vi.fn(), cut: vi.fn(), sendInputEvent: vi.fn() })
+          press(code, mod, body)
+          await flush()
+          const ask = body.mainFrame!.framesInSubtree[1].executeJavaScript as ReturnType<
+            typeof vi.fn
+          >
+          names.push(String(ask.mock.calls[0][0]).match(/__ieumHancomKey\("([^"]+)"\)/)![1])
+        }
+        expect(names).toEqual(asked)
+      } finally {
+        Object.defineProperty(process, 'platform', { value: real })
+      }
+    },
+  )
+
   it('leaves Cmd+C to the editor when it takes the key (a cell block)', async () => {
     const real = process.platform
     Object.defineProperty(process, 'platform', { value: 'darwin' })

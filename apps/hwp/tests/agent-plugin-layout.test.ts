@@ -7,7 +7,7 @@
  * file gives it, as a file written by another program over a Hancom form reads. rhwp keeps
  * that row height and draws the lines below the row's edge, where they are clipped.
  */
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, join } from 'node:path'
 import JSZip from 'jszip'
@@ -100,6 +100,64 @@ async function staleRowHeight(): Promise<Uint8Array> {
   return zip.generateAsync({ type: 'uint8array' })
 }
 
+const BLANK_PARAGRAPH =
+  '<hp:p id="2147483648" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="0"/></hp:p>'
+
+/**
+ * Fixture `name` with an empty paragraph put first in the paragraph list that starts after
+ * `opening` in XML part `part` (and `edit` applied to the part), so that the table of that
+ * list sits in its paragraph 1.
+ */
+async function withBlankFirst(
+  name: string,
+  part: string,
+  opening: string,
+  edit: (xml: string) => string = (xml) => xml,
+): Promise<Uint8Array> {
+  const zip = await JSZip.loadAsync(fixture(name))
+  const xml = edit(await zip.file(part)!.async('string'))
+  const at = xml.indexOf('<hp:p ', xml.indexOf(opening))
+  expect(at).toBeGreaterThan(0)
+  zip.file(part, xml.slice(0, at) + BLANK_PARAGRAPH + xml.slice(at))
+  return zip.generateAsync({ type: 'uint8array' })
+}
+
+/**
+ * The document with a 1×1 body table holding a short line in its paragraph 1: the address
+ * (paragraph 1, object 0, cell 0) a table in paragraph 1 of the header, the footer or the
+ * master page has too.
+ */
+function withShortBodyTable(bytes: Uint8Array): Uint8Array {
+  const doc = new HwpDocument(new Uint8Array(bytes))
+  doc.pageCount()
+  const made = JSON.parse(doc.createTable(0, 0, 0, 1, 1)) as { paraIdx: number; controlIdx: number }
+  expect(made).toMatchObject({ paraIdx: 1, controlIdx: 0 })
+  doc.insertTextInCellByPath(
+    0,
+    made.paraIdx,
+    JSON.stringify([{ controlIndex: made.controlIdx, cellIndex: 0, cellParaIndex: 0 }]),
+    0,
+    '짧은 글',
+  )
+  doc.pageCount()
+  const out = doc.exportHwp()
+  doc.free()
+  return out
+}
+
+/** Every cell checkLayout lists, following `next` from call to call. */
+function allOverflows(plugin: ReturnType<typeof open>['plugin']) {
+  const cells = []
+  let place: { table: number; row: number } | undefined = { table: 1, row: 1 }
+  for (let calls = 0; place && calls < 100; calls++) {
+    const part = plugin.checkLayout(place.table, place.row)
+    cells.push(...part.cells)
+    place = part.next
+  }
+  expect(place).toBeUndefined()
+  return cells
+}
+
 /** A blank document with one table of `rows` × 3 cells, each holding a short line. */
 function bigTable(rows: number): Uint8Array {
   const doc = HwpDocument.createEmpty()
@@ -165,11 +223,74 @@ describe('checkLayout', () => {
       measured: 9,
       cells: [],
     })
-    // the master page draws text addressed like the body table's cell, far below it
+    // the master page draws text addressed like the body table's cell
     expect(open(fixture('master-page-duplex-both.hwpx')).plugin.checkLayout()).toMatchObject({
       measured: 1,
       cells: [],
     })
+  })
+
+  it('leaves out the footer text drawn below a body cell with the same address', async () => {
+    // the footer's table moves to its paragraph 1, where the body table is: its text is
+    // drawn in the body cell's column, far below the cell
+    const bytes = withShortBodyTable(
+      await withBlankFirst(
+        'header-footer-paper-tables.hwpx',
+        'Contents/section0.xml',
+        '<hp:footer',
+      ),
+    )
+    expect(open(bytes).plugin.checkLayout()).toMatchObject({ measured: 1, cells: [] })
+  })
+
+  it('does not measure the body text against the box of a master page table', async () => {
+    // the master page's table moves to its paragraph 1 and to the top of the page: the
+    // engine hands back its box for the body table's address, above the body cell's text
+    const bytes = withShortBodyTable(
+      await withBlankFirst(
+        'master-page-next-section.hwpx',
+        'Contents/masterpage0.xml',
+        '<hp:subList',
+        (xml) =>
+          xml.replace(
+            'vertAlign="BOTTOM" horzAlign="LEFT" vertOffset="4000"',
+            'vertAlign="TOP" horzAlign="LEFT" vertOffset="7000"',
+          ),
+      ),
+    )
+    expect(open(bytes).plugin.checkLayout()).toMatchObject({ measured: 1, cells: [] })
+  })
+
+  it('lists no cell in any of the test documents', () => {
+    const names = readdirSync(join(__dirname, 'fixtures')).filter((name) => /\.hwpx?$/.test(name))
+    expect(names.length).toBeGreaterThanOrEqual(36)
+    for (const name of names) {
+      expect({ name, cells: allOverflows(open(fixture(name)).plugin) }).toEqual({ name, cells: [] })
+    }
+  })
+
+  it('lays the pages out with the portable widths and puts the screen’s back', () => {
+    const { plugin, doc } = open(TABLE)
+    // the screen's widths need a canvas the test does not have: only the calls are recorded
+    let screen = true
+    const switched: boolean[] = []
+    const readOnScreen: boolean[] = []
+    const pageLayout = doc.getPageTextLayout.bind(doc)
+    Object.assign(doc, {
+      canvasMetricsActive: () => screen,
+      selectCanvasMetrics: (on: boolean) => {
+        switched.push(on)
+        screen = on
+        return true
+      },
+      getPageTextLayout: (page: number) => {
+        readOnScreen.push(screen)
+        return pageLayout(page)
+      },
+    })
+    expect(plugin.checkLayout()).toMatchObject({ measured: 4, cells: [] })
+    expect(switched).toEqual([false, true])
+    expect(readOnScreen).toEqual([false])
   })
 
   it('does not count the half of a line that stays inside the cell', () => {

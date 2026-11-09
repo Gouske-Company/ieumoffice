@@ -3023,7 +3023,8 @@ function tablesOf(doc) {
 /**
  * The text lines of each table cell on page `page`, from one layout read of the page
  * (getPageTextLayout): for every cell, keyed as `tableKey` + `/` + cell index, its runs of
- * visible text as boxes in CSS px.
+ * visible text as boxes in CSS px, each with the cell paragraph (`para`), the character it
+ * starts at (`start`) and its text, so that whose text a run draws can be checked.
  */
 function cellLinesOn(doc, page) {
   const lines = new Map()
@@ -3046,7 +3047,14 @@ function cellLinesOn(doc, page) {
       last.controlIndex,
       last.cellIndex,
     ].join('/')
-    const box = { x: run.x, y: run.y, h: run.h }
+    const box = {
+      x: run.x,
+      y: run.y,
+      h: run.h,
+      para: last.cellParaIndex,
+      start: run.charStart,
+      text: run.text,
+    }
     const seen = lines.get(key)
     if (seen) seen.push(box)
     else lines.set(key, [box])
@@ -3055,25 +3063,47 @@ function cellLinesOn(doc, page) {
 }
 
 /**
- * The run of `runs` that ends lowest among those drawn in the cell's column from its top
- * down. The text layout of a page also holds the master page's and the header's text, whose
- * cells are addressed like the body's: those runs stand elsewhere on the page.
+ * Whether `run` draws the text of the cell whose paragraphs are `paragraphs`: its text is
+ * the paragraph's from the character it starts at. The text layout of a page also holds the
+ * header's, the footer's and the master page's text, and their cells are addressed like the
+ * body's (the same paragraph, object and cell numbers), wherever on the page they stand. A
+ * run with no character of its own (a bullet) is not the cell's text.
  */
-function lowestRunIn(runs, box) {
-  let lowest = null
-  for (const run of runs) {
-    if (run.x < box.x - 1 || run.x >= box.x + box.w || run.y + run.h <= box.y) continue
-    if (!lowest || run.y + run.h > lowest.y + lowest.h) lowest = run
-  }
-  return lowest
+function drawsTextOf(run, paragraphs) {
+  if (!Number.isInteger(run.start) || typeof run.text !== 'string') return false
+  const paragraph = paragraphs[run.para]
+  if (typeof paragraph !== 'string') return false
+  return engineSlice(paragraph, run.start, run.start + engineLength(run.text)) === run.text
 }
 
 /**
- * The table cells whose text does not fit, as the pages are laid out: a row keeps the height
- * the file gives it, so a line drawn past the cell's bottom edge is cut off on the page and
- * in print. The cells' boxes come from one read per table (getTableCellBboxesByPath) and
- * their lines from one read per page (cellLinesOn); a cell that runs on to the next page is
- * measured page by page. `over` is how far the text goes past the edge, in mm.
+ * How far below the cell's bottom edge, in CSS px, the cell's lowest cut-off line of `runs`
+ * ends, or null when every line reads whole. Only the runs drawn in the cell's column that
+ * draw the cell's own text (`paragraphs()`, read only for a cell with a line past its edge)
+ * count, and a line passes the edge by more than LAYOUT_SLACK_LINE of its height to be cut
+ * off. The box must hold the start of one of those lines: the engine can hand back a master
+ * page's table for a body table's address, and the body cell's text then stands elsewhere.
+ */
+function overflowIn(runs, box, paragraphs) {
+  const edge = box.y + box.h
+  const own = (run) => drawsTextOf(run, paragraphs())
+  const inColumn = runs.filter((run) => run.x >= box.x - 1 && run.x < box.x + box.w)
+  const past = inColumn
+    .filter((run) => run.y + run.h - edge > run.h * LAYOUT_SLACK_LINE)
+    .sort((a, b) => b.y + b.h - (a.y + a.h))
+  const lowest = past.find(own)
+  if (!lowest) return null
+  if (!inColumn.some((run) => run.y >= box.y - 1 && run.y < edge && own(run))) return null
+  return lowest.y + lowest.h - edge
+}
+
+/**
+ * The table cells whose text does not fit, as the pages are laid out (checkLayout lays them
+ * out with the widths print and export use): a row keeps the height the file gives it, so a
+ * line drawn past the cell's bottom edge is cut off on the page and in print. The cells'
+ * boxes come from one read per table (getTableCellBboxesByPath) and their lines from one
+ * read per page (cellLinesOn); a cell that runs on to the next page is measured page by
+ * page. `over` is how far the text goes past the edge, in mm.
  *
  * Starts at table `fromTable`, row `fromRow` (1-based, as listTables and readTable number
  * them) and goes on for about two seconds or until MAX_LISTED_OVERFLOWS cells are listed,
@@ -3112,6 +3142,11 @@ function overflowsOf(doc, fromTable, fromRow) {
     }
     const cellAtPlace = new Map(grid.map((g) => [`${g.row}/${g.col}`, g.cell]))
     const key = tableKey(table.sec, table.para, table.path)
+    const texts = new Map()
+    const textOf = (cell) => {
+      if (!texts.has(cell)) texts.set(cell, paragraphsOf(cellBox(doc, table, cell)))
+      return texts.get(cell)
+    }
     const rows = new Map()
     for (const box of boxes) {
       if (index === start && box.row < firstRow) continue
@@ -3136,10 +3171,10 @@ function overflowsOf(doc, fromTable, fromRow) {
           measured += 1
         }
         if (listed.has(cell)) continue
-        const lowest = lowestRunIn(linesOn(box.pageIndex).get(`${key}/${cell}`) ?? [], box)
-        if (!lowest) continue
-        const below = lowest.y + lowest.h - (box.y + box.h)
-        if (below <= lowest.h * LAYOUT_SLACK_LINE) continue
+        const below = overflowIn(linesOn(box.pageIndex).get(`${key}/${cell}`) ?? [], box, () =>
+          textOf(cell),
+        )
+        if (below === null) continue
         listed.add(cell)
         cells.push({
           table: index + 1,
@@ -3147,12 +3182,7 @@ function overflowsOf(doc, fromTable, fromRow) {
           col: box.col + 1,
           page: box.pageIndex + 1,
           over: toMm(below),
-          text: clip(
-            paragraphsOf(cellBox(doc, table, cell))
-              .join(' ')
-              .trim(),
-            PREVIEW_CHARS,
-          ),
+          text: clip(textOf(cell).join(' ').trim(), PREVIEW_CHARS),
         })
       }
     }
@@ -6110,10 +6140,11 @@ export const agentPlugin = {
        * in print), with the table number listTables gives, the 1-based row and column, the
        * page and how far past the edge in mm. Starts at table `fromTable`, row `fromRow`
        * (1-based, default the first) and measures for about two seconds; `next` is where
-       * the next call goes on. Reads only.
+       * the next call goes on. The pages are laid out with the widths printPages and the
+       * PDF export use, so a listed cell is the one cut off in print. Reads only.
        */
       checkLayout: guarded((fromTable, fromRow) =>
-        host.read((doc) => overflowsOf(doc, fromTable, fromRow)),
+        host.read((doc) => withPortableWidths(doc, () => overflowsOf(doc, fromTable, fromRow))),
       ),
 
       /**

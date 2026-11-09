@@ -191,7 +191,11 @@ vi.mock('@genoffice/ai-provider/subscription', async (importOriginal) => ({
   sharedSubscriptionStatuses: () => ({}),
 }))
 
-import { createSheetsView, queueWorkbookForView } from '../src/main/sheets-main'
+import {
+  createSheetsView,
+  openSheetsUntitledCopy,
+  queueWorkbookForView,
+} from '../src/main/sheets-main'
 
 interface OpenedWorkbook {
   sessionId: string
@@ -406,8 +410,36 @@ describe('an .ods opens as a converted .xlsx session', () => {
     ) as Record<string, unknown>
     expect(meta.originalPath).toBe(ods)
     expect(meta.title).toBe('보고서.ods')
+    // the footer's count survives the restart with the copy
+    expect(meta.formulasDropped).toBe(2)
     // the copy went to the app's own folder, not beside the file the user opened
     expect(readdirSync(dir)).toEqual(['보고서.ods'])
+  })
+
+  it('keeps the footer notice when the copy is restored after a crash', async () => {
+    const contents = newTab()
+    const ods = writeOds()
+    const file = await openOds(contents, ods)
+    await call(contents, IPC_CHANNELS.writeWorkbookRecovery, saveRequest(file.sessionId))
+
+    // the launch list restores the copy under its untitled identity; the shell
+    // passes no save-as hint here, so the path and count come from the metadata
+    const untitled = join(userDataDirRef.value, 'sheets-autosave', 'untitled')
+    const copyName = readdirSync(untitled).find((name) => name.endsWith('.xlsx'))
+    expect(copyName).toBeDefined()
+    const copy = {
+      kind: 'sheets' as const,
+      untitledId: copyName!.replace(/\.xlsx$/, ''),
+      ext: '.xlsx' as const,
+    }
+    await openSheetsUntitledCopy(contents as never, { copy, title: '보고서.ods' })
+
+    const restored = (await call(contents, IPC_CHANNELS.selectWorkbook)) as OpenedWorkbook
+
+    expect(restored.odsConverted).toBe(true)
+    expect(restored.formulasDropped).toBe(2)
+    expect(restored.needsSaveAs).toBe(true)
+    expect(readFileSync(ods).toString()).toBe(ODS_BYTES)
   })
 })
 

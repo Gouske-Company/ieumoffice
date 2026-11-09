@@ -1670,6 +1670,11 @@ interface SessionInfo {
   /// Set when the session opened a converted copy (.xls import): the
   /// first save routes through Save As, defaulting to this .xlsx path.
   readonly suggestSaveAs?: string
+  /// Opened from an .ods conversion: the document keeps saying that saving
+  /// writes an .xlsx, and how many formulas the conversion kept as values.
+  /// A restored copy records the count in its recovery metadata.
+  readonly odsConverted?: boolean
+  readonly formulasDropped?: number
   /// The shell's "New spreadsheet" backing file in a temp directory: like an
   /// import the first Save is a Save As, but AutoSave and the recovery copy
   /// keep running (keyed on suggestSaveAs), and a quiet save writes in place.
@@ -2135,6 +2140,9 @@ interface UnsavedNewWorkbook {
   restored?: boolean
   /** a CSV or converted workbook's copy: the file it came from (see SessionInfo) */
   originalPath?: string
+  /** the copy came from an .ods conversion: the restored tab keeps its footer notice */
+  odsConverted?: boolean
+  formulasDropped?: number
 }
 const unsavedNewWorkbooks = new Map<string, UnsavedNewWorkbook>()
 
@@ -2435,6 +2443,13 @@ async function writeSessionCopy(
       ...(session.recoveryOriginalPath === undefined
         ? {}
         : { originalPath: session.recoveryOriginalPath }),
+      // a converted .ods keeps its formula count in the copy, so a restore
+      // shows the same footer line (0 needs no record: absent reads as 0)
+      ...(session.odsConverted &&
+      session.formulasDropped !== undefined &&
+      session.formulasDropped > 0
+        ? { formulasDropped: session.formulasDropped }
+        : {}),
     },
   )
   if (result !== 'written') return false
@@ -2666,9 +2681,15 @@ export async function openSheetsUntitledCopy(
   const copy = request.copy
   const ext = isUntitledIdentity(copy) ? copy.ext : untitledWorkbookExt(copy.filePath)
   // an untitled copy that names its original file came from a CSV or converted workbook
+  const copyInfo = isUntitledIdentity(copy) ? recoveryStore.copyInfo(copy) : null
   const originalPath = isUntitledIdentity(copy)
-    ? (request.saveAsDefaultPath ?? recoveryStore.copyInfo(copy)?.originalPath ?? undefined)
+    ? (request.saveAsDefaultPath ?? copyInfo?.originalPath ?? undefined)
     : undefined
+  // a copy of an .ods document keeps its footer notice (decision 0118): the
+  // original's extension says the session runs on a converted .xlsx, and the
+  // copy's metadata says how many formulas were kept as values
+  const odsConverted = originalPath?.toLowerCase().endsWith('.ods') === true
+  const formulasDropped = odsConverted ? (copyInfo?.formulasDropped ?? 0) : undefined
   const offered =
     originalPath !== undefined ? saveAsDefaultFor(originalPath) : request.saveAsDefaultPath
   const stem =
@@ -2686,6 +2707,8 @@ export async function openSheetsUntitledCopy(
     recovery: request.copy,
     restored: true,
     ...(originalPath === undefined ? {} : { originalPath }),
+    ...(odsConverted ? { odsConverted } : {}),
+    ...(formulasDropped === undefined ? {} : { formulasDropped }),
   })
   queueWorkbookForView(contents, staged.openPath)
   nudgeQueuedWorkbook(contents)
@@ -5290,6 +5313,8 @@ async function openWorkbookSession(
       sheetNames: new Map(opened.sheets.map((sheet) => [sheet.id, sheet.name])),
       automaticRecoveryDisabled,
       ...(suggestSaveAs === undefined ? {} : { suggestSaveAs }),
+      ...(odsConverted ? { odsConverted: true } : {}),
+      ...(formulasDropped === undefined ? {} : { formulasDropped }),
       ...(csvImport ? { csvImport } : {}),
       ...(csvSourcePath === undefined ? {} : { csvSourcePath }),
       ...(csvSourceSha === undefined ? {} : { csvSourceSha }),
@@ -5549,6 +5574,15 @@ async function prepareWorkbookForOpen(
       ...(unsavedNew.originalPath === undefined
         ? {}
         : { recoveryOriginalPath: unsavedNew.originalPath }),
+      // a copy of an .ods document keeps its footer notice (converted .xlsx)
+      ...(unsavedNew.odsConverted
+        ? {
+            odsConverted: true,
+            ...(unsavedNew.formulasDropped === undefined
+              ? {}
+              : { formulasDropped: unsavedNew.formulasDropped }),
+          }
+        : {}),
     }
     // An untitled copy of a .csv/.tsv/.xls (a skill template's, spec 5.7) is
     // converted beside itself in its own temp folder: the session edits the

@@ -664,6 +664,44 @@ describe('an untitled copy of a file the editor cannot write back to', () => {
     })
     expect(store.copyInfo(identity)!.originalPath).toBe(original)
   })
+
+  it("carries an ODS import's dropped formulas through every state change", async () => {
+    const original = userDoc('report.ods')
+    const identity = untitled()
+    await store.writeCopy(identity, Buffer.from('xlsx'), {
+      title: 'report.ods',
+      originalPath: original,
+      formulasDropped: 3,
+    })
+    expect(store.copyInfo(identity)!.formulasDropped).toBe(3)
+    store.applyLaunchDecision(identity, 'restore')
+    expect(store.copyInfo(identity)!.formulasDropped).toBe(3)
+    store.markCopyLoaded(identity)
+    expect(store.copyInfo(identity)!.formulasDropped).toBe(3)
+    store.applyLaunchDecision(identity, 'later')
+    const [listed] = store.listCopies({ untitled: true })
+    expect(listed!.formulasDropped).toBe(3)
+  })
+
+  it('keeps the count only on untitled copies, and reads absent metadata as none', async () => {
+    const identity = untitled()
+    await store.writeCopy(identity, Buffer.from('x'), { formulasDropped: 2 })
+    expect(store.copyInfo(identity)!.formulasDropped).toBe(2)
+    // a later write without it drops it (0 is "no count", so it is not stored)
+    await store.writeCopy(identity, Buffer.from('x'))
+    expect(store.copyInfo(identity)!.formulasDropped).toBeNull()
+    // metadata written before the field existed
+    const meta = `${store.copyPath(identity)}.meta.json`
+    const raw = JSON.parse(readFileSync(meta, 'utf8')) as Record<string, unknown>
+    expect('formulasDropped' in raw).toBe(false)
+
+    const doc = userDoc('kept.xlsx')
+    const fileCopy = { kind: 'sheets' as const, filePath: doc }
+    await store.writeCopy(fileCopy, Buffer.from('x'), { formulasDropped: 2 })
+    expect(store.copyInfo(fileCopy)!.formulasDropped).toBeNull()
+    const fileMeta = JSON.parse(readFileSync(`${store.copyPath(fileCopy)}.meta.json`, 'utf8'))
+    expect('formulasDropped' in fileMeta).toBe(false)
+  })
 })
 
 describe('damaged metadata', () => {

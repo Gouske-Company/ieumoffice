@@ -729,7 +729,7 @@ function strayText(cx: Cx, block: WordBlock, where: string): Block[] {
   return [paraOf({ kind: 'body' }, plainShape(cx), inlinesOf(cx, runs, where, 'body'))]
 }
 
-function tocLine(cx: Cx, block: WordBlock, where: string): Block[] {
+function tocLine(cx: Cx, block: WordBlock, _where: string): Block[] {
   cx.ledger.note('toc', 'toc')
   const field = block.fieldDisplay!
   if (field.deleted) return []

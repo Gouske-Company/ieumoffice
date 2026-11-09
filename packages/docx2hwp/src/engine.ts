@@ -1,8 +1,8 @@
 /**
  * The rhwp engine, and the only module that loads it. A document lives only
  * inside withNewDocument / withOpenedDocument and is freed when the callback
- * returns or throws: the engine's WebAssembly memory is never released on its
- * own.
+ * returns or throws: left to the engine's finalizer, a document's WebAssembly
+ * memory comes back at no set time.
  */
 import type { HwpDocument } from '@rhwp/core'
 

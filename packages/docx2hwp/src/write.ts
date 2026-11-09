@@ -372,7 +372,7 @@ function cellJson(cell: Cell, table: Table): string {
     paddingLeft: cell.padding.left,
     applyInnerMargin: true,
     ...(table.repeatHeader && cell.row === 0 ? { isHeader: true } : {}),
-    // pattern -1 is none: left out, the engine puts in 0, which Hangul draws as lines
+    // pattern -1 is none: a 0 here would be drawn by Hangul as lines
     ...(cell.fill ? { fillType: 'solid', fillColor: cell.fill, patternType: -1 } : {}),
   })
 }

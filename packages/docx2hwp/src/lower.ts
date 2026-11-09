@@ -932,8 +932,8 @@ function cellBody(cx: Cx, cell: TableCell, where: string): Para[] {
       )
   const nested = cell.nestedTables ?? []
   if (nested.length === 0) return paras
-  // the engine builds no table inside a cell: a nested table's paragraphs take
-  // its place, after the cell paragraphs that precede it in Word
+  // a nested table's paragraphs take its place, after the cell paragraphs that
+  // precede it in Word (the engine's createTableInCellByPath could build it; not yet)
   const out = [...paras]
   nested
     .map((table, i) => ({ table, at: cell.nestedTableAnchors?.[i] ?? paras.length, i }))

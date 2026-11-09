@@ -454,6 +454,8 @@ export function prepareTextImport(options: PrepareTextImportOptions): Promise<Sk
 export interface PrepareSkillFileImportOptions {
   file: string
   appSkillsDir: string
+  /** nothing inside the Codex home (`~/.codex`) is read */
+  homeDir: string
   /** where this import's temporary folder is made */
   tempDir: string
 }
@@ -466,6 +468,9 @@ export interface PrepareSkillFileImportOptions {
 export async function prepareSkillFileImport(
   options: PrepareSkillFileImportOptions,
 ): Promise<SkillImport> {
+  if (await isInsideCodexHome(options.file, options.homeDir)) {
+    throw new SkillImportError('invalid-source', 'The file is inside the Codex home')
+  }
   const info = await stat(options.file).catch(() => undefined)
   if (!info?.isFile()) throw new SkillImportError('not-found', 'The file cannot be read')
   if (info.size > MAX_SKILL_TEXT_IMPORT_BYTES) {
@@ -482,13 +487,17 @@ const SKILL_FILE_NAME = /(?:^|[\\/])skill\.md$/i
 /**
  * What a file dropped on a window gives to take skills from: a `SKILL.md`
  * file, or a zip whose layout is a skill's (`readSkillArchiveLayout`).
- * `undefined` for anything else, which keeps the drop's usual handling.
+ * `undefined` for anything else, which keeps the drop's usual handling, and
+ * for anything inside the Codex home, which is never read.
  */
 export async function droppedSkillSourceOf(
   path: string,
+  homeDir: string,
 ): Promise<Extract<SkillImportSource, { kind: 'zip' | 'skill-file' }> | undefined> {
-  if (SKILL_FILE_NAME.test(path)) return { kind: 'skill-file', file: path }
-  if (!/\.zip$/i.test(path)) return undefined
+  const named = SKILL_FILE_NAME.test(path)
+  if (!named && !/\.zip$/i.test(path)) return undefined
+  if (await isInsideCodexHome(path, homeDir)) return undefined
+  if (named) return { kind: 'skill-file', file: path }
   return (await readSkillArchiveLayout(path)) ? { kind: 'zip', file: path } : undefined
 }
 
@@ -584,7 +593,12 @@ export function prepareSkillImport(
     case 'zip':
       return prepareZipImport({ file: source.file, appSkillsDir, tempDir })
     case 'skill-file':
-      return prepareSkillFileImport({ file: source.file, appSkillsDir, tempDir })
+      return prepareSkillFileImport({
+        file: source.file,
+        appSkillsDir,
+        homeDir: env.homeDir,
+        tempDir,
+      })
     case 'text':
       return prepareTextImport({ text: source.text, appSkillsDir, tempDir })
     case 'github':

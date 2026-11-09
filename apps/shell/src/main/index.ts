@@ -5562,7 +5562,7 @@ const droppedFilesDeps = (): DroppedFilesDeps => ({
   revealShellWindow,
   showWarning: showAppWarning,
   unsupportedMessage: (exts: string[]) => tm('errUnsupportedExt', { ext: exts.join(', ') }),
-  skillSourceOf: droppedSkillSourceOf,
+  skillSourceOf: (path) => droppedSkillSourceOf(path, homedir()),
   importSkills: (source) => {
     userSkillsIpc.queueDropped(source)
     openSkillsSettings()

@@ -15,7 +15,7 @@ import {
   SKILL_WARNING_RULES,
   SkillImportError,
   disposeSkillImport,
-  droppedSkillSourceOf,
+  droppedSkillSourceOf as dropped,
   exportSkillBundleZip,
   installImportedSkills,
   listSkillFolderFiles,
@@ -104,6 +104,24 @@ describe('skillArchiveLayout', () => {
 })
 
 describe('droppedSkillSourceOf', () => {
+  const home = join(tmpdir(), 'no-such-home-for-this-test')
+  const droppedSkillSourceOf = (path: string) => dropped(path, home)
+
+  it('reads nothing inside the Codex home', async () => {
+    const codexHome = temp()
+    const skills = join(codexHome, '.codex', 'skills', 'x')
+    writeTree(skills, { 'SKILL.md': skillMd('x') })
+    expect(await dropped(join(skills, 'SKILL.md'), codexHome)).toBeUndefined()
+    expect(
+      await kindOf(
+        prepareSkillImport(
+          { kind: 'skill-file', file: join(skills, 'SKILL.md') },
+          { ...env(), homeDir: codexHome },
+        ),
+      ),
+    ).toBe('invalid-source')
+  })
+
   it('takes a SKILL.md file and a skill zip, and nothing else', async () => {
     const single = await zipFile({ 'SKILL.md': skillMd('one') })
     expect(await droppedSkillSourceOf(single)).toEqual({ kind: 'zip', file: single })

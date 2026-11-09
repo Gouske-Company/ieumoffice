@@ -25,7 +25,7 @@ function fakeDeps(overrides: Partial<DroppedFilesDeps> = {}): DroppedFilesDeps &
     warned,
     skills,
     // the core's real judge: a zip is read for its layout
-    skillSourceOf: droppedSkillSourceOf,
+    skillSourceOf: (path) => droppedSkillSourceOf(path, '/no-home'),
     importSkills: (source) => {
       skills.push(source)
     },

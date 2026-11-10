@@ -109,10 +109,16 @@ impl StyleRegistry {
                 ));
                 (Some(name), ValueKind::Number)
             }
-            Analysis::Calendar { fields, time_only } => {
+            Analysis::Calendar {
+                fields,
+                time_only,
+                elapsed,
+            } => {
                 let name = self.next_name("N");
-                self.data_bodies
-                    .push((name.clone(), calendar_style_xml(&name, &fields, time_only)));
+                self.data_bodies.push((
+                    name.clone(),
+                    calendar_style_xml(&name, &fields, time_only, elapsed),
+                ));
                 (
                     Some(name),
                     if time_only {
@@ -521,7 +527,7 @@ enum Analysis {
     Number(NumberSpec),
     Percent(NumberSpec),
     Currency { symbol: String, spec: NumberSpec },
-    Calendar { fields: Vec<Field>, time_only: bool },
+    Calendar { fields: Vec<Field>, time_only: bool, elapsed: bool },
     Unknown,
 }
 
@@ -669,6 +675,10 @@ fn analyze(code: &str) -> Analysis {
         return Analysis::Calendar {
             fields,
             time_only: !has_date,
+            // `[h]`, `[m]` or `[s]` is the one thing an Excel code says about a
+            // value running past a day, so it decides whether the ODF time
+            // style may truncate at 24 hours.
+            elapsed: tokens.iter().any(|token| matches!(token, Raw::Elapsed(_))),
         };
     }
     let spec = if fraction_or_scientific(&tokens) {
@@ -914,11 +924,20 @@ fn number_element(spec: &NumberSpec) -> String {
     )
 }
 
-fn calendar_style_xml(name: &str, fields: &[Field], time_only: bool) -> String {
+fn calendar_style_xml(name: &str, fields: &[Field], time_only: bool, elapsed: bool) -> String {
     let element = if time_only {
         "number:time-style"
     } else {
         "number:date-style"
+    };
+    // A time style truncates at a day unless told otherwise, so a duration of
+    // 30 hours would read as `06:00:00`. Excel asks for the full hours with the
+    // bracketed `[h]`, which reaches here as an elapsed field; a plain `h:mm`
+    // clock time keeps the truncating default because Excel wraps it too.
+    let truncate = if time_only && elapsed {
+        r#" number:truncate-on-overflow="false""#
+    } else {
+        ""
     };
     let mut body = String::new();
     for field in fields {
@@ -975,7 +994,7 @@ fn calendar_style_xml(name: &str, fields: &[Field], time_only: bool) -> String {
     if body.is_empty() {
         body.push_str(r#"<number:year number:style="long"/>"#);
     }
-    format!(r#"<{element} style:name="{name}">{body}</{element}>"#)
+    format!(r#"<{element} style:name="{name}"{truncate}>{body}</{element}>"#)
 }
 
 fn empty_element(name: &str, attributes: &str) -> String {
@@ -1047,10 +1066,38 @@ mod tests {
         let Analysis::Calendar { fields, .. } = analyze("hh:mm") else {
             panic!("hh:mm is a time format");
         };
-        let rendered = calendar_style_xml("N1", &fields, true);
+        let rendered = calendar_style_xml("N1", &fields, true, false);
         assert!(rendered.contains("<number:hours"), "{rendered}");
         assert!(rendered.contains("<number:minutes"), "{rendered}");
         assert!(!rendered.contains("<number:month"), "{rendered}");
+    }
+
+    #[test]
+    fn a_bracketed_hour_keeps_its_time_style_from_truncating_at_a_day() {
+        let Analysis::Calendar {
+            fields, elapsed, ..
+        } = analyze("[h]:mm:ss")
+        else {
+            panic!("[h]:mm:ss is a time format");
+        };
+        assert!(elapsed, "the bracketed hour asks for elapsed time");
+        let rendered = calendar_style_xml("N3", &fields, true, elapsed);
+        assert!(
+            rendered.contains(r#"number:truncate-on-overflow="false""#),
+            "{rendered}"
+        );
+
+        // A plain clock time keeps the ODF default, which matches Excel's
+        // `h:mm` wrapping at midnight.
+        let Analysis::Calendar {
+            fields, elapsed, ..
+        } = analyze("h:mm")
+        else {
+            panic!("h:mm is a time format");
+        };
+        assert!(!elapsed);
+        let rendered = calendar_style_xml("N4", &fields, true, elapsed);
+        assert!(!rendered.contains("truncate-on-overflow"), "{rendered}");
     }
 
     #[test]
@@ -1058,7 +1105,7 @@ mod tests {
         let Analysis::Calendar { fields, .. } = analyze(r#"yyyy"년" mm"월" dd"일""#) else {
             panic!("a Korean date format is a calendar format");
         };
-        let rendered = calendar_style_xml("N2", &fields, false);
+        let rendered = calendar_style_xml("N2", &fields, false, false);
         assert!(rendered.contains("<number:text>년</number:text>"), "{rendered}");
         assert!(rendered.contains("<number:month"), "{rendered}");
     }

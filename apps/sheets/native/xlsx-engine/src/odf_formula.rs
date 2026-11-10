@@ -501,6 +501,14 @@ pub(crate) fn to_odf(raw: &str) -> Option<String> {
     // Excel's intersection operator is a space between two references; a
     // space anywhere else is layout and is dropped.
     let mut previous_reference = false;
+    // One entry per open `(`: true when it starts a function call's argument
+    // list, false when it only groups an expression. The two spell a comma
+    // differently — `SUM(A1,B1)` separates arguments, `SUM((A1,B1))` joins two
+    // references into a union — so the difference has to be remembered.
+    let mut calls: Vec<bool> = Vec::new();
+    // Set by a function name and read by the `(` that follows it (a space
+    // between the two is layout, so the flag survives the whitespace arm).
+    let mut after_call_name = false;
     while let Some(character) = rest.chars().next() {
         match character {
             '"' => {
@@ -508,6 +516,7 @@ pub(crate) fn to_odf(raw: &str) -> Option<String> {
                 out.push_str(literal);
                 rest = remainder;
                 previous_reference = false;
+                after_call_name = false;
             }
             '\'' => {
                 // A quoted name can only be a sheet ahead of `!`; Excel's
@@ -519,6 +528,7 @@ pub(crate) fn to_odf(raw: &str) -> Option<String> {
                 out.push_str(&reference);
                 rest = remainder;
                 previous_reference = true;
+                after_call_name = false;
             }
             character if character.is_whitespace() => {
                 rest = rest.trim_start();
@@ -531,11 +541,35 @@ pub(crate) fn to_odf(raw: &str) -> Option<String> {
                     return None;
                 }
             }
-            // Arguments: OpenFormula separates them with `;`.
+            // Arguments: OpenFormula separates them with `;`, but only inside
+            // a call. Elsewhere the comma is Excel's union operator (a
+            // multi-area reference), which OpenFormula spells with `~` — a
+            // spelling `translate` refuses — so it cannot be translated here
+            // either. Writing `;` there would change what the formula means.
             ',' => {
+                if !calls.last().is_some_and(|call| *call) {
+                    return None;
+                }
                 out.push(';');
                 rest = &rest[1..];
                 previous_reference = false;
+                after_call_name = false;
+            }
+            '(' => {
+                calls.push(after_call_name);
+                out.push('(');
+                rest = &rest[1..];
+                previous_reference = false;
+                after_call_name = false;
+            }
+            ')' => {
+                // A close without an open cannot be part of a formula this
+                // translation understands.
+                calls.pop()?;
+                out.push(')');
+                rest = &rest[1..];
+                previous_reference = false;
+                after_call_name = false;
             }
             '.' => {
                 if !rest[1..]
@@ -549,6 +583,7 @@ pub(crate) fn to_odf(raw: &str) -> Option<String> {
                 out.push_str(&rest[..end]);
                 rest = &rest[end..];
                 previous_reference = false;
+                after_call_name = false;
             }
             character if character.is_ascii_digit() => {
                 // A whole-row range starts with a digit: `1:2`.
@@ -562,12 +597,14 @@ pub(crate) fn to_odf(raw: &str) -> Option<String> {
                     rest = &rest[end..];
                     previous_reference = false;
                 }
+                after_call_name = false;
             }
             character if is_identifier_start(character) || character == '$' => {
-                let (token, remainder, is_reference) = word_at(rest)?;
+                let (token, remainder, kind) = word_at(rest)?;
                 out.push_str(&token);
                 rest = remainder;
-                previous_reference = is_reference;
+                previous_reference = matches!(kind, WordKind::Reference);
+                after_call_name = matches!(kind, WordKind::Call);
             }
             // Array constants, structured and external references, error
             // literals, the spill and implicit-intersection operators, a
@@ -578,16 +615,29 @@ pub(crate) fn to_odf(raw: &str) -> Option<String> {
                 out.push(character);
                 rest = &rest[character.len_utf8()..];
                 previous_reference = false;
+                after_call_name = false;
             }
         }
+    }
+    if !calls.is_empty() {
+        return None;
     }
     Some(out)
 }
 
+/// What a copied word turned out to be. The caller needs the difference to
+/// know whether the `(` after it opens an argument list.
+enum WordKind {
+    Reference,
+    Call,
+    Value,
+}
+
 /// One word and what follows it: a function call, a sheet-qualified
-/// reference, a bare `TRUE`/`FALSE`, or a reference. The returned flag says
-/// whether the copied token was a reference (the intersection check needs it).
-fn word_at(text: &str) -> Option<(String, &str, bool)> {
+/// reference, a bare `TRUE`/`FALSE`, or a reference. The returned kind says
+/// what the copied token was: the intersection check needs to know whether it
+/// was a reference, and the comma check whether the next `(` opens a call.
+fn word_at(text: &str) -> Option<(String, &str, WordKind)> {
     let end = word_end(text);
     if end == 0 {
         return None;
@@ -604,20 +654,20 @@ fn word_at(text: &str) -> Option<(String, &str, bool)> {
         {
             return None;
         }
-        return Some((word.to_owned(), &text[end..], false));
+        return Some((word.to_owned(), &text[end..], WordKind::Call));
     }
     if let Some(qualified) = after.strip_prefix('!') {
         let (reference, remainder) = reference_at(qualified, Some(word))?;
-        return Some((reference, remainder, true));
+        return Some((reference, remainder, WordKind::Reference));
     }
     if word.eq_ignore_ascii_case("TRUE") {
-        return Some(("TRUE()".to_owned(), &text[end..], false));
+        return Some(("TRUE()".to_owned(), &text[end..], WordKind::Value));
     }
     if word.eq_ignore_ascii_case("FALSE") {
-        return Some(("FALSE()".to_owned(), &text[end..], false));
+        return Some(("FALSE()".to_owned(), &text[end..], WordKind::Value));
     }
     let (reference, remainder) = reference_at(text, None)?;
-    Some((reference, remainder, true))
+    Some((reference, remainder, WordKind::Reference))
 }
 
 /// One endpoint of an Excel reference as written: `$A$1`, `A`, `1`.
@@ -880,6 +930,32 @@ mod tests {
     }
 
     #[test]
+    fn a_comma_separates_arguments_only_inside_a_call() {
+        assert_eq!(
+            to_odf("=SUM(A1,B1)").as_deref(),
+            Some("of:=SUM([.A1];[.B1])")
+        );
+        assert_eq!(
+            to_odf("=IF(A1,SUM(B1,C1),0)").as_deref(),
+            Some("of:=IF([.A1];SUM([.B1];[.C1]);0)")
+        );
+        // A space between the name and its `(` is layout, not a break.
+        assert_eq!(
+            to_odf("=SUM (A1,B1)").as_deref(),
+            Some("of:=SUM([.A1];[.B1])")
+        );
+        // A comma inside grouping parentheses is Excel's union operator (a
+        // multi-area reference), which has no `;` spelling in OpenFormula.
+        assert_eq!(to_odf("=SUM((A1,B1))"), None);
+        assert_eq!(to_odf("=A1,B1"), None);
+        // Grouping without a comma is an ordinary expression.
+        assert_eq!(
+            to_odf("=(A1+B1)*2").as_deref(),
+            Some("of:=([.A1]+[.B1])*2")
+        );
+    }
+
+    #[test]
     fn keeps_functions_for_the_export() {
         assert_eq!(to_odf("=TRUE()").as_deref(), Some("of:=TRUE()"));
         assert_eq!(
@@ -911,6 +987,9 @@ mod tests {
             "=XLOOKUP(A1,B1:B2,C1:C2)",
             "=XMATCH(A1,B1:B2)",
             "=NETWORKDAYS.INTL(A1,B1)",
+            "=SUM((A1,B1))",
+            "=SUM(A1",
+            "=SUM(A1,B1))",
             "=",
         ] {
             assert_eq!(to_odf(raw), None, "{raw}");

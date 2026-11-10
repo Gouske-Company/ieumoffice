@@ -25,15 +25,6 @@ import { ptFromHwp } from './units'
 const SECTION = 0
 
 /**
- * Body paragraphs per section while writing. Every paragraph format or style
- * call lays out its whole section again, even in batch mode, so one long
- * section makes the conversion quadratic (1,000 paragraphs took 42 s); the
- * sections are joined into one at the end. Of 50, 100, 200 and 400, sections
- * of 100 were fastest on both 100-page test documents.
- */
-export const SECTION_CHUNK = 100
-
-/**
  * The engine's seven font slots: Hangul, Latin, Hanja, Japanese, other, symbol, user.
  * Hangul, Hanja, Japanese and symbol take the East Asian face: Word draws the
  * ambiguous-width symbols of a Korean document (○, ※) with its East Asian font.
@@ -101,15 +92,10 @@ class WriteContext {
   }
 }
 
-export function writePlan(
-  doc: HwpDocument,
-  plan: HwpPlan,
-  ledger: LossLedger,
-  sectionChunk = SECTION_CHUNK,
-): void {
+export function writePlan(doc: HwpDocument, plan: HwpPlan, ledger: LossLedger): void {
   const cx = new WriteContext(doc, plan, ledger)
   writePage(cx)
-  writeBody(cx, plan.body, sectionChunk)
+  writeStory(cx, opsOf(doc, { kind: 'body', sec: SECTION }), plan.body)
   for (const [header, story] of [
     [true, plan.header],
     [false, plan.footer],
@@ -125,27 +111,6 @@ function writePage(cx: WriteContext): void {
   const { page } = cx.plan
   const json = JSON.stringify({ ...current, ...page })
   call('page setup', () => cx.doc.setPageDef(SECTION, json))
-}
-
-/** the body in sections of `chunk` paragraphs, joined into the first one at the end */
-function writeBody(cx: WriteContext, body: Story, chunk: number): void {
-  const doc = cx.doc
-  let sec = SECTION
-  let ops = opsOf(doc, { kind: 'body', sec })
-  const cursor = new ParagraphCursor(ops)
-  body.forEach((block, i) => {
-    if (i > 0 && i % chunk === 0) {
-      // the spare moves whole into the new section, which takes this one's page setup
-      call('section', () => doc.splitSection(sec, ops.count() - 1, 0))
-      sec++
-      ops = opsOf(doc, { kind: 'body', sec })
-      cursor.moveTo(ops)
-    }
-    writeBlock(cx, ops, cursor, block)
-  })
-  for (let s = sec; s > SECTION; s--) call('section', () => doc.mergeSection(s))
-  cursor.moveTo(opsOf(doc, { kind: 'body', sec: SECTION }))
-  cursor.close()
 }
 
 function writeStory(cx: WriteContext, ops: PlaceOps, story: Story): void {

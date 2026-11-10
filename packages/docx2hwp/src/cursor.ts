@@ -10,8 +10,7 @@
  * Word's paragraph count.
  *
  * The spare is shaped before it is split, so both halves carry the shape: a
- * paragraph shaped like the one before it needs no format call. That matters
- * because every paragraph format call lays out its whole section again.
+ * paragraph shaped like the one before it needs no format call.
  */
 import type { HwpDocument } from '@rhwp/core'
 import { call, callNumber } from './engine'
@@ -210,7 +209,7 @@ export class ParagraphCursor {
   /** the shape the spare carries; null = the place's own */
   private spareShape: string | null = null
 
-  constructor(private ops: PlaceOps) {}
+  constructor(private readonly ops: PlaceOps) {}
 
   /** opens an empty paragraph of this shape before the spare and answers its index */
   start(shaping: Shaping): number {
@@ -223,13 +222,6 @@ export class ParagraphCursor {
     this.ops.split(spare, 0)
     this.written++
     return spare
-  }
-
-  /** the spare moved to another place (a new body section): go on writing there */
-  moveTo(ops: PlaceOps): void {
-    this.ops = ops
-    // the move may have reshaped the spare
-    this.spareShape = null
   }
 
   /** removes the spare; a place nothing was written to keeps its own paragraph */

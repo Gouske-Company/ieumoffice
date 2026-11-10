@@ -1582,4 +1582,8 @@ export const ru = {
   appSpellUnavailable: 'Проверка орфографии недоступна в этом окне.',
   appSpellReplaceAll: 'Заменить все на «{suggestion}»',
   appSpellChangedAll: 'Исправлено {count} ячеек со словом «{word}».',
+
+  // ── ODS import ──
+  appOdsImportNotice: 'Файл ODS открыт как копия xlsx. При сохранении будет записан файл xlsx.',
+  appOdsFormulasDropped: 'В {count} формулах остались только значения.',
 } satisfies Record<keyof typeof zh, string>

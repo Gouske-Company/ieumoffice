@@ -1500,4 +1500,8 @@ export const he = {
   appSpellUnavailable: 'בדיקת האיות אינה זמינה בחלון זה.',
   appSpellReplaceAll: 'החלף הכול ב־«{suggestion}»',
   appSpellChangedAll: 'תוקנו {count} תאים של «{word}».',
+
+  // ── ODS import ──
+  appOdsImportNotice: 'קובץ ה-ODS נפתח כעותק xlsx. השמירה תכתוב קובץ xlsx.',
+  appOdsFormulasDropped: 'ב-{count} נוסחאות נשמרו הערכים בלבד.',
 } satisfies Record<keyof typeof zh, string>

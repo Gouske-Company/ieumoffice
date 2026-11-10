@@ -1495,4 +1495,8 @@ export const zh = {
   appSpellUnavailable: '此窗口无法使用拼写检查。',
   appSpellReplaceAll: '全部替换为“{suggestion}”',
   appSpellChangedAll: '已更正 {count} 处“{word}”。',
+
+  // ── ODS import ──
+  appOdsImportNotice: '已将 ODS 作为 xlsx 副本打开。保存时将保存为 xlsx 文件。',
+  appOdsFormulasDropped: '有 {count} 个公式仅保留了值。',
 }

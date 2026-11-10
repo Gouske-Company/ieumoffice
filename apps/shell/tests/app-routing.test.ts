@@ -84,6 +84,14 @@ describe('appForPath', () => {
     expect(appForPath('C:/x/REPORT.ODT')).toBe('docs')
   })
 
+  it('opens an OpenDocument spreadsheet in the spreadsheet tab only', () => {
+    expect(appForPath('/x/a.ods')).toBe('sheets')
+    expect(appForPath('C:/x/BUDGET.ODS')).toBe('sheets')
+    // the spreadsheet form belongs to no other editor, and a backup of one is no document
+    expect(appForPath('/x/a.odp')).toBeUndefined()
+    expect(appForPath('/x/a.ods.bak')).toBeUndefined()
+  })
+
   it('has no app for an extension nothing opens', () => {
     expect(appForPath('/x/a.xyz')).toBeUndefined()
     expect(appForPath('/x/noextension')).toBeUndefined()
@@ -146,6 +154,15 @@ describe('renameStaysInApp', () => {
     expect(renameStaysInApp('/x/a.odt', 'b.odt')).toBe(true)
     expect(renameStaysInApp('/x/a.odt', 'b.ODT')).toBe(true)
     expect(renameStaysInApp('/x/a.odt', 'a.pdf')).toBe(false)
+  })
+
+  it('refuses a rename between .ods and another spreadsheet form: same tab, different bytes', () => {
+    expect(renameStaysInApp('/x/a.ods', 'b.ods')).toBe(true)
+    expect(renameStaysInApp('/x/a.ods', 'b.ODS')).toBe(true)
+    expect(renameStaysInApp('/x/a.ods', 'a.xlsx')).toBe(false)
+    expect(renameStaysInApp('/x/a.xlsx', 'a.ods')).toBe(false)
+    expect(renameStaysInApp('/x/a.ods', 'a.csv')).toBe(false)
+    expect(renameStaysInApp('/x/a.csv', 'a.ods')).toBe(false)
   })
 
   it('stays put when the file was never openable to begin with', () => {

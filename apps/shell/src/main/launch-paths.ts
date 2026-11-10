@@ -11,6 +11,7 @@ export const LAUNCHABLE_EXTS = [
   'xls',
   'csv',
   'tsv',
+  'ods',
   'pptx',
   'pdf',
   'md',
@@ -51,7 +52,7 @@ const SUPPORTED_LAUNCH_RE = new RegExp(
   ].join('|')})$`,
   'i',
 )
-const UNSUPPORTED_LAUNCH_RE = /\.(doc|rtf|ppt|pps|odp|ods|xlsb|pages|key|numbers)$/i
+const UNSUPPORTED_LAUNCH_RE = /\.(doc|rtf|ppt|pps|odp|xlsb|pages|key|numbers)$/i
 
 interface LaunchPayload {
   launchPaths?: unknown

@@ -909,6 +909,8 @@ function parseWorkbookFile(input: unknown): WorkbookFile {
     definedNames,
     readOnly,
     needsSaveAs,
+    odsConverted,
+    formulasDropped,
     csvPath,
     emptyCsv,
     restoredFromRecovery,
@@ -928,6 +930,8 @@ function parseWorkbookFile(input: unknown): WorkbookFile {
     !Array.isArray(definedNames) ||
     typeof readOnly !== 'boolean' ||
     (needsSaveAs !== undefined && typeof needsSaveAs !== 'boolean') ||
+    (odsConverted !== undefined && odsConverted !== true) ||
+    (formulasDropped !== undefined && !isNonnegativeInteger(formulasDropped)) ||
     (csvPath !== undefined && (typeof csvPath !== 'string' || csvPath.length === 0)) ||
     (emptyCsv !== undefined && typeof emptyCsv !== 'boolean') ||
     (restoredFromRecovery !== undefined && typeof restoredFromRecovery !== 'boolean')
@@ -1234,6 +1238,8 @@ function parseWorkbookFile(input: unknown): WorkbookFile {
     definedNames: parsedDefinedNames,
     readOnly,
     ...(needsSaveAs === undefined ? {} : { needsSaveAs }),
+    ...(odsConverted === true ? { odsConverted } : {}),
+    ...(formulasDropped === undefined ? {} : { formulasDropped }),
     ...(csvPath === undefined ? {} : { csvPath }),
     ...(emptyCsv === undefined ? {} : { emptyCsv }),
     ...(restoredFromRecovery === undefined ? {} : { restoredFromRecovery }),

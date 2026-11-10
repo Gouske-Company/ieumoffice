@@ -32,6 +32,24 @@ describe('collectLaunchPaths', () => {
     ).toEqual(['/data/variants.tsv'])
   })
 
+  it('accepts an OpenDocument spreadsheet from argv or the second-instance payload', () => {
+    expect(LAUNCHABLE_EXTS).toContain('ods')
+    expect(
+      collectLaunchPaths(['IeumOffice.exe', 'C:/data/budget.ods'], undefined, () => true),
+    ).toEqual(['C:/data/budget.ods'])
+    expect(
+      collectLaunchPaths(['IeumOffice.exe'], { launchPaths: ['/data/BUDGET.ODS'] }, () => true),
+    ).toEqual(['/data/BUDGET.ODS'])
+    // an .ods next to an unsupported file is opened, not the fallback
+    expect(collectLaunchPaths(['IeumOffice.exe', 'x.rtf', 'y.ods'], undefined, () => true)).toEqual(
+      ['y.ods'],
+    )
+    // a path that is not on disk is not opened
+    expect(collectLaunchPaths(['IeumOffice.exe', '/budget.ods'], undefined, () => false)).toEqual(
+      [],
+    )
+  })
+
   /**
    * A `.txt` or `.json` is now a document the text app opens, so dropping one
    * from argv (or from a second-instance payload, or from a Finder open-file)

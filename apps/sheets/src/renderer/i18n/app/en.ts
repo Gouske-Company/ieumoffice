@@ -1540,4 +1540,8 @@ export const en = {
   appSpellUnavailable: 'Spell checking is unavailable in this window.',
   appSpellReplaceAll: 'Replace All with "{suggestion}"',
   appSpellChangedAll: 'Corrected {count} cells of "{word}".',
+
+  // ── ODS import ──
+  appOdsImportNotice: 'Opened the ODS as an xlsx copy. Saving writes an xlsx file.',
+  appOdsFormulasDropped: '{count} formulas were kept as values only.',
 } satisfies Record<keyof typeof zh, string>

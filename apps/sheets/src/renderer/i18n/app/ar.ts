@@ -531,6 +531,9 @@ export const ar = {
   appCsvExportNeedsFullLoad: 'يتطلب تصدير CSV مصنفًا محمّلاً بالكامل — انتظر حتى ينتهي التحميل.',
   appCsvExportTooLarge: 'الورقة كبيرة جدًا ولا يمكن تصديرها بتنسيق CSV.',
   appCsvExportCanceled: 'أُلغي تصدير CSV.',
+  appOdsExported: 'تم التصدير: {path}.',
+  appOdsExportCanceled: 'أُلغي تصدير ODS.',
+  appOdsExportFailed: 'فشل تصدير ODS.',
   appCsvExported: 'تم التصدير: {path}.',
   appCsvExportedActiveOnly:
     'ملفات CSV تحتوي على ورقة واحدة فقط — تم تصدير الورقة النشطة «{name}» إلى {path}.',

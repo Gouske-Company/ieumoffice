@@ -570,6 +570,9 @@ export const ru = {
     'Экспорт в CSV требует полностью загруженной книги — дождитесь завершения загрузки.',
   appCsvExportTooLarge: 'Лист слишком большой для экспорта в CSV.',
   appCsvExportCanceled: 'Экспорт в CSV отменён.',
+  appOdsExported: 'Экспортировано: {path}.',
+  appOdsExportCanceled: 'Экспорт в ODS отменён.',
+  appOdsExportFailed: 'Не удалось экспортировать в ODS.',
   appCsvExported: 'Экспортировано: {path}.',
   appCsvExportedActiveOnly:
     'Файлы CSV содержат только один лист — активный лист «{name}» экспортирован в {path}.',

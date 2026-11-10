@@ -44,7 +44,10 @@ import {
 import { access, readFile } from 'node:fs/promises'
 import { z } from 'zod'
 import { atomicWriteFile } from '../../../../apps/sheets/src/main/atomic-write'
-import { XlsxSidecarClient } from '../../../../apps/sheets/src/main/xlsx-sidecar-client'
+import {
+  XlsxSidecarClient,
+  type OdsConversionResult,
+} from '../../../../apps/sheets/src/main/xlsx-sidecar-client'
 import { planExternalLinkBreak } from '@genoffice/xlsx-gateway/gateway/xlsx-external-links'
 import { CliError, EXIT } from '../result'
 import { sheetNotFoundHints } from '../suggest'
@@ -270,6 +273,14 @@ export async function convertLegacyWorkbook(
   return withSidecar(async (client) => {
     return (await client.convertWorkbook({ path, targetPath })) as { sheets: number; cells: number }
   })
+}
+
+/**
+ * .xlsx/.xlsm → ODS: a complete new package written by the sidecar. The answer
+ * names every dropped feature; the caller reports the non-zero ones.
+ */
+export async function convertToOds(path: string, targetPath: string): Promise<OdsConversionResult> {
+  return withSidecar((client) => client.convertToOds({ path, targetPath }))
 }
 
 // ── reading ────────────────────────────────────────────────────────────

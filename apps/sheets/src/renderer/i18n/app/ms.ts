@@ -556,6 +556,9 @@ export const ms = {
     'Eksport CSV memerlukan buku kerja dimuatkan sepenuhnya — tunggu pemuatan selesai.',
   appCsvExportTooLarge: 'Helaian terlalu besar untuk dieksport sebagai CSV.',
   appCsvExportCanceled: 'Eksport CSV dibatalkan.',
+  appOdsExported: '{path} dieksport.',
+  appOdsExportCanceled: 'Eksport ODS dibatalkan.',
+  appOdsExportFailed: 'Eksport ODS gagal.',
   appCsvExported: '{path} dieksport.',
   appCsvExportedActiveOnly:
     'Fail CSV hanya mengandungi satu helaian — helaian aktif “{name}” dieksport ke {path}.',

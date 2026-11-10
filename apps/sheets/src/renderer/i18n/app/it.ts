@@ -591,6 +591,9 @@ export const it = {
     "L'esportazione in CSV richiede la cartella di lavoro completamente caricata — attendi la fine del caricamento.",
   appCsvExportTooLarge: 'Il foglio è troppo grande per essere esportato come CSV.',
   appCsvExportCanceled: 'Esportazione CSV annullata.',
+  appOdsExported: '{path} esportato.',
+  appOdsExportCanceled: 'Esportazione ODS annullata.',
+  appOdsExportFailed: 'Esportazione ODS non riuscita.',
   appCsvExported: '{path} esportato.',
   appCsvExportedActiveOnly:
     'I file CSV contengono un solo foglio — il foglio attivo “{name}” è stato esportato in {path}.',

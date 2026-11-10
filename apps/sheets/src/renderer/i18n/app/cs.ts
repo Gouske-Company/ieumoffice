@@ -558,6 +558,9 @@ export const cs = {
     'Export do CSV vyžaduje plně načtený sešit — počkejte na dokončení načítání.',
   appCsvExportTooLarge: 'List je příliš velký na export do CSV.',
   appCsvExportCanceled: 'Export do CSV zrušen.',
+  appOdsExported: 'Exportováno {path}.',
+  appOdsExportCanceled: 'Export do ODS zrušen.',
+  appOdsExportFailed: 'Export do ODS selhal.',
   appCsvExported: 'Exportováno {path}.',
   appCsvExportedActiveOnly:
     'CSV obsahuje jediný list — aktivní list „{name}“ byl exportován do {path}.',

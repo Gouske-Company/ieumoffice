@@ -273,22 +273,24 @@ afterEach(() => {
 describe('Save As format list', () => {
   const label = (key: string) => `<${key}>`
 
-  it('offers the workbook first, then CSV and PDF of the active sheet', () => {
+  it('offers the workbook first, then CSV, ODS and PDF copies', () => {
     expect(sheetsSaveAsFilters(false, true, label)).toEqual([
       { name: '<filterXlsx>', extensions: ['xlsx'] },
       { name: '<filterCsv>', extensions: ['csv'] },
+      { name: '<filterOds>', extensions: ['ods'] },
       { name: '<filterPdfActiveSheet>', extensions: ['pdf'] },
     ])
   })
 
-  it('keeps a macro workbook on .xlsm and adds PDF only', () => {
+  it('keeps a macro workbook on .xlsm and adds ODS and PDF copies', () => {
     expect(sheetsSaveAsFilters(true, true, label)).toEqual([
       { name: '<filterXlsm>', extensions: ['xlsm'] },
+      { name: '<filterOds>', extensions: ['ods'] },
       { name: '<filterPdfActiveSheet>', extensions: ['pdf'] },
     ])
   })
 
-  it('offers no PDF outside an explicit Save As (a first Save)', () => {
+  it('offers no copies outside an explicit Save As (a first Save)', () => {
     expect(sheetsSaveAsFilters(false, false, label)).toEqual([
       { name: '<filterXlsx>', extensions: ['xlsx'] },
       { name: '<filterCsv>', extensions: ['csv'] },
@@ -312,6 +314,14 @@ describe('Save As format list', () => {
     expect(resolveSheetsSaveAsPick('/d/a.PDF', true, true)).toEqual({
       kind: 'pdf',
       path: '/d/a.PDF',
+    })
+    expect(resolveSheetsSaveAsPick('/d/a.ods', false, true)).toEqual({
+      kind: 'ods',
+      path: '/d/a.ods',
+    })
+    expect(resolveSheetsSaveAsPick('/d/a.ODS', true, true)).toEqual({
+      kind: 'ods',
+      path: '/d/a.ODS',
     })
     expect(resolveSheetsSaveAsPick('/d/a.csv', false, true)).toEqual({
       kind: 'csv',
@@ -339,6 +349,11 @@ describe('Save As format list', () => {
       kind: 'workbook',
       path: '/d/a.pdf.xlsx',
     })
+    // nor ODS: a copy pick only exists on the explicit Save As
+    expect(resolveSheetsSaveAsPick('/d/a.ods', false, false)).toEqual({
+      kind: 'workbook',
+      path: '/d/a.ods.xlsx',
+    })
   })
 
   it('accepts an authorized export target once, for its own tab only', () => {
@@ -355,6 +370,12 @@ describe('Save As format list', () => {
       workbookSaveResultSchema.parse({ canceled: true, pdfSaveAsPath: '/tmp/book.pdf' }),
     ).toEqual({ canceled: true, pdfSaveAsPath: '/tmp/book.pdf' })
   })
+
+  it('round-trips an ODS pick through the save result schema', () => {
+    expect(
+      workbookSaveResultSchema.parse({ canceled: true, odsSaveAsPath: '/tmp/book.ods' }),
+    ).toEqual({ canceled: true, odsSaveAsPath: '/tmp/book.ods' })
+  })
 })
 
 describe('Save As in the workbook tab', () => {
@@ -370,6 +391,7 @@ describe('Save As in the workbook tab', () => {
     expect(saveDialogs.at(-1)?.filters?.map((filter) => filter.extensions)).toEqual([
       ['xlsx'],
       ['csv'],
+      ['ods'],
       ['pdf'],
     ])
     // a translated label that says only the active sheet is exported
@@ -465,7 +487,7 @@ describe('Save As in the workbook tab', () => {
     expect(sheetsPendingEditCount(tab.id)).toBe(0)
   })
 
-  it('offers .xlsm and PDF for a macro workbook', async () => {
+  it('offers .xlsm and ODS/PDF copies for a macro workbook', async () => {
     const path = writeWorkbook('Macro.xlsm')
     const tab = newTab()
     const opened = await openWorkbook(tab, path)
@@ -480,6 +502,7 @@ describe('Save As in the workbook tab', () => {
     expect(saveDialogs.at(-1)?.defaultPath).toBe(join(dir, 'Macro'))
     expect(saveDialogs.at(-1)?.filters?.map((filter) => filter.extensions)).toEqual([
       ['xlsm'],
+      ['ods'],
       ['pdf'],
     ])
     expect(result).toEqual({ canceled: true, pdfSaveAsPath: join(dir, 'Macro.pdf') })

@@ -556,6 +556,9 @@ export const id = {
     'Ekspor CSV memerlukan buku kerja termuat penuh — tunggu pemuatan selesai.',
   appCsvExportTooLarge: 'Lembar terlalu besar untuk diekspor sebagai CSV.',
   appCsvExportCanceled: 'Ekspor CSV dibatalkan.',
+  appOdsExported: '{path} diekspor.',
+  appOdsExportCanceled: 'Ekspor ODS dibatalkan.',
+  appOdsExportFailed: 'Ekspor ODS gagal.',
   appCsvExported: '{path} diekspor.',
   appCsvExportedActiveOnly:
     'File CSV hanya memuat satu lembar — lembar aktif “{name}” diekspor ke {path}.',

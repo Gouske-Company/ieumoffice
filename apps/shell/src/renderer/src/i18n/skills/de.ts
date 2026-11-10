@@ -96,7 +96,7 @@ export const de = {
   githubLabel: 'GitHub-Adresse',
   githubPlaceholder: 'https://github.com/inhaber/repository',
   githubHint:
-    'Nur öffentliche Repositorys. Fügen Sie die Adresse eines Repositorys, Ordners oder einer SKILL.md ein, oder „inhaber/repository“.',
+    'Nur öffentliche Repositorys. Fügen Sie die Adresse eines Repositorys, Ordners oder einer SKILL.md ein, „inhaber/repository“ oder die Seite eines Skills auf skills.sh.',
   githubFind: 'Suchen',
   githubFetching: 'Wird von GitHub heruntergeladen…',
   importReading: 'Skills werden gelesen…',
@@ -141,4 +141,28 @@ export const de = {
   failEmptyBody: 'Geben Sie die Anleitung ein',
   failBadName: 'Der Name entspricht nicht den Regeln',
   failGeneric: 'Das hat nicht geklappt. Versuchen Sie es noch einmal',
+  addPaste: 'Aus eingefügtem Text',
+  pasteTitle: 'Durch Einfügen von Text hinzufügen',
+  pasteLabel: 'SKILL.md-Text',
+  pasteHint:
+    'Fügen Sie den ganzen SKILL.md-Text ein, beginnend mit der Zeile --- und den Zeilen name: und description: darunter.',
+  pastePreview: 'Vorschau',
+  pasteNotSkill:
+    'Das ist kein Skill-Text. Er muss mit einer Zeile --- beginnen, auf die eine Zeile name: folgt.',
+  previewFromText: '{n} Skills im eingefügten Text gefunden',
+  previewFromSkillFile: '{n} Skills in der SKILL.md-Datei gefunden',
+  previewWarnings: 'Zeilen, die Sie vor der Installation lesen sollten: {n}',
+  previewWarningsNote:
+    'Diese Zeilen passen zu einer kurzen Liste von Mustern. Ein Skill ohne Zeilen hier ist deshalb noch nicht sicher.',
+  previewWarningAt: '{file}, Zeile {line}',
+  warnIgnoreInstructions: 'Fordert die KI auf, frühere Anweisungen zu ignorieren',
+  warnHideFromUser: 'Fordert die KI auf, etwas vor Ihnen zu verbergen',
+  warnRemoteInstructions: 'Fordert die KI auf, Anweisungen von einer externen Adresse zu holen',
+  warnParentPath: 'Ein ../-Pfad, der aus dem Skill-Ordner hinauszeigt',
+  exportSeveral: 'Mehrere exportieren',
+  bundleTitle: 'Skills gemeinsam exportieren',
+  bundleIntro:
+    'Die angehakten Skills kommen in eine zip-Datei, ein Ordner pro Skill. Wer sie erhält, kann die zip-Datei auf ein App-Fenster ziehen oder Hinzufügen ▸ Aus einer zip-Datei verwenden.',
+  bundleSelectLabel: '{title} einschließen',
+  bundleExport: 'Exportieren ({n})',
 } satisfies Record<keyof typeof zh, string>

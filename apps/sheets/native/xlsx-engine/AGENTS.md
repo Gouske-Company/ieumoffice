@@ -6,7 +6,7 @@
 
 - 열기와 읽기. `open`은 압축 파일을 검사하고 시트 목록·서식·도형·정의된 이름 같은 메타데이터만 돌려준다. 셀은 `read_range`가 주고, `read_formula_cells`·`read_row_outline`·`read_media`·`find_cells`가 같은 세션을 읽는다.
 - 저장용 묶기(`src/archive.rs`): `archive_manifest`, `read_entries`, `scan_entries`, `save_archive`. 세션 없이 파일 경로만 받는다.
-- 수식 재계산 `recalc_cells`(IronCalc)와 옛 형식 가져오기 `convert_workbook`(calamine).
+- 수식 재계산 `recalc_cells`(IronCalc)와 옛 형식 가져오기 `convert_workbook`(calamine), ODS 내보내기 `convert_to_ods`.
 - 표준 입출력 프로토콜(`src/main.rs`의 `Command`, `Request`, `Response`).
 
 ## 맡지 않는 것 (경계)
@@ -75,6 +75,18 @@
 - **`.xls`의 인쇄 설정.** `xls_print.rs`가 시트의 `WSBOOL`, `SETUP`, 여백, 가운데, 눈금선·머리글, `HEADER`·`FOOTER`, 쪽 나누기 기록과 전역의 Print_Area·Print_Titles `NAME` 기록을 읽는다. `convert.rs`가 그것을 `sheetPr/pageSetUpPr`, `printOptions`부터 `colBreaks`까지(`mergeCells` 뒤, `drawing` 앞), `definedNames`로 쓴다. `xls_biff.rs`에서는 전역의 `0x0018`과 시트 기록의 나머지 갈래(`print.take_record`)만 이 모듈로 넘긴다. 시험 `xls_print::tests` 전체, `convert::tests`의 `carries_print_settings_from_a_legacy_workbook`, `print_area_and_titles_become_defined_names`.
 - **`.xls`의 글꼴에 맞춘 줄 높이.** 원본은 손으로 정한 줄 높이(`ROW`의 0x40)만 쓴다. 여기서는 시트 기본 높이(`DEFAULTROWHEIGHT`, `default_row_twips`)와 다른 높이도 `customHeight` 없이 `ht`로 쓴다. 시험 `carries_print_settings_from_a_legacy_workbook`의 1행.
 - 원본 2026-11-04 묶음 커밋의 `.xls` 셀 서식(`xls_styles.rs` 등)은 원본 코드를 미리 받아온 것이다. 다음 원본 받아오기에서 같은 내용이 들어오면 충돌은 원본 쪽으로 푼다.
+- **ODS의 수식·병합·크기.** ODF 스프레드시트를 옮길 때 `convert.rs`가 원본(calamine이 주는 값만 쓰는 변환)과 다르게 하는 세 가지다(결정 [0119](../../../../docs/tracking/decisions/0119-ods-open-and-export.md)). `.xls`·XML 스프레드시트의 결과는 그대로다.
+  - `odf_formula.rs`가 `table:formula`의 OpenFormula(`of:=` 접두사, `[.B1:.B2]` 참조, `;` 인수 구분)를 엑셀 문법으로 번역한다. `COM.MICROSOFT.` 접두사는 떼고, `TRUE()`·`FALSE()`와 두 쪽이 같이 쓰는 함수는 그대로 둔다. 번역할 수 없는 수식(정의된 이름, `oooc:`·`msoxl:`, 배열 상수, 교차 `!`·합집합 `~`, ODF 전용 함수, 3-D 참조)은 **그 셀의 수식만 버리고 값은 남기며** `ConvertResult::formulas_dropped`로 개수를 센다. 응답의 `formulasDropped` 필드가 그 값이다.
+  - `odf_layout.rs`가 `content.xml`과 `styles.xml`에서 병합(`table:number-columns-spanned`·`table:number-rows-spanned`)과 열 너비(`style:column-width`)·행 높이(`style:row-height`)를 읽어 `mergeCells`·`cols`·`row/@ht`로 쓴다. calamine의 ODS 읽기는 이 셋을 알려 주지 않는다. `table:number-columns-repeated`·`table:number-rows-repeated`로 좌표를 계산하고, 파일이 정하지 않은 너비·높이는 쓰지 않는다.
+  - ODS 시간(`office:time-value="PT13H30M"`, calamine의 `Data::DurationIso`)은 글자로 두지 않고 하루를 1로 하는 일련번호와 `[h]:mm:ss` 서식으로 옮긴다. 이 서식 하나 때문에 ODS 변환은 `STYLES_XML`에 `numFmts`와 `cellXfs` 하나를 더한 `ods_styles_xml()`을 쓴다.
+  - 시험: `odf_formula::tests`와 `odf_layout::tests` 전체, `convert::tests`의 `converts_ods_values_dates_times_and_error_results`·`translates_odf_formulas_and_counts_the_dropped_ones`·`carries_merged_ranges_across_repeated_rows_and_cells`·`carries_explicit_column_widths_and_row_heights`·`iso_durations_become_fractions_of_a_day`·`a_string_that_is_an_error_literal_becomes_an_error_cell`·`keeps_a_row_height_repeated_over_a_span_too_wide_to_expand`·`carries_a_row_height_repeated_over_rows_that_hold_data`·`the_ods_stylesheet_keeps_the_minimal_one_and_adds_a_time_format`, `main.rs`의 `convert_workbook_reports_dropped_formulas`.
+- **ODS로 내보내기.** `convert_to_ods` 명령이 `.xlsx`를 새 ODS 꾸러미로 쓴다(결정 [0119](../../../../docs/tracking/decisions/0119-ods-open-and-export.md)). 원본 바이트 보존이 아니라 **전체 변환**이고, `convert_workbook`의 동작과 `.xls` 결과는 그대로다.
+  - `ods_export.rs`가 `WorkbookSessions`의 세션 모델(값·수식·스타일·병합·크기·시트 메타데이터)을 그대로 읽어 `mimetype`·`META-INF/manifest.xml`·`content.xml`·`styles.xml`·`meta.xml`·`settings.xml`을 만든다. 시트는 `read_range` 창 단위로 읽고 행마다 바로 쓰며, 꾸러미는 대상 옆 임시 파일에 쓴 뒤 이름을 바꾼다. 대상 경로가 원본과 같으면 거절한다.
+  - `odf_formula::to_odf`가 엑셀 수식을 `of:=` 문법으로 되돌린다(`[.B1]`·`[.B1:.B2]`·`[$Sheet.$A$1]`, `,`→`;`). 정의된 이름, 배열 상수, 구조적·외부 참조, 3-D 참조, OpenFormula에 없는 함수는 **그 셀의 수식만 버리고 값은 남기며** `formulasDropped`로 센다.
+  - `ods_styles.rs`가 글꼴·글자색·채우기·테두리·맞춤과 엑셀 숫자 서식(`0.00`, `#,##0`, `%`, 통화, 날짜·시간)을 ODF 자동 스타일과 데이터 스타일로 옮긴다. 알 수 없는 서식은 데이터 스타일 없이 값만 쓴다.
+  - 배열 수식(`CellRecord.array_ref`)과 함수 호출 밖 쉼표(합집합)는 수식을 쓰지 않고 값만 남겨 `formulasDropped`로 센다. `[h]:mm:ss` 같은 경과 시간 서식은 `number:truncate-on-overflow="false"`로 24시간을 넘겨도 그대로 보인다.
+  - 옮기지 않는 것: 차트·그림·조건부 서식·데이터 유효성 검사·피벗·메모·매크로. 개수를 `dropped`(charts·images·conditionalFormats·validations·pivots·comments)로 돌려준다. 인쇄 설정은 용지·방향·여백·배율만 페이지 스타일로 옮기고, 한 페이지에 맞추기·머리글·꼬리말·인쇄 영역·반복 제목은 옮기지 않는다. 틀 고정은 `settings.xml`에 적는다. 이름 정의, 하이퍼링크, 자동 필터, 표(목록), 윤곽, 셀 안의 글자별 서식(rich text)도 옮기지 않는다.
+  - 시험: `ods_export::tests` 전체(`writes_values_formulas_dates_merges_sizes_and_styles`·`counts_the_features_that_do_not_travel`·`collapses_long_empty_stretches_into_repeated_rows`·`refuses_a_target_that_is_the_source_and_leaves_no_partial_file`·`drops_array_formula_masters_and_keeps_their_values`), `ods_styles::tests` 전체, `odf_formula::tests`의 `to_odf` 시험들(`a_comma_separates_arguments_only_inside_a_call` 포함), `main.rs`의 `convert_to_ods_reports_the_package_it_wrote`.
 
 ## 테스트
 

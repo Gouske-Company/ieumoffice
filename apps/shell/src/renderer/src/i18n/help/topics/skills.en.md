@@ -22,18 +22,22 @@ A skill is a set of working instructions for the AI. Write down something you do
 - A built-in skill is hidden instead of removed: choose **Hide**. **Show again** at the bottom of the list brings it back as it was at first.
 - To change a built-in skill or one from another program, choose **Copy to my skills**. The copy appears in my skills and the original is turned off.
 - Exporting a skill with a template puts the template document in the zip too. Check the document holds no personal information before you export it.
+- **Export several** at the top of the page puts the skills you tick into one zip file, a folder per skill. Whoever gets the zip adds it the same way as any skill zip, and can pick which of its skills to install.
 
 ## Adding a skill
 
 1. In **Settings ▸ Skills**, click **Add**.
-2. Choose **From a folder**, **From a zip file** or **From a GitHub link**. For GitHub, enter the address of a public repository or `owner/repo` and click **Find**.
-3. Check the skills found in the preview. It shows the number and size of the files, whether there are scripts, the web addresses in the text, and the license file.
+2. Choose **From a folder**, **From a zip file**, **From pasted text** or **From a GitHub link**. For pasted text, paste the whole `SKILL.md`, from its first `---` line, and click **Preview**. For GitHub, enter the address of a public repository, `owner/repo`, or a skill's page on skills.sh, and click **Find**.
+3. Check the skills found in the preview. It shows the number and size of the files, whether there are scripts, the web addresses in the text, the license file, and the lines worth reading before you install.
 4. Tick only the skills to install and click **Install**. Installed skills start turned on.
 
 Below the preview it always says: "Install skills only from sources you trust. A skill gives the AI instructions, and in the agent window it can run scripts." Read a skill from an unknown source before you install it.
 
 - If my skills already have one with the same name, choose **Replace** or **Skip** on that row.
+- You can also drop a skill's zip file or a `SKILL.md` file onto any GenOffice window. **Settings ▸ Skills** opens with the same preview. A zip counts as a skill when `SKILL.md` sits at its top or every top folder holds one; any other zip is left alone. A `SKILL.md` file comes in alone: put a skill with more files in a zip.
+- **Lines worth reading** are lines that ask the AI to ignore earlier instructions, to keep something from you, or to take instructions from an outside address, and `../` paths that point outside the skill folder. Each shows its file and line. They do not stop the install, and a skill with no such lines is not therefore safe.
 - When it downloads from GitHub, GenOffice connects only to `github.com`, `api.github.com` and `codeload.github.com`, and sends no sign-in data. If the archive is too large or fails the safety checks, nothing is installed.
+- A skill's page on skills.sh (`https://skills.sh/owner/repo/skill`) is read as that skill in the GitHub repository `owner/repo`. GenOffice does not connect to skills.sh.
 - **New skill** opens an empty editor where you write the name, description and instructions yourself.
 
 ## Checking for updates

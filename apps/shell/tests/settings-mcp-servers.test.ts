@@ -1031,6 +1031,8 @@ describe('Settings → Skills: MCP mark follows the registered servers', () => {
     ;(window as unknown as { aiOfficeUserSkills?: unknown }).aiOfficeUserSkills = {
       list: vi.fn(async () => [skill]),
       onChanged: vi.fn(() => () => undefined),
+      onDropped: vi.fn(() => () => undefined),
+      takeDropped: vi.fn(async () => ({ ok: true, preview: null })),
     }
     const h = fakeApi([serverView(), serverView({ id: 's2', name: 'web', enabled: false })])
     window.aiOfficeMcpServers = h.api

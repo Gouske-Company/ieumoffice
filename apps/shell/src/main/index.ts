@@ -154,7 +154,7 @@ import {
 import { createDocList } from './doc-picker/doc-list'
 import { resolveDocAsker } from './doc-picker/doc-asker'
 import { createDocPicker } from './doc-picker/doc-picker-window'
-import { handleDroppedFiles } from './dropped-files'
+import { handleDroppedFiles, type DroppedFilesDeps } from './dropped-files'
 import { collectLaunchPaths } from './launch-paths'
 
 import {
@@ -570,7 +570,12 @@ import {
   startCodexAgentSession,
 } from '@genoffice/ai-provider/agent-session'
 import { normalizeAgentPrefs } from '../shared/agent-api'
-import { normalizeAiSettings, setAiSecretCodec, type AiSettings } from '@genoffice/ai-provider'
+import {
+  droppedSkillSourceOf,
+  normalizeAiSettings,
+  setAiSecretCodec,
+  type AiSettings,
+} from '@genoffice/ai-provider'
 import {
   REVEAL_FLAG,
   fileSearchHoldsPlainKeys,
@@ -4779,7 +4784,7 @@ function ensureFileIndexer(): FileIndexer | null {
 
 const SEARCH_EXT_FAMILY: Record<string, readonly string[]> = {
   docx: ['docx', 'doc', 'odt'],
-  xlsx: ['xlsx', 'xlsm', 'xls', 'csv', 'tsv'],
+  xlsx: ['xlsx', 'xlsm', 'xls', 'csv', 'tsv', 'ods'],
   pptx: ['pptx', 'ppt'],
   md: ['md', 'markdown', 'txt', 'json'],
   html: ['html', 'htm'],
@@ -5506,6 +5511,7 @@ const OPEN_DIALOG_EXTENSIONS = [
   'xls',
   'csv',
   'tsv',
+  'ods',
   'pptx',
   'ppt',
   'pdf',
@@ -5549,18 +5555,24 @@ function showAppWarning(message: string, detail?: string): void {
  * Files dropped from the OS into any renderer arrive via installDropOpenBridge
  * and route through the normal File > Open pipeline; detached editor windows
  * can host the drop target, so the shell must reveal itself after opening.
+ * A skill file (a SKILL.md, a skill zip) goes to Settings ▸ Skills' preview.
  */
-const droppedFilesDeps = () => ({
+const droppedFilesDeps = (): DroppedFilesDeps => ({
   openDocumentPath,
   revealShellWindow,
   showWarning: showAppWarning,
   unsupportedMessage: (exts: string[]) => tm('errUnsupportedExt', { ext: exts.join(', ') }),
+  skillSourceOf: (path) => droppedSkillSourceOf(path, homedir()),
+  importSkills: (source) => {
+    userSkillsIpc.queueDropped(source)
+    openSkillsSettings()
+  },
 })
 
 function registerDroppedFilesIpc(): void {
-  ipcMain.on(DROP_OPEN_CHANNEL, (_event, raw: unknown) =>
-    handleDroppedFiles(raw, droppedFilesDeps()),
-  )
+  ipcMain.on(DROP_OPEN_CHANNEL, (_event, raw: unknown) => {
+    void handleDroppedFiles(raw, droppedFilesDeps())
+  })
 }
 
 /** the single router: extension decides which module owns the file; false = nothing opened */
@@ -6465,7 +6477,7 @@ function registerHomeIpc(): void {
         { name: tm('filterSupported'), extensions: OPEN_DIALOG_EXTENSIONS },
         { name: tm('filterWord'), extensions: ['docx', 'doc'] },
         { name: tm('filterOdt'), extensions: ['odt'] },
-        { name: tm('filterExcel'), extensions: ['xlsx', 'xlsm', 'xls', 'csv', 'tsv'] },
+        { name: tm('filterExcel'), extensions: ['xlsx', 'xlsm', 'xls', 'csv', 'tsv', 'ods'] },
         { name: tm('filterPpt'), extensions: ['pptx', 'ppt'] },
         { name: tm('filterPdf'), extensions: ['pdf'] },
         { name: tm('filterMarkdown'), extensions: ['md', 'markdown', 'txt', 'json'] },
@@ -6866,7 +6878,7 @@ function registerHomeIpc(): void {
       const root = addFolderRoot(path)
       if (root) added.push(root)
     }
-    if (files.length > 0) handleDroppedFiles(files, droppedFilesDeps())
+    if (files.length > 0) void handleDroppedFiles(files, droppedFilesDeps())
     return added
   })
 
@@ -9495,7 +9507,17 @@ const userSkills = createUserSkillsService({
   // Node's fetch: no browser cookies; the core sets no-redirect and no-credentials per request
   fetch: (url, init) => fetch(url, init),
 })
-registerUserSkillsIpc({
+/** Bring the main window forward with the settings open on the skills page */
+function openSkillsSettings(): void {
+  const win = shellWindow
+  if (!win || win.isDestroyed()) return
+  if (win.isMinimized()) win.restore()
+  win.show()
+  win.focus()
+  tabManager?.openHomeTab()
+  win.webContents.send(HOME_CHANNELS.openSettings, { section: 'skills' })
+}
+const userSkillsIpc = registerUserSkillsIpc({
   service: userSkills,
   // the settings screen; the agent window only for the install preview a session proposed
   canManage: userSkillsManageGate({
@@ -9503,15 +9525,7 @@ registerUserSkillsIpc({
       !!shellWindow && !shellWindow.isDestroyed() && sender === shellWindow.webContents,
     isAgentWindow: (sender) => isAgentWindowContents(sender),
   }),
-  openSettings: () => {
-    const win = shellWindow
-    if (!win || win.isDestroyed()) return
-    if (win.isMinimized()) win.restore()
-    win.show()
-    win.focus()
-    tabManager?.openHomeTab()
-    win.webContents.send(HOME_CHANNELS.openSettings, { section: 'skills' })
-  },
+  openSettings: openSkillsSettings,
   agentNoticeDue: () => agentSkillNoticeDue(APP_SETTINGS_PATH()),
   markAgentNoticeSeen: () => markAgentSkillNoticeSeen(APP_SETTINGS_PATH()),
 })

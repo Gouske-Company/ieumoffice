@@ -36,6 +36,7 @@ export const TREE_FILE_EXTENSIONS: ReadonlySet<string> = new Set([
   'xls',
   'csv',
   'tsv',
+  'ods',
   'pptx',
   'ppt',
   'pdf',

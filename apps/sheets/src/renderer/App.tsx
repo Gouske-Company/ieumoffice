@@ -533,6 +533,7 @@ import {
   type PageLayoutContext,
 } from './page-layout-actions'
 import { handleExportCsv as handleExportCsvImpl, type CsvExportContext } from './csv-export'
+import { handleExportOds as handleExportOdsImpl, type OdsExportContext } from './ods-export'
 import { effectivePageBreaks, installPageBreakPreview } from './page-break-preview'
 import { mapProtectedRanges } from './protected-ranges'
 import {
@@ -591,6 +592,7 @@ import { planStillMatches } from './lazy-plan'
 import { lastSurvivingScreenLine, netAxisDelta, screenToFile } from './view-transform'
 import { selectionFormatEquals, toSelectionFormat, type SelectionFormat } from './selection-format'
 import { ExcelShell, type SelectedShapeRibbon } from './ExcelShell'
+import { odsConversionNoticeOf, type OdsConversionNotice } from './ods-import'
 import { ToastHost } from './toast'
 import { showToast } from './toast-bus'
 import { AdvancedFilterDialog, type AdvancedFilterColumn } from './AdvancedFilterDialog'
@@ -864,6 +866,10 @@ export function App({
       new URLSearchParams(window.location.search).get('openingWorkbook') === '1',
   )
   const [emptyCsvNotice, setEmptyCsvNotice] = useState(false)
+  /// A document opened from an .ods copy keeps this line for its life: saving
+  /// writes an .xlsx. Separate from `message`, so a command's transient status
+  /// never clears it; only opening another document replaces it.
+  const [odsNotice, setOdsNotice] = useState<OdsConversionNotice | null>(null)
   /// Zoom of the active sheet in percent, echoed by the status-bar slider.
   const [zoomPercent, setZoomPercent] = useState(100)
   /** F5: the grid alone in fullscreen (presentation) */
@@ -1192,6 +1198,17 @@ export function App({
     }
   }
 
+  function odsExportContext(): OdsExportContext {
+    return {
+      lazyWorkbookRef,
+      setMessage,
+      saveFirst: async () => {
+        const outcome = await handleSaveRef.current('save', true)
+        return outcome.ok || outcome.skipped === true
+      },
+    }
+  }
+
   function saveContext(): SaveContext {
     return {
       univerRef,
@@ -1205,6 +1222,7 @@ export function App({
       },
       exportPdfCopy: (saveAsPath) =>
         handleExportPdfImpl(pageLayoutContext(), undefined, saveAsPath),
+      exportOdsCopy: (saveAsPath) => handleExportOdsImpl(odsExportContext(), saveAsPath),
     }
   }
 
@@ -5063,6 +5081,7 @@ export function App({
         return
       }
       setEmptyCsvNotice(selected.emptyCsv === true)
+      setOdsNotice(odsConversionNoticeOf(selected))
       setMessage(selected.emptyCsv ? '' : t('appOpened', { name: selected.name }))
     } catch (error: unknown) {
       setMessage(error instanceof Error ? stripIpcErrorWrapper(error.message) : t('appOpenFailed'))
@@ -5123,6 +5142,8 @@ export function App({
       void handleExportPdfImpl(pageLayoutContext())
     } else if (action === 'export-csv') {
       void handleExportCsvImpl(csvExportContext())
+    } else if (action === 'export-ods') {
+      void handleExportOdsImpl(odsExportContext())
     } else if (action === 'undo' || action === 'redo') {
       // The shell's own text fields (AI prompt, dialog inputs) keep native
       // text undo; everywhere else ⌘Z means workbook history.
@@ -5559,6 +5580,7 @@ export function App({
         formatPainterActive={formatPainterActive}
         statusMessage={openingWorkbook ? t('appOpeningWorkbook') : message}
         emptyCsvNotice={emptyCsvNotice}
+        odsNotice={odsNotice}
         onOpenWorkbook={() => void handleInspectWorkbook()}
         onDismissEmptyCsvNotice={() => setEmptyCsvNotice(false)}
         recoveryNotice={recoveryNotice}

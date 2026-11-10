@@ -589,6 +589,9 @@ export const ja = {
     'CSV エクスポートにはブックの完全読み込みが必要です — 読み込みの完了をお待ちください。',
   appCsvExportTooLarge: 'シートが大きすぎるため、CSV をエクスポートできません。',
   appCsvExportCanceled: 'CSV エクスポートをキャンセルしました。',
+  appOdsExported: '{path} をエクスポートしました。',
+  appOdsExportCanceled: 'ODS へのエクスポートを中止しました。',
+  appOdsExportFailed: 'ODS へのエクスポートに失敗しました。',
   appCsvExported: '{path} をエクスポートしました。',
   appCsvExportedActiveOnly:
     'CSV ファイルには 1 枚のシートしか含められません — アクティブなシート「{name}」を {path} にエクスポートしました。',
@@ -1614,4 +1617,9 @@ export const ja = {
   appSpellUnavailable: 'このウィンドウではスペルチェックを利用できません。',
   appSpellReplaceAll: 'すべて「{suggestion}」に置換',
   appSpellChangedAll: '「{word}」を {count} か所修正しました。',
+
+  // ── ODS import ──
+  appOdsImportNotice: 'ODS を xlsx のコピーとして開きました。保存すると xlsx ファイルになります。',
+  appOdsFormulasDropped: '数式 {count} 個は値のみ残しました。',
+  saveAsNeedsExtension: 'ファイル名に拡張子を付けてください。例: 報告書.xlsx、報告書.ods',
 } satisfies Record<keyof typeof zh, string>

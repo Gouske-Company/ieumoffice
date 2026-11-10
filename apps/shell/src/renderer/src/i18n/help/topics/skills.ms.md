@@ -22,18 +22,22 @@ Kemahiran ialah satu set arahan kerja untuk AI. Tulis sekali sahaja perkara yang
 - Kemahiran terbina dalam tidak dibuang tetapi disembunyikan: pilih **Sembunyikan**. **Tunjukkan semula** di bahagian bawah senarai mengembalikannya seperti keadaan asal.
 - Untuk mengubah kemahiran terbina dalam atau kemahiran daripada program lain, pilih **Salin ke kemahiran saya**. Salinannya muncul dalam kemahiran saya dan kemahiran asal dimatikan.
 - Apabila kemahiran yang mempunyai templat dieksport, dokumen templat turut dimasukkan ke dalam fail zip. Pastikan dokumen itu tidak mengandungi maklumat peribadi sebelum anda mengeksportnya.
+- **Eksport beberapa** di bahagian atas halaman memasukkan kemahiran yang anda tandakan ke dalam satu fail zip, satu folder bagi setiap kemahiran. Penerima zip itu menambahkannya dengan cara yang sama seperti zip kemahiran lain, dan boleh memilih kemahiran mana di dalamnya untuk dipasang.
 
 ## Menambah kemahiran
 
 1. Dalam **Tetapan ▸ Kemahiran**, klik **Tambah**.
-2. Pilih **Daripada folder**, **Daripada fail zip** atau **Daripada pautan GitHub**. Untuk GitHub, masukkan alamat repositori awam atau `owner/repo`, kemudian klik **Cari**.
-3. Semak kemahiran yang ditemui dalam pratonton. Pratonton menunjukkan bilangan dan saiz fail, sama ada terdapat skrip, alamat web dalam teks dan fail lesen.
+2. Pilih **Daripada folder**, **Daripada fail zip**, **Daripada teks yang ditampal** atau **Daripada pautan GitHub**. Untuk teks yang ditampal, tampal keseluruhan `SKILL.md` bermula dari baris `---` pertamanya, kemudian klik **Pratonton**. Untuk GitHub, masukkan alamat repositori awam, `owner/repo` atau halaman kemahiran di skills.sh, kemudian klik **Cari**.
+3. Semak kemahiran yang ditemui dalam pratonton. Pratonton menunjukkan bilangan dan saiz fail, sama ada terdapat skrip, alamat web dalam teks, fail lesen dan baris yang patut dibaca sebelum memasang.
 4. Tandakan hanya kemahiran yang hendak dipasang, kemudian klik **Pasang**. Kemahiran yang dipasang bermula dalam keadaan hidup.
 
 Di bawah pratonton sentiasa tertulis: "Pasang kemahiran hanya daripada sumber yang anda percayai. Kemahiran memberi arahan kepada AI, dan dalam tetingkap ejen ia boleh menjalankan skrip." Baca dahulu kemahiran daripada sumber yang tidak dikenali sebelum memasangnya.
 
 - Jika kemahiran saya sudah ada kemahiran dengan nama yang sama, pilih **Gantikan** atau **Langkau** pada baris itu.
+- Anda juga boleh melepaskan fail zip kemahiran atau fail `SKILL.md` pada mana-mana tetingkap GenOffice. **Tetapan ▸ Kemahiran** dibuka dengan pratonton yang sama. Zip dikira sebagai kemahiran apabila `SKILL.md` berada di peringkat teratasnya atau setiap folder teratas mengandungi satu; zip lain dibiarkan. Fail `SKILL.md` masuk bersendirian: masukkan kemahiran yang mempunyai fail lain ke dalam zip.
+- **Baris yang patut dibaca sebelum memasang** ialah baris yang meminta AI mengabaikan arahan sebelumnya, menyembunyikan sesuatu daripada anda atau mengambil arahan dari alamat luar, serta laluan `../` yang menghala ke luar folder kemahiran. Setiap satu menunjukkan fail dan barisnya. Baris ini tidak menghalang pemasangan, dan kemahiran tanpa baris sebegini tidak semestinya selamat.
 - Semasa memuat turun dari GitHub, GenOffice hanya bersambung ke `github.com`, `api.github.com` dan `codeload.github.com`, dan tidak menghantar sebarang data log masuk. Jika arkib terlalu besar atau gagal dalam semakan keselamatan, tiada apa-apa yang dipasang.
+- Halaman kemahiran di skills.sh (`https://skills.sh/owner/repo/skill`) dibaca sebagai kemahiran itu dalam repositori GitHub `owner/repo`. GenOffice tidak bersambung ke skills.sh.
 - **Kemahiran baharu** membuka editor kosong untuk anda menulis sendiri nama, keterangan dan arahannya.
 
 ## Menyemak kemas kini

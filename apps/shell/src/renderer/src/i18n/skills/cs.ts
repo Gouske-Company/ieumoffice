@@ -94,7 +94,7 @@ export const cs = {
   githubLabel: 'Adresa GitHub',
   githubPlaceholder: 'https://github.com/vlastník/repozitář',
   githubHint:
-    'Jen veřejné repozitáře. Vložte adresu repozitáře, složky nebo SKILL.md, případně „vlastník/repozitář“.',
+    'Jen veřejné repozitáře. Vložte adresu repozitáře, složky nebo SKILL.md, „vlastník/repozitář“, případně stránku dovednosti na skills.sh.',
   githubFind: 'Najít',
   githubFetching: 'Stahování ze služby GitHub…',
   importReading: 'Načítání dovedností…',
@@ -138,4 +138,27 @@ export const cs = {
   failEmptyBody: 'Zadejte pokyny',
   failBadName: 'Název neodpovídá pravidlům',
   failGeneric: 'Nepodařilo se. Zkuste to znovu',
+  addPaste: 'Z vloženého textu',
+  pasteTitle: 'Přidat vložením textu',
+  pasteLabel: 'Text SKILL.md',
+  pasteHint: 'Vložte celý text SKILL.md, počínaje řádkem --- a řádky name: a description: pod ním.',
+  pastePreview: 'Náhled',
+  pasteNotSkill:
+    'Toto není text dovednosti. Musí začínat řádkem ---, po kterém následuje řádek name:.',
+  previewFromText: 'Nalezené dovednosti ve vloženém textu: {n}',
+  previewFromSkillFile: 'Nalezené dovednosti v souboru SKILL.md: {n}',
+  previewWarnings: 'Řádky, které stojí za přečtení před instalací: {n}',
+  previewWarningsNote:
+    'Tyto řádky odpovídají krátkému seznamu vzorů. Dovednost bez řádků zde tím ještě není bezpečná.',
+  previewWarningAt: '{file}, řádek {line}',
+  warnIgnoreInstructions: 'Žádá AI, aby ignorovala dřívější pokyny',
+  warnHideFromUser: 'Žádá AI, aby před vámi něco skrývala',
+  warnRemoteInstructions: 'Žádá AI, aby přebírala pokyny z vnější adresy',
+  warnParentPath: 'Cesta ../, která vede mimo složku dovednosti',
+  exportSeveral: 'Exportovat více',
+  bundleTitle: 'Exportovat dovednosti společně',
+  bundleIntro:
+    'Zaškrtnuté dovednosti se uloží do jednoho souboru zip, každá do vlastní složky. Kdo ho dostane, může zip přetáhnout na okno aplikace nebo použít Přidat ▸ Ze souboru zip.',
+  bundleSelectLabel: 'Zahrnout {title}',
+  bundleExport: 'Exportovat ({n})',
 } satisfies Record<keyof typeof zh, string>

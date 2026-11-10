@@ -570,6 +570,9 @@ export const ru = {
     'Экспорт в CSV требует полностью загруженной книги — дождитесь завершения загрузки.',
   appCsvExportTooLarge: 'Лист слишком большой для экспорта в CSV.',
   appCsvExportCanceled: 'Экспорт в CSV отменён.',
+  appOdsExported: 'Экспортировано: {path}.',
+  appOdsExportCanceled: 'Экспорт в ODS отменён.',
+  appOdsExportFailed: 'Не удалось экспортировать в ODS.',
   appCsvExported: 'Экспортировано: {path}.',
   appCsvExportedActiveOnly:
     'Файлы CSV содержат только один лист — активный лист «{name}» экспортирован в {path}.',
@@ -1582,4 +1585,9 @@ export const ru = {
   appSpellUnavailable: 'Проверка орфографии недоступна в этом окне.',
   appSpellReplaceAll: 'Заменить все на «{suggestion}»',
   appSpellChangedAll: 'Исправлено {count} ячеек со словом «{word}».',
+
+  // ── ODS import ──
+  appOdsImportNotice: 'Файл ODS открыт как копия xlsx. При сохранении будет записан файл xlsx.',
+  appOdsFormulasDropped: 'В {count} формулах остались только значения.',
+  saveAsNeedsExtension: 'Добавьте расширение к имени файла, например отчёт.xlsx или отчёт.ods.',
 } satisfies Record<keyof typeof zh, string>

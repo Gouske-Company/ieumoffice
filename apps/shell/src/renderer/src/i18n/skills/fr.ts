@@ -97,7 +97,7 @@ export const fr = {
   githubLabel: 'Adresse GitHub',
   githubPlaceholder: 'https://github.com/propriétaire/dépôt',
   githubHint:
-    'Dépôts publics uniquement. Collez l’adresse d’un dépôt, d’un dossier ou d’un SKILL.md, ou « propriétaire/dépôt ».',
+    'Dépôts publics uniquement. Collez l’adresse d’un dépôt, d’un dossier ou d’un SKILL.md, « propriétaire/dépôt », ou la page d’une compétence sur skills.sh.',
   githubFind: 'Rechercher',
   githubFetching: 'Téléchargement depuis GitHub…',
   importReading: 'Lecture des compétences…',
@@ -142,4 +142,29 @@ export const fr = {
   failEmptyBody: 'Saisissez les instructions',
   failBadName: 'Le nom ne respecte pas les règles',
   failGeneric: 'Cela n’a pas fonctionné. Réessayez',
+  addPaste: 'Depuis un texte collé',
+  pasteTitle: 'Ajouter en collant du texte',
+  pasteLabel: 'Texte du SKILL.md',
+  pasteHint:
+    'Collez tout le texte du SKILL.md, à partir de la ligne --- et des lignes name: et description: qui la suivent.',
+  pastePreview: 'Aperçu',
+  pasteNotSkill:
+    'Ce n’est pas un texte de compétence. Il doit commencer par une ligne --- suivie d’une ligne name:.',
+  previewFromText: '{n} compétences trouvées dans le texte collé',
+  previewFromSkillFile: '{n} compétences trouvées dans le fichier SKILL.md',
+  previewWarnings: 'Lignes à lire avant d’installer : {n}',
+  previewWarningsNote:
+    'Ces lignes correspondent à une courte liste de motifs. Une compétence sans aucune ligne ici n’est pas sûre pour autant.',
+  previewWarningAt: '{file}, ligne {line}',
+  warnIgnoreInstructions: 'Demande à l’IA d’ignorer les instructions précédentes',
+  warnHideFromUser: 'Demande à l’IA de vous cacher quelque chose',
+  warnRemoteInstructions:
+    'Demande à l’IA de suivre des instructions venant d’une adresse extérieure',
+  warnParentPath: 'Un chemin ../ qui pointe hors du dossier de la compétence',
+  exportSeveral: 'Exporter plusieurs',
+  bundleTitle: 'Exporter des compétences ensemble',
+  bundleIntro:
+    'Les compétences cochées vont dans un seul fichier zip, avec un dossier par compétence. La personne qui le reçoit peut déposer le zip sur une fenêtre de l’application, ou utiliser Ajouter ▸ Depuis un fichier zip.',
+  bundleSelectLabel: 'Inclure {title}',
+  bundleExport: 'Exporter ({n})',
 } satisfies Record<keyof typeof zh, string>

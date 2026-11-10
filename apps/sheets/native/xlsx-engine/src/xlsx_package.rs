@@ -127,18 +127,21 @@ pub(crate) fn write_package(
 }
 
 /// The `<worksheet>` wrapper: a dimension, then the parts the schema fixes in
-/// this order — `cols` before the data, and the dialect's trailing parts
-/// (merges, the drawing reference) after it. The `r` namespace is declared
-/// even when unused so callers can append `<drawing r:id>` freely.
+/// this order — `<sheetFormatPr>`, `cols`, the data, and the dialect's trailing
+/// parts (merges, the drawing reference). `sheet_format` arrives already
+/// serialized and is empty when the sheet keeps Excel's default row height.
+/// The `r` namespace is declared even when unused so callers can append
+/// `<drawing r:id>` freely.
 pub(crate) fn worksheet_document(
     dimension: &str,
+    sheet_format: &str,
     columns: &str,
     sheet_data: &str,
     tail: &str,
 ) -> String {
     format!(
         r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><dimension ref="{dimension}"/>{columns}<sheetData>{sheet_data}</sheetData>{tail}</worksheet>"#,
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><dimension ref="{dimension}"/>{sheet_format}{columns}<sheetData>{sheet_data}</sheetData>{tail}</worksheet>"#,
     )
 }
 

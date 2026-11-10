@@ -95,7 +95,7 @@ export const pt = {
   githubLabel: 'Endereço do GitHub',
   githubPlaceholder: 'https://github.com/dono/repositorio',
   githubHint:
-    'Somente repositórios públicos. Cole o endereço de um repositório, pasta ou SKILL.md, ou "dono/repositorio".',
+    'Somente repositórios públicos. Cole o endereço de um repositório, pasta ou SKILL.md, "dono/repositorio" ou a página de uma habilidade no skills.sh.',
   githubFind: 'Buscar',
   githubFetching: 'Baixando do GitHub…',
   importReading: 'Lendo as habilidades…',
@@ -140,4 +140,28 @@ export const pt = {
   failEmptyBody: 'Digite as instruções',
   failBadName: 'O nome não segue as regras',
   failGeneric: 'Não deu certo. Tente de novo',
+  addPaste: 'De um texto colado',
+  pasteTitle: 'Adicionar colando texto',
+  pasteLabel: 'Texto do SKILL.md',
+  pasteHint:
+    'Cole todo o texto do SKILL.md, começando pela linha --- e pelas linhas name: e description: logo abaixo.',
+  pastePreview: 'Pré-visualizar',
+  pasteNotSkill:
+    'Isto não é texto de uma habilidade. Ele precisa começar com uma linha --- seguida de uma linha name:.',
+  previewFromText: '{n} habilidades encontradas no texto colado',
+  previewFromSkillFile: '{n} habilidades encontradas no arquivo SKILL.md',
+  previewWarnings: 'Linhas para ler antes de instalar: {n}',
+  previewWarningsNote:
+    'Estas linhas corresponderam a uma lista curta de padrões. Uma habilidade sem nenhuma linha aqui não é, por isso, segura.',
+  previewWarningAt: '{file}, linha {line}',
+  warnIgnoreInstructions: 'Pede à IA que ignore as instruções anteriores',
+  warnHideFromUser: 'Pede à IA que esconda algo de você',
+  warnRemoteInstructions: 'Pede à IA que siga instruções de um endereço externo',
+  warnParentPath: 'Um caminho ../ que aponta para fora da pasta da habilidade',
+  exportSeveral: 'Exportar várias',
+  bundleTitle: 'Exportar habilidades juntas',
+  bundleIntro:
+    'As habilidades que você marcar vão para um único arquivo zip, uma pasta por habilidade. Quem receber pode soltar o zip numa janela do aplicativo ou usar Adicionar ▸ De um arquivo zip.',
+  bundleSelectLabel: 'Incluir {title}',
+  bundleExport: 'Exportar ({n})',
 } satisfies Record<keyof typeof zh, string>

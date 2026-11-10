@@ -22,18 +22,22 @@ Kỹ năng là một bộ hướng dẫn làm việc dành cho AI. Hãy viết r
 - Kỹ năng có sẵn không bị xóa mà được ẩn đi: hãy chọn **Ẩn**. **Hiện lại** ở cuối danh sách sẽ đưa nó trở lại như ban đầu.
 - Để thay đổi một kỹ năng có sẵn hoặc kỹ năng từ chương trình khác, hãy chọn **Sao chép vào kỹ năng của tôi**. Bản sao xuất hiện trong kỹ năng của tôi và bản gốc bị tắt.
 - Khi xuất một kỹ năng có mẫu, tài liệu mẫu cũng được đưa vào tệp zip. Hãy kiểm tra để chắc rằng tài liệu đó không chứa thông tin cá nhân trước khi xuất.
+- **Xuất nhiều kỹ năng** ở đầu trang đưa các kỹ năng bạn đánh dấu vào một tệp zip, mỗi kỹ năng một thư mục. Người nhận thêm tệp zip đó giống như mọi tệp zip kỹ năng khác và có thể chọn cài những kỹ năng nào trong đó.
 
 ## Thêm kỹ năng
 
 1. Trong **Cài đặt ▸ Kỹ năng**, nhấn **Thêm**.
-2. Chọn **Từ thư mục**, **Từ tệp zip** hoặc **Từ liên kết GitHub**. Với GitHub, hãy nhập địa chỉ của một kho lưu trữ công khai hoặc `owner/repo` rồi nhấn **Tìm**.
-3. Kiểm tra các kỹ năng tìm thấy trong bản xem trước. Bản xem trước cho biết số lượng và kích thước tệp, có tập lệnh hay không, các địa chỉ web trong nội dung và tệp giấy phép.
+2. Chọn **Từ thư mục**, **Từ tệp zip**, **Từ văn bản dán vào** hoặc **Từ liên kết GitHub**. Với văn bản dán vào, hãy dán toàn bộ `SKILL.md` từ dòng `---` đầu tiên rồi nhấn **Xem trước**. Với GitHub, hãy nhập địa chỉ của một kho lưu trữ công khai, `owner/repo` hoặc trang của một kỹ năng trên skills.sh rồi nhấn **Tìm**.
+3. Kiểm tra các kỹ năng tìm thấy trong bản xem trước. Bản xem trước cho biết số lượng và kích thước tệp, có tập lệnh hay không, các địa chỉ web trong nội dung, tệp giấy phép và các dòng nên đọc trước khi cài.
 4. Chỉ đánh dấu những kỹ năng muốn cài rồi nhấn **Cài đặt**. Kỹ năng đã cài ở trạng thái bật ngay từ đầu.
 
 Bên dưới bản xem trước luôn có dòng: "Chỉ cài kỹ năng từ nguồn bạn tin cậy. Kỹ năng đưa chỉ dẫn cho AI và có thể chạy tập lệnh trong cửa sổ tác tử." Hãy đọc kỹ một kỹ năng từ nguồn lạ trước khi cài.
 
 - Nếu kỹ năng của tôi đã có một kỹ năng trùng tên, hãy chọn **Thay thế** hoặc **Bỏ qua** trên hàng đó.
+- Bạn cũng có thể thả tệp zip của một kỹ năng hoặc tệp `SKILL.md` vào bất kỳ cửa sổ GenOffice nào. **Cài đặt ▸ Kỹ năng** sẽ mở ra với cùng bản xem trước. Một tệp zip được coi là kỹ năng khi `SKILL.md` nằm ở cấp trên cùng của nó hoặc mỗi thư mục cấp trên cùng đều có một tệp như vậy; mọi tệp zip khác được để nguyên. Tệp `SKILL.md` chỉ được đưa vào một mình: hãy đóng gói kỹ năng có thêm tệp khác thành zip.
+- **Các dòng nên đọc trước khi cài** là những dòng yêu cầu AI bỏ qua các chỉ dẫn trước đó, giấu bạn điều gì đó hoặc nhận chỉ dẫn từ một địa chỉ bên ngoài, và các đường dẫn `../` trỏ ra ngoài thư mục kỹ năng. Mỗi dòng đều cho biết tệp và số dòng. Chúng không ngăn việc cài đặt, và kỹ năng không có những dòng như vậy cũng không vì thế mà an toàn.
 - Khi tải xuống từ GitHub, GenOffice chỉ kết nối tới `github.com`, `api.github.com` và `codeload.github.com`, và không gửi bất kỳ dữ liệu đăng nhập nào. Nếu tệp nén quá lớn hoặc không qua được các bước kiểm tra an toàn, sẽ không có gì được cài.
+- Trang của một kỹ năng trên skills.sh (`https://skills.sh/owner/repo/skill`) được đọc là kỹ năng đó trong kho GitHub `owner/repo`. GenOffice không kết nối tới skills.sh.
 - **Kỹ năng mới** mở một trình soạn thảo trống để bạn tự viết tên, mô tả và hướng dẫn.
 
 ## Kiểm tra cập nhật

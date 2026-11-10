@@ -96,7 +96,7 @@ export const nl = {
   githubLabel: 'GitHub-adres',
   githubPlaceholder: 'https://github.com/eigenaar/opslagplaats',
   githubHint:
-    'Alleen openbare opslagplaatsen. Plak het adres van een opslagplaats, map of SKILL.md, of "eigenaar/opslagplaats".',
+    'Alleen openbare opslagplaatsen. Plak het adres van een opslagplaats, map of SKILL.md, "eigenaar/opslagplaats" of de pagina van een vaardigheid op skills.sh.',
   githubFind: 'Zoeken',
   githubFetching: 'Downloaden van GitHub…',
   importReading: 'Vaardigheden lezen…',
@@ -141,4 +141,28 @@ export const nl = {
   failEmptyBody: 'Vul de instructies in',
   failBadName: 'De naam voldoet niet aan de regels',
   failGeneric: 'Dat is niet gelukt. Probeer het opnieuw',
+  addPaste: 'Uit geplakte tekst',
+  pasteTitle: 'Toevoegen door tekst te plakken',
+  pasteLabel: 'SKILL.md-tekst',
+  pasteHint:
+    'Plak de hele SKILL.md-tekst, te beginnen bij de regel --- en de regels name: en description: eronder.',
+  pastePreview: 'Voorbeeld',
+  pasteNotSkill:
+    'Dit is geen vaardigheidstekst. Die moet beginnen met een regel --- gevolgd door een regel name:.',
+  previewFromText: '{n} vaardigheden gevonden in de geplakte tekst',
+  previewFromSkillFile: '{n} vaardigheden gevonden in het SKILL.md-bestand',
+  previewWarnings: 'Regels om te lezen voordat je installeert: {n}',
+  previewWarningsNote:
+    'Deze regels kwamen overeen met een korte lijst patronen. Een vaardigheid zonder regels hier is daarom nog niet veilig.',
+  previewWarningAt: '{file}, regel {line}',
+  warnIgnoreInstructions: 'Vraagt de AI eerdere instructies te negeren',
+  warnHideFromUser: 'Vraagt de AI iets voor je verborgen te houden',
+  warnRemoteInstructions: 'Vraagt de AI instructies van een extern adres te halen',
+  warnParentPath: 'Een ../-pad dat buiten de vaardigheidsmap wijst',
+  exportSeveral: 'Meerdere exporteren',
+  bundleTitle: 'Vaardigheden samen exporteren',
+  bundleIntro:
+    'De vaardigheden die je aanvinkt gaan in één zip-bestand, een map per vaardigheid. Wie het krijgt, kan de zip op een appvenster neerzetten of Toevoegen ▸ Uit een zip-bestand gebruiken.',
+  bundleSelectLabel: '{title} meenemen',
+  bundleExport: 'Exporteren ({n})',
 } satisfies Record<keyof typeof zh, string>

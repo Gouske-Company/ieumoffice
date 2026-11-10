@@ -65,7 +65,101 @@ export function CandidateSummary({
           </ul>
         </div>
       )}
+      {c.warningCount > 0 && (
+        <div className="skl-line-warnings" role="note">
+          <span className="skl-line-warnings-title">
+            {text('previewWarnings', { n: c.warningCount })}
+          </span>
+          <ul>
+            {c.warnings.map((w) => (
+              <li key={`${w.file}:${w.line}:${w.messageKey}`} data-warning={w.messageKey}>
+                <span>{text(w.messageKey)}</span>{' '}
+                <span className="set-field-desc">
+                  {text('previewWarningAt', { file: w.file, line: w.line })}
+                </span>
+                <code dir="auto">{w.excerpt}</code>
+              </li>
+            ))}
+          </ul>
+          <span className="set-field-desc">{text('previewWarningsNote')}</span>
+        </div>
+      )}
     </div>
+  )
+}
+
+/** The paste step: SKILL.md text goes to the shared preview as one skill */
+export function PasteImportDialog({
+  api,
+  lang,
+  onPreview,
+  onClose,
+}: {
+  api: Pick<UserSkillsBridge, 'importText'>
+  lang: Lang
+  onPreview: (preview: UserSkillImportPreview) => void
+  onClose: () => void
+}) {
+  const s: Text = (key, params) => skillsText(lang, key, params)
+  const [value, setValue] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [errorKey, setErrorKey] = useState<SkillsStringKey | null>(null)
+
+  const find = async () => {
+    if (!value.trim() || busy) return
+    setBusy(true)
+    setErrorKey(null)
+    const answer = await api.importText(value)
+    setBusy(false)
+    if (answer.ok) {
+      onPreview(answer.preview)
+      return
+    }
+    setErrorKey(
+      answer.reason === 'no-skills'
+        ? 'pasteNotSkill'
+        : (failureKey(answer.reason, 'other') ?? 'failGeneric'),
+    )
+  }
+
+  return (
+    <SkillDialog
+      label={s('pasteTitle')}
+      onCancel={onClose}
+      footer={
+        <>
+          <button type="button" className="set-btn" onClick={onClose}>
+            {s('cancel')}
+          </button>
+          <button
+            type="button"
+            className="set-btn primary"
+            disabled={busy || !value.trim()}
+            onClick={() => void find()}
+          >
+            {s('pastePreview')}
+          </button>
+        </>
+      }
+    >
+      <label className="skl-field">
+        <span className="skl-field-label">{s('pasteLabel')}</span>
+        <textarea
+          className="skl-input skl-textarea-body"
+          value={value}
+          spellCheck={false}
+          disabled={busy}
+          placeholder={'---\nname: \ndescription: \n---\n'}
+          onChange={(e) => setValue(e.target.value)}
+        />
+        <span className="set-field-desc">{s('pasteHint')}</span>
+      </label>
+      {errorKey && (
+        <p className="set-field-desc skl-error" role="alert">
+          {s(errorKey)}
+        </p>
+      )}
+    </SkillDialog>
   )
 }
 
@@ -175,7 +269,13 @@ function originLine(preview: UserSkillImportPreview, text: Text): string {
     const ref = origin.path ? `${origin.ref}/${origin.path}` : origin.ref
     return text('previewFromGitHub', { repo: origin.repo, ref, n })
   }
-  return text(origin.kind === 'zip' ? 'previewFromZip' : 'previewFromFolder', { n })
+  const key: Record<typeof origin.kind, SkillsStringKey> = {
+    folder: 'previewFromFolder',
+    zip: 'previewFromZip',
+    'skill-file': 'previewFromSkillFile',
+    text: 'previewFromText',
+  }
+  return text(key[origin.kind], { n })
 }
 
 /**

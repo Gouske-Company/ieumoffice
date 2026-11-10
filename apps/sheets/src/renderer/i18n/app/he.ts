@@ -510,6 +510,9 @@ export const he = {
   appCsvExportNeedsFullLoad: 'ייצוא CSV דורש חוברת עבודה טעונה במלואה — המתן לסיום הטעינה.',
   appCsvExportTooLarge: 'הגיליון גדול מדי לייצוא כ-CSV.',
   appCsvExportCanceled: 'ייצוא ה-CSV בוטל.',
+  appOdsExported: '{path} יוצא.',
+  appOdsExportCanceled: 'ייצוא ODS בוטל.',
+  appOdsExportFailed: 'ייצוא ODS נכשל.',
   appCsvExported: '{path} יוצא.',
   appCsvExportedActiveOnly:
     'קובצי CSV מכילים גיליון אחד בלבד — הגיליון הפעיל "{name}" יוצא אל {path}.',
@@ -1500,4 +1503,9 @@ export const he = {
   appSpellUnavailable: 'בדיקת האיות אינה זמינה בחלון זה.',
   appSpellReplaceAll: 'החלף הכול ב־«{suggestion}»',
   appSpellChangedAll: 'תוקנו {count} תאים של «{word}».',
+
+  // ── ODS import ──
+  appOdsImportNotice: 'קובץ ה-ODS נפתח כעותק xlsx. השמירה תכתוב קובץ xlsx.',
+  appOdsFormulasDropped: 'ב-{count} נוסחאות נשמרו הערכים בלבד.',
+  saveAsNeedsExtension: 'הוסיפו סיומת לשם הקובץ, למשל report.xlsx או report.ods.',
 } satisfies Record<keyof typeof zh, string>

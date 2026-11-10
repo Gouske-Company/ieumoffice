@@ -22,18 +22,22 @@ Un'abilità è un insieme di istruzioni di lavoro per l'IA. Scrivi una volta sol
 - Un'abilità integrata non si elimina, si nasconde: scegli **Nascondi**. **Mostra di nuovo** in fondo all'elenco la riporta com'era all'inizio.
 - Per cambiare un'abilità integrata o una che viene da un altro programma, scegli **Copia nelle mie abilità**. La copia compare tra le mie abilità e l'originale viene disattivato.
 - Se esporti un'abilità con un modello, nello zip finisce anche il documento modello. Prima di esportarla, controlla che il documento non contenga dati personali.
+- **Esporta più abilità**, in cima alla pagina, mette le abilità che selezioni in un unico file zip, una cartella per abilità. Chi riceve lo zip lo aggiunge come qualsiasi zip di abilità e può scegliere quali delle sue abilità installare.
 
 ## Aggiungere un'abilità
 
 1. In **Impostazioni ▸ Abilità**, fai clic su **Aggiungi**.
-2. Scegli **Da una cartella**, **Da un file zip** o **Da un link GitHub**. Per GitHub, inserisci l'indirizzo di un repository pubblico oppure `owner/repo` e fai clic su **Cerca**.
-3. Controlla nell'anteprima le abilità trovate. L'anteprima mostra il numero e la dimensione dei file, se ci sono script, gli indirizzi web presenti nel testo e il file della licenza.
+2. Scegli **Da una cartella**, **Da un file zip**, **Da testo incollato** o **Da un link GitHub**. Per il testo incollato, incolla l'intero `SKILL.md` dalla sua prima riga `---` e fai clic su **Anteprima**. Per GitHub, inserisci l'indirizzo di un repository pubblico, `owner/repo` oppure la pagina di un'abilità su skills.sh e fai clic su **Cerca**.
+3. Controlla nell'anteprima le abilità trovate. L'anteprima mostra il numero e la dimensione dei file, se ci sono script, gli indirizzi web presenti nel testo, il file della licenza e le righe da leggere prima di installare.
 4. Spunta solo le abilità da installare e fai clic su **Installa**. Le abilità installate partono attive.
 
 Sotto l'anteprima compare sempre: «Installa abilità solo da fonti affidabili. Un'abilità dà istruzioni all'IA e nella finestra dell'agente può eseguire script». Prima di installare un'abilità di provenienza sconosciuta, leggila.
 
 - Se tra le mie abilità ce n'è già una con lo stesso nome, scegli **Sostituisci** o **Salta** su quella riga.
+- Puoi anche trascinare il file zip di un'abilità o un file `SKILL.md` su qualsiasi finestra di GenOffice. Si apre **Impostazioni ▸ Abilità** con la stessa anteprima. Uno zip conta come abilità quando `SKILL.md` si trova al suo livello principale o ogni cartella di primo livello ne contiene uno; qualsiasi altro zip viene lasciato com'è. Un file `SKILL.md` arriva da solo: metti in uno zip un'abilità con altri file.
+- **Righe da leggere prima di installare**: sono righe che chiedono all'IA di ignorare le istruzioni precedenti, di nasconderti qualcosa o di prendere istruzioni da un indirizzo esterno, e percorsi `../` che puntano fuori dalla cartella dell'abilità. Per ognuna sono indicati il file e la riga. Non bloccano l'installazione, e un'abilità senza righe di questo tipo non è per questo sicura.
 - Quando scarica da GitHub, GenOffice si collega solo a `github.com`, `api.github.com` e `codeload.github.com` e non invia alcun dato di accesso. Se l'archivio è troppo grande o non supera i controlli di sicurezza, non viene installato nulla.
+- La pagina di un'abilità su skills.sh (`https://skills.sh/owner/repo/skill`) viene letta come quell'abilità nel repository GitHub `owner/repo`. GenOffice non si collega a skills.sh.
 - **Nuova abilità** apre un editor vuoto in cui scrivi tu nome, descrizione e istruzioni.
 
 ## Cercare aggiornamenti

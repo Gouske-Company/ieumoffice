@@ -40,6 +40,8 @@ describe('CSV and converted sessions', () => {
     expect(csv?.recoveryOriginalPath).toBe('/data/a.csv')
     const xls = convertedSessionRecovery({ suggestSaveAs: '/data/b.xlsx' }, '/data/b.xls')
     expect(xls?.recoveryOriginalPath).toBe('/data/b.xls')
+    const ods = convertedSessionRecovery({ suggestSaveAs: '/data/o.xlsx' }, '/data/o.ods')
+    expect(ods?.recoveryOriginalPath).toBe('/data/o.ods')
     expect(xls?.recoveryIdentity.untitledId).not.toBe(csv?.recoveryIdentity.untitledId)
   })
 
@@ -81,6 +83,7 @@ describe('CSV and converted sessions', () => {
     expect(saveAsDefaultFor(join('dir', 'a.csv'))).toBe(join('dir', 'a.xlsx'))
     expect(saveAsDefaultFor(join('dir', 'b.tsv'))).toBe(join('dir', 'b.xlsx'))
     expect(saveAsDefaultFor(join('dir', 'c.xls'))).toBe(join('dir', 'c.xlsx'))
+    expect(saveAsDefaultFor(join('dir', 'f.ods'))).toBe(join('dir', 'f.xlsx'))
     expect(saveAsDefaultFor(join('dir', 'd.xlsx'))).toBe(join('dir', 'd.xlsx'))
     expect(saveAsDefaultFor(join('dir', 'e.XLSM'))).toBe(join('dir', 'e.XLSM'))
     expect(saveAsDefaultFor(join('dir.v2', 'noext'))).toBe(join('dir.v2', 'noext.xlsx'))

@@ -6,10 +6,11 @@ import { assertOptionValues, flagBool, flagString, type ParsedArgs } from '../ar
 import { csvToXlsx, sheetNameFromStem } from '../formats/csv'
 import { convertLegacyDoc } from '../formats/legacy-doc'
 import { convertPdf, type PdfTarget } from '../formats/pdf'
-import { convertLegacyWorkbook, sheetToCsv } from '../formats/xlsx'
+import { convertLegacyWorkbook, convertToOds, sheetToCsv } from '../formats/xlsx'
 import { exportViaApp, type AppExportTarget } from '../formats/app-export'
 import { htmlToMarkdown, markdownToDocx, markdownToHtml } from '../formats/markdown'
 import { closeDocument, documentHtml, openDocument } from '../formats/docx'
+import { docxToHangul } from '../formats/docx-hwp'
 import { docxBytesToOdt, openOdtBytes, reportOdtConversion } from '../formats/odt'
 import { writeEpubFile, writeMarkdownFile } from '../formats/pdf-outputs'
 import {
@@ -52,9 +53,9 @@ const NODE_ROUTES: Record<string, readonly string[]> = {
   dot: ['docx'],
   md: ['docx', 'html'],
   markdown: ['docx', 'html'],
-  docx: ['md'],
-  xlsx: ['csv'],
-  xlsm: ['csv'],
+  docx: ['md', 'hwp', 'hwpx'],
+  xlsx: ['csv', 'ods'],
+  xlsm: ['csv', 'ods'],
 }
 
 /**
@@ -260,13 +261,68 @@ async function run(
     // UTF-8 BOM, as the app writes it, so Excel opens the file without a wizard
     return { bytes: Buffer.from('\ufeff' + csv, 'utf-8'), detail }
   }
+  if (to === 'ods') return workbookToOds(input, output, ctx)
   if (to === 'md') return docxToMarkdown(readInput(input), ctx)
+  if (to === 'hwp' || to === 'hwpx') {
+    const { bytes, hwp_report } = await docxToHangul(readInput(input), to, ctx)
+    return { bytes, detail: { hwp_report } }
+  }
   if (from === 'doc' || from === 'dot') {
     const r = await convertLegacyDoc(readInput(input))
     return { bytes: r.bytes, detail: r.detail }
   }
   const r = await convertLegacyWorkbook(input, output)
   return { detail: { sheets: r.sheets, cells: r.cells } }
+}
+
+async function workbookToOds(
+  input: string,
+  output: string,
+  ctx: CommandContext,
+): Promise<Produced> {
+  const result = await convertToOds(input, output)
+  const dropped = {
+    charts: result.dropped.charts,
+    images: result.dropped.images,
+    conditionalFormats: result.dropped.conditionalFormats,
+    validations: result.dropped.validations,
+    pivots: result.dropped.pivots,
+    comments: result.dropped.comments,
+  }
+  const lost = [
+    ...(result.formulasDropped > 0 ? [`${result.formulasDropped} formula(s) kept as values`] : []),
+    ...Object.entries(dropped)
+      .filter(([, count]) => count > 0)
+      .map(([kind, count]) => `${count} ${odsDroppedLabel(kind)}`),
+  ]
+  if (lost.length) {
+    ctx.warn({
+      code: 'ods_features_dropped',
+      message: `the ODS copy leaves out ${lost.join(', ')}`,
+      suggestion: 'keep the .xlsx when those features matter',
+    })
+  }
+  return {
+    detail: {
+      sheets: result.sheets,
+      cells: result.cells,
+      formulas_dropped: result.formulasDropped,
+      dropped,
+    },
+  }
+}
+
+function odsDroppedLabel(kind: string): string {
+  switch (kind) {
+    case 'conditionalFormats':
+      return 'conditional formatting rule(s)'
+    case 'validations':
+      return 'data validation rule(s)'
+    case 'pivots':
+      return 'pivot table(s)'
+    default:
+      return kind
+  }
 }
 
 async function docxToMarkdown(docx: Uint8Array, ctx: CommandContext): Promise<Produced> {

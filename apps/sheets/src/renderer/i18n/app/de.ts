@@ -602,6 +602,9 @@ export const de = {
     'Der CSV-Export erfordert die vollständig geladene Arbeitsmappe — warten Sie, bis das Laden abgeschlossen ist.',
   appCsvExportTooLarge: 'Das Blatt ist zu groß für den CSV-Export.',
   appCsvExportCanceled: 'CSV-Export abgebrochen.',
+  appOdsExported: '{path} exportiert.',
+  appOdsExportCanceled: 'ODS-Export abgebrochen.',
+  appOdsExportFailed: 'ODS-Export fehlgeschlagen.',
   appCsvExported: '{path} exportiert.',
   appCsvExportedActiveOnly:
     'CSV-Dateien enthalten nur ein Blatt — das aktive Blatt „{name}“ wurde nach {path} exportiert.',
@@ -1625,4 +1628,11 @@ export const de = {
   appSpellUnavailable: 'Die Rechtschreibprüfung ist in diesem Fenster nicht verfügbar.',
   appSpellReplaceAll: 'Alle durch „{suggestion}“ ersetzen',
   appSpellChangedAll: '{count} Zellen mit „{word}“ korrigiert.',
+
+  // ── ODS import ──
+  appOdsImportNotice:
+    'Die ODS-Datei wurde als xlsx-Kopie geöffnet. Beim Speichern wird eine xlsx-Datei geschrieben.',
+  appOdsFormulasDropped: 'Bei {count} Formeln blieben nur die Werte erhalten.',
+  saveAsNeedsExtension:
+    'Fügen Sie dem Dateinamen eine Erweiterung hinzu, zum Beispiel Bericht.xlsx oder Bericht.ods.',
 } satisfies Record<keyof typeof zh, string>

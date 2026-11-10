@@ -7,7 +7,9 @@
  * Starting a paragraph splits the spare at offset 0, which makes an empty
  * paragraph to write into and a fresh spare after it; a written paragraph is
  * never split again. Closing removes the last spare, so a table cell keeps
- * Word's paragraph count.
+ * Word's paragraph count. A table nested in a cell is written the same way:
+ * it is built in the body and moved in whole (see write.ts), so content is
+ * only ever written in the body, a top-level cell, or a header or footer.
  *
  * The spare is shaped before it is split, so both halves carry the shape: a
  * paragraph shaped like the one before it needs no format call.
@@ -50,8 +52,8 @@ export interface PlaceOps {
   insertField?(p: number, at: number, field: keyof typeof HF_FIELD): void
   insertPicture?(p: number, at: number, picture: Picture): void
   insertNote?(p: number, at: number, kind: 'footnote' | 'endnote'): number
-  /** pastes a table skeleton into the empty paragraph p; answers its control index */
-  pasteTable?(p: number, html: string): number
+  /** pastes the control on the engine's clipboard into the empty paragraph p */
+  pasteControl?(p: number): void
 }
 
 export function opsOf(doc: HwpDocument, place: Place): PlaceOps {
@@ -102,11 +104,6 @@ function bodyOps(doc: HwpDocument, place: Place & { kind: 'body' }): PlaceOps {
       call<{ controlIdx: number }>(kind, () =>
         kind === 'footnote' ? doc.insertFootnote(sec, p, at) : doc.insertEndnote(sec, p, at),
       ).controlIdx,
-    pasteTable: (p, html) => {
-      const before = (JSON.parse(doc.getControlTextPositions(sec, p)) as unknown[]).length
-      call('table', () => doc.pasteHtml(sec, p, 0, html))
-      return before
-    },
   }
 }
 
@@ -161,6 +158,8 @@ function cellOps(doc: HwpDocument, place: Place & { kind: 'cell' }): PlaceOps {
         ),
       )
     },
+    pasteControl: (p) =>
+      void call('paste table', () => doc.pasteInternalInCellByPath(sec, para, path(p), 0)),
   }
 }
 
@@ -209,23 +208,38 @@ export class ParagraphCursor {
   /** the shape the spare carries; null = the place's own */
   private spareShape: string | null = null
 
-  constructor(private readonly ops: PlaceOps) {}
+  constructor(private readonly place: PlaceOps) {}
+
+  get ops(): PlaceOps {
+    return this.place
+  }
 
   /** opens an empty paragraph of this shape before the spare and answers its index */
   start(shaping: Shaping): number {
     // derived every time: an engine call inside a paragraph cannot desynchronize it
-    const spare = this.ops.count() - 1
+    const spare = this.place.count() - 1
     if (shaping.key !== this.spareShape) {
-      shaping.apply(this.ops, spare)
+      shaping.apply(this.place, spare)
       this.spareShape = shaping.key
     }
-    this.ops.split(spare, 0)
+    this.place.split(spare, 0)
     this.written++
     return spare
   }
 
+  /**
+   * takes back paragraph p, the last one started, which the caller has emptied:
+   * the spare joins it and p is the spare again
+   */
+  drop(p: number): void {
+    this.place.merge(p + 1)
+    this.written--
+    // p keeps its own shape, which whatever was written into it may have changed
+    this.spareShape = null
+  }
+
   /** removes the spare; a place nothing was written to keeps its own paragraph */
   close(): void {
-    if (this.written > 0) this.ops.merge(this.ops.count() - 1)
+    if (this.written > 0) this.place.merge(this.place.count() - 1)
   }
 }

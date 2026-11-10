@@ -95,7 +95,7 @@ export const vi = {
   githubLabel: 'Địa chỉ GitHub',
   githubPlaceholder: 'https://github.com/chủ-sở-hữu/kho',
   githubHint:
-    'Chỉ kho công khai. Dán địa chỉ của kho, thư mục hoặc SKILL.md, hoặc "chủ-sở-hữu/kho".',
+    'Chỉ kho công khai. Dán địa chỉ của kho, thư mục hoặc SKILL.md, "chủ-sở-hữu/kho", hoặc trang của một kỹ năng trên skills.sh.',
   githubFind: 'Tìm',
   githubFetching: 'Đang tải xuống từ GitHub…',
   importReading: 'Đang đọc kỹ năng…',
@@ -138,4 +138,28 @@ export const vi = {
   failEmptyBody: 'Nhập hướng dẫn',
   failBadName: 'Tên không đúng quy tắc',
   failGeneric: 'Không thực hiện được. Hãy thử lại',
+  addPaste: 'Từ văn bản dán vào',
+  pasteTitle: 'Thêm bằng cách dán văn bản',
+  pasteLabel: 'Văn bản SKILL.md',
+  pasteHint:
+    'Dán toàn bộ văn bản SKILL.md, bắt đầu từ dòng --- và các dòng name:, description: bên dưới.',
+  pastePreview: 'Xem trước',
+  pasteNotSkill:
+    'Đây không phải văn bản kỹ năng. Văn bản phải bắt đầu bằng dòng --- và tiếp theo là dòng name:.',
+  previewFromText: 'Tìm thấy {n} kỹ năng trong văn bản đã dán',
+  previewFromSkillFile: 'Tìm thấy {n} kỹ năng trong tệp SKILL.md',
+  previewWarnings: 'Các dòng nên đọc trước khi cài: {n}',
+  previewWarningsNote:
+    'Các dòng này khớp với một danh sách mẫu ngắn. Kỹ năng không có dòng nào ở đây cũng không vì thế mà an toàn.',
+  previewWarningAt: '{file}, dòng {line}',
+  warnIgnoreInstructions: 'Yêu cầu AI bỏ qua các chỉ dẫn trước đó',
+  warnHideFromUser: 'Yêu cầu AI giấu bạn điều gì đó',
+  warnRemoteInstructions: 'Yêu cầu AI nhận chỉ dẫn từ một địa chỉ bên ngoài',
+  warnParentPath: 'Đường dẫn ../ trỏ ra ngoài thư mục kỹ năng',
+  exportSeveral: 'Xuất nhiều kỹ năng',
+  bundleTitle: 'Xuất các kỹ năng cùng nhau',
+  bundleIntro:
+    'Các kỹ năng bạn đánh dấu sẽ được đưa vào một tệp zip, mỗi kỹ năng một thư mục. Người nhận có thể thả tệp zip vào cửa sổ ứng dụng, hoặc dùng Thêm ▸ Từ tệp zip.',
+  bundleSelectLabel: 'Bao gồm {title}',
+  bundleExport: 'Xuất ({n})',
 } satisfies Record<keyof typeof zh, string>

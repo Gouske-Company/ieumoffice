@@ -582,4 +582,10 @@ export const vi = {
   appMergeSourceLoaded: 'Đã tải {name} ({n} bản ghi)',
   appMergeWritten: 'Đã ghi {n} tài liệu',
   appMergeNothingToWrite: 'Không có gì để ghi',
+  appExportingHwp: 'Đang xuất tài liệu HWP…',
+  appExportedHwp: 'Đã xuất tài liệu HWP: {path}',
+  appExportHwpFailed: 'Xuất HWP thất bại: {error}',
+  appExportHwpCanceled: 'Đã hủy xuất HWP',
+  appExportHwpReadback:
+    'Không thể ghi chính xác tài liệu này dưới dạng .hwp. Hãy thử lưu dưới dạng .hwpx.',
 } satisfies Record<keyof typeof zh, string>

@@ -91,6 +91,7 @@
     }
   },
   "dependencies": {
+    "@genoffice/docx2hwp": "*",
     "@genoffice/electron-utils": "*",
     "@genoffice/font-metrics": "*",
     "@genoffice/odt-engine": "*",

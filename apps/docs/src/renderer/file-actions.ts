@@ -1561,7 +1561,7 @@ async function saveOnce(
 }
 
 /**
- * Save As › PDF, HTML, Markdown or page images: the regular export writes a
+ * Save As › PDF, Hangul, HTML, Markdown or page images: the regular export writes a
  * copy to the path the Save As dialog picked (the main process authorized it),
  * with no dialog of its own. The document keeps its path, its unsaved state,
  * its recovery copy and its tab title. Resolves true when the copy was written.
@@ -1573,6 +1573,9 @@ export function exportSaveAsCopy(
   switch (pick.kind) {
     case 'pdf':
       return exportPdf(ctx, pick.path)
+    case 'hwp':
+    case 'hwpx':
+      return exportHwp(ctx, pick.path)
     case 'html':
       return exportHtml(ctx, pick.path)
     case 'md':
@@ -1944,6 +1947,44 @@ export async function exportHtml(ctx: FileActionContext, outPath?: string): Prom
         : t('appExportHtmlCanceled'),
   )
   return result.ok
+}
+
+/**
+ * Resolves true only when a Hangul file was written to disk. The main process
+ * converts the docx a save would write, asks before writing a copy that loses
+ * something, and opens the copy.
+ */
+export async function exportHwp(ctx: FileActionContext, outPath?: string): Promise<boolean> {
+  const { doc } = ctx
+  if (!doc || !ctx.editor) return false
+  const generation = docGeneration
+  await waitForFullContent()
+  if (docGeneration !== generation) return false
+  window.dispatchEvent(new Event('ai-docs-commit-tables'))
+  ctx.setStatus(t('appExportingHwp'))
+  const docx = await buildDocBytes(ctx)
+  if (!docx) return false
+  const result = await window.desktop.exportHwp(
+    doc.fileName,
+    toArrayBuffer(docx),
+    outPath,
+    doc.encrypted === true,
+  )
+  if (result.ok) {
+    ctx.setStatus(t('appExportedHwp', { path: result.path ?? '' }))
+    return true
+  }
+  if (!result.error) {
+    ctx.setStatus(t('appExportHwpCanceled'))
+    return false
+  }
+  const failed =
+    result.code === 'hwp-readback'
+      ? t('appExportHwpReadback')
+      : t('appExportHwpFailed', { error: result.error })
+  ctx.setStatus(failed)
+  showToast(failed, 'error')
+  return false
 }
 
 /** Resolves true only when a Markdown file was written to disk. */

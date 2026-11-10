@@ -1,15 +1,22 @@
 /**
  * Save As format list of the Word editor. Word (.docx) and ODT (.odt) are the
- * document's own formats; PDF, HTML, Markdown and page images (one PNG per
- * page) are copies written by the export code, so picking one of them leaves
- * the open document as it was. Kept free of Electron so the rules are
+ * document's own formats; PDF, Hangul (.hwp, .hwpx), HTML, Markdown and page
+ * images (one PNG per page) are copies written by the export code, so picking
+ * one of them leaves the open document as it was. Kept free of Electron so the rules are
  * unit-tested.
  */
 import type { SaveAsKind } from '../shared/open-file'
 import { docFormatOfPath, withDocExtension, type DocFormat } from './doc-format'
 
 export type SaveAsLabelKey =
-  'filterWord' | 'filterOdt' | 'filterPdf' | 'filterHtml' | 'filterMarkdown' | 'filterPageImages'
+  | 'filterWord'
+  | 'filterOdt'
+  | 'filterPdf'
+  | 'filterHwp'
+  | 'filterHwpx'
+  | 'filterHtml'
+  | 'filterMarkdown'
+  | 'filterPageImages'
 
 export interface SaveAsFilter {
   name: string
@@ -23,6 +30,8 @@ const EXPORT_KINDS: ReadonlyArray<{
   extensions: string[]
 }> = [
   { kind: 'pdf', label: 'filterPdf', extensions: ['pdf'] },
+  { kind: 'hwp', label: 'filterHwp', extensions: ['hwp'] },
+  { kind: 'hwpx', label: 'filterHwpx', extensions: ['hwpx'] },
   { kind: 'html', label: 'filterHtml', extensions: ['html', 'htm'] },
   { kind: 'md', label: 'filterMarkdown', extensions: ['md', 'markdown'] },
   { kind: 'png', label: 'filterPageImages', extensions: ['png'] },
@@ -75,4 +84,29 @@ export function saveAsTarget(
     if (hit) return { path: filePath, kind: hit.kind }
   }
   return { path: withDocExtension(filePath, current), kind: current }
+}
+
+export type HwpExportFormat = 'hwp' | 'hwpx'
+
+/**
+ * The Hangul export's own dialog (File menu): the format new Hangul documents
+ * are saved in comes first, as the dialog's default.
+ */
+export function hwpExportFilters(
+  first: HwpExportFormat,
+  label: (key: SaveAsLabelKey) => string,
+): SaveAsFilter[] {
+  const hwp = { name: label('filterHwp'), extensions: ['hwp'] }
+  const hwpx = { name: label('filterHwpx'), extensions: ['hwpx'] }
+  return first === 'hwpx' ? [hwpx, hwp] : [hwp, hwpx]
+}
+
+/** the Hangul format a path names; a bare name gets the dialog's default */
+export function hwpExportTarget(
+  filePath: string,
+  first: HwpExportFormat,
+): { path: string; format: HwpExportFormat } {
+  const ext = /\.([^./\\]+)$/.exec(filePath)?.[1]?.toLowerCase()
+  if (ext === 'hwp' || ext === 'hwpx') return { path: filePath, format: ext }
+  return { path: `${filePath}.${first}`, format: first }
 }

@@ -11,7 +11,13 @@ import { buildBlankDocx } from '@genoffice/docx-engine'
 import { editorExtensions } from '../src/renderer/editor/extensions'
 import type { DocState } from '../src/renderer/doc-state'
 import type { OpenDocxResult } from '../src/shared/ipc'
-import { saveAsDefaultPath, saveAsFilters, saveAsTarget } from '../src/main/save-as-formats'
+import {
+  hwpExportFilters,
+  hwpExportTarget,
+  saveAsDefaultPath,
+  saveAsFilters,
+  saveAsTarget,
+} from '../src/main/save-as-formats'
 
 const handoff = new Map<string, Uint8Array>()
 vi.mock('../src/renderer/doc-bytes', () => ({
@@ -59,6 +65,8 @@ describe('Save As dialog rules', () => {
       { name: '<filterWord>', extensions: ['docx'] },
       { name: '<filterOdt>', extensions: ['odt'] },
       { name: '<filterPdf>', extensions: ['pdf'] },
+      { name: '<filterHwp>', extensions: ['hwp'] },
+      { name: '<filterHwpx>', extensions: ['hwpx'] },
       { name: '<filterHtml>', extensions: ['html', 'htm'] },
       { name: '<filterMarkdown>', extensions: ['md', 'markdown'] },
       { name: '<filterPageImages>', extensions: ['png'] },
@@ -68,6 +76,8 @@ describe('Save As dialog rules', () => {
       'odt',
       'docx',
       'pdf',
+      'hwp',
+      'hwpx',
       'html',
       'md',
       'png',
@@ -94,10 +104,23 @@ describe('Save As dialog rules', () => {
     expect(saveAsTarget('/d/a.pdf', 'docx', true)).toEqual({ path: '/d/a.pdf', kind: 'pdf' })
     expect(saveAsTarget('/d/a.htm', 'docx', true)).toEqual({ path: '/d/a.htm', kind: 'html' })
     expect(saveAsTarget('/d/a.md', 'docx', true)).toEqual({ path: '/d/a.md', kind: 'md' })
+    expect(saveAsTarget('/d/a.hwp', 'docx', true)).toEqual({ path: '/d/a.hwp', kind: 'hwp' })
+    expect(saveAsTarget('/d/a.HWPX', 'odt', true)).toEqual({ path: '/d/a.HWPX', kind: 'hwpx' })
     expect(saveAsTarget('C:\\d\\A.PNG', 'docx', true)).toEqual({
       path: 'C:\\d\\A.PNG',
       kind: 'png',
     })
+  })
+
+  it("the Hangul export's own dialog offers the new-document format first", () => {
+    expect(hwpExportFilters('hwp', label)).toEqual([
+      { name: '<filterHwp>', extensions: ['hwp'] },
+      { name: '<filterHwpx>', extensions: ['hwpx'] },
+    ])
+    expect(hwpExportFilters('hwpx', label).map((f) => f.extensions[0])).toEqual(['hwpx', 'hwp'])
+    expect(hwpExportTarget('/d/a.HWP', 'hwpx')).toEqual({ path: '/d/a.HWP', format: 'hwp' })
+    // a dialog that adds no extension: the offered format
+    expect(hwpExportTarget('/d/report', 'hwpx')).toEqual({ path: '/d/report.hwpx', format: 'hwpx' })
   })
 
   it('a bare or unknown name falls back to the document format', () => {
@@ -153,6 +176,9 @@ function installDesktop(): void {
     exportMarkdown: vi.fn(
       async (_name: string, _md: string, _images: unknown[], outPath?: string) =>
         outPath ? { ok: true, path: outPath, imagesDropped: 0 } : { ok: false },
+    ),
+    exportHwp: vi.fn(async (_name: string, _docx: ArrayBuffer, outPath?: string) =>
+      outPath ? { ok: true, path: outPath } : { ok: false },
     ),
     pickExportImagesTarget: vi.fn(async () => null),
     takeExportPdf: vi.fn(async () => ({ ok: true, base64: btoa('%PDF') })),
@@ -326,6 +352,21 @@ describe('Save As into another format', () => {
     pick = { path: '/out/report.md', kind: 'md' }
     expect(await save(ctx, true)).toBe(false)
     expect(desktop.exportMarkdown.mock.calls[0][3]).toBe('/out/report.md')
+    expectUntouched(ctx)
+  })
+
+  it('a Hangul pick sends the docx a save would write to the Hangul export', async () => {
+    const ctx = await openEdited()
+    pick = { path: '/out/report.hwpx', kind: 'hwpx' }
+    expect(await save(ctx, true)).toBe(false)
+    expect(desktop.exportHwp).toHaveBeenCalledTimes(1)
+    const [name, docx, outPath, passwordSet] = desktop.exportHwp.mock.calls[0]
+    expect([name, outPath, passwordSet]).toEqual(['report.docx', '/out/report.hwpx', false])
+    // a whole docx: a zip
+    expect([...new Uint8Array(docx as ArrayBuffer).slice(0, 2)]).toEqual([0x50, 0x4b])
+    pick = { path: '/out/report.hwp', kind: 'hwp' }
+    expect(await save(ctx, true)).toBe(false)
+    expect(desktop.exportHwp.mock.calls[1][2]).toBe('/out/report.hwp')
     expectUntouched(ctx)
   })
 

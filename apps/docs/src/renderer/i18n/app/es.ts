@@ -591,4 +591,10 @@ export const es = {
   appMergeSourceLoaded: '{name} cargado ({n} registros)',
   appMergeWritten: '{n} documentos escritos',
   appMergeNothingToWrite: 'No hay nada que escribir',
+  appExportingHwp: 'Exportando documento HWP…',
+  appExportedHwp: 'Documento HWP exportado: {path}',
+  appExportHwpFailed: 'Error al exportar a HWP: {error}',
+  appExportHwpCanceled: 'Exportación a HWP cancelada',
+  appExportHwpReadback:
+    'Este documento no se pudo escribir exactamente como .hwp. Pruebe a guardarlo como .hwpx.',
 } satisfies Record<keyof typeof zh, string>

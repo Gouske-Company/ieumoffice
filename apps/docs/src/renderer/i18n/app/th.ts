@@ -579,4 +579,9 @@ export const th = {
   appMergeSourceLoaded: 'โหลด {name} แล้ว ({n} ระเบียน)',
   appMergeWritten: 'เขียนเอกสารแล้ว {n} ฉบับ',
   appMergeNothingToWrite: 'ไม่มีเอกสารให้เขียน',
+  appExportingHwp: 'กำลังส่งออกเอกสาร HWP…',
+  appExportedHwp: 'ส่งออกเอกสาร HWP แล้ว: {path}',
+  appExportHwpFailed: 'ส่งออก HWP ไม่สำเร็จ: {error}',
+  appExportHwpCanceled: 'ยกเลิกการส่งออก HWP แล้ว',
+  appExportHwpReadback: 'ไม่สามารถเขียนเอกสารนี้เป็น .hwp ได้อย่างถูกต้อง ลองบันทึกเป็น .hwpx',
 } satisfies Record<keyof typeof zh, string>

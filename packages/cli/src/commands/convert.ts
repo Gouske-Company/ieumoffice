@@ -10,6 +10,7 @@ import { convertLegacyWorkbook, convertToOds, sheetToCsv } from '../formats/xlsx
 import { exportViaApp, type AppExportTarget } from '../formats/app-export'
 import { htmlToMarkdown, markdownToDocx, markdownToHtml } from '../formats/markdown'
 import { closeDocument, documentHtml, openDocument } from '../formats/docx'
+import { docxToHangul } from '../formats/docx-hwp'
 import { docxBytesToOdt, openOdtBytes, reportOdtConversion } from '../formats/odt'
 import { writeEpubFile, writeMarkdownFile } from '../formats/pdf-outputs'
 import {
@@ -52,7 +53,7 @@ const NODE_ROUTES: Record<string, readonly string[]> = {
   dot: ['docx'],
   md: ['docx', 'html'],
   markdown: ['docx', 'html'],
-  docx: ['md'],
+  docx: ['md', 'hwp', 'hwpx'],
   xlsx: ['csv', 'ods'],
   xlsm: ['csv', 'ods'],
 }
@@ -262,6 +263,10 @@ async function run(
   }
   if (to === 'ods') return workbookToOds(input, output, ctx)
   if (to === 'md') return docxToMarkdown(readInput(input), ctx)
+  if (to === 'hwp' || to === 'hwpx') {
+    const { bytes, hwp_report } = await docxToHangul(readInput(input), to, ctx)
+    return { bytes, detail: { hwp_report } }
+  }
   if (from === 'doc' || from === 'dot') {
     const r = await convertLegacyDoc(readInput(input))
     return { bytes: r.bytes, detail: r.detail }

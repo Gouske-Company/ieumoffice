@@ -231,6 +231,8 @@ const api: DesktopApi = {
     ),
   exportHtml: (defaultName: string, html: string, outPath?: string) =>
     ipcRenderer.invoke('docs:export-html', defaultName, html, outPath),
+  exportHwp: (defaultName: string, docx: ArrayBuffer, outPath?: string, passwordSet?: boolean) =>
+    ipcRenderer.invoke('docs:export-hwp', defaultName, docx, outPath, passwordSet),
   exportMarkdown: (
     defaultName: string,
     markdown: string,

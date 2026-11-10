@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
+import JSZip from 'jszip'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { parseDocx } from '@genoffice/docx-engine'
 import { convert } from '../src/convert'
@@ -296,25 +297,37 @@ describe('writing strategy', () => {
     return { back, losses }
   }
 
-  // eight puts a section boundary between the mixed document's first heading and its table;
-  // one starts a section with the table whose nested tables are built after it
-  it.each([
-    ...[
-      `${FIXTURES}/notice.docx`,
-      `${CORPUS}/06-with-footnotes.docx`,
-      `${CORPUS}/15-mixed-content.docx`,
-    ].flatMap((path) => [3, 8].map((chunk) => [path, chunk] as const)),
-    [`${FIXTURES}/nested.docx`, 1] as const,
-  ])(
-    'writing %s in sections of %i paragraphs reads back as one section does',
-    async (path, chunk) => {
-      const chunked = await summary(path, { batch: true, sectionChunk: chunk })
-      expect(chunked).toEqual(
-        await summary(path, { batch: true, sectionChunk: Number.MAX_SAFE_INTEGER }),
-      )
-      expect(chunked.back.body.length).toBeGreaterThan(chunk)
-    },
-  )
+  it('a long document reads back as its parts do', async () => {
+    const notice = readFileSync(`${FIXTURES}/notice.docx`)
+    const copies = 10
+    const zip = await JSZip.loadAsync(notice)
+    const xml = await zip.file('word/document.xml')!.async('string')
+    // the body's content ten times over, before the one section setting that ends it
+    const long = xml.replace(
+      /(<w:body>)([\s\S]*)(<w:sectPr[\s\S]*<\/w:body>)/,
+      (_, open: string, content: string, close: string) => open + content.repeat(copies) + close,
+    )
+    zip.file('word/document.xml', long)
+    const { bytes } = await docxToHwp(
+      await zip.generateAsync({ type: 'uint8array' }),
+      'hwpx',
+      engine,
+    )
+    const back = await readBack(engine, bytes)
+    const one = (await summary(`${FIXTURES}/notice.docx`, { batch: true })).back
+    // a list in a later copy continues the numbers of the copy before it, as in Word
+    const continuing = (body: ReadBack['body']) =>
+      body.map(({ para: { numberingRestartMode: _, ...para }, ...p }) => ({ ...p, para }))
+    const withoutPlace = (tables: ReadBack['tables']) => tables.map(({ para: _, ...t }) => t)
+    expect(back.body.length).toBeGreaterThan(100)
+    expect(back.body.slice(0, one.body.length)).toEqual(one.body)
+    expect(continuing(back.body)).toEqual(
+      continuing(Array.from({ length: copies }, () => one.body).flat()),
+    )
+    expect(withoutPlace(back.tables)).toEqual(
+      Array.from({ length: copies }, () => withoutPlace(one.tables)).flat(),
+    )
+  })
 
   it('batch mode writes the same document as call by call', async () => {
     const path = `${FIXTURES}/notice.docx`

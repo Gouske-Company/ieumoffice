@@ -46,7 +46,7 @@ export async function convert(
   docx: Uint8Array,
   format: HwpFormat,
   engine: HwpEngine,
-  options: { batch: boolean; sectionChunk?: number },
+  options: { batch: boolean },
 ): Promise<HwpConversion> {
   let parsed: Awaited<ReturnType<typeof parseDocx>>
   try {
@@ -58,7 +58,7 @@ export async function convert(
   const plan = lowerDocument(parsed, ledger)
   try {
     const bytes = withNewDocument(engine, (doc) => {
-      const write = () => writePlan(doc, plan, ledger, options.sectionChunk)
+      const write = () => writePlan(doc, plan, ledger)
       if (options.batch) inBatch(doc, write)
       else write()
       if (format === 'hwp') assertHwpReadsBack(doc)

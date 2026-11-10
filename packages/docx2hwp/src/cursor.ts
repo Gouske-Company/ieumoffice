@@ -12,8 +12,7 @@
  * only ever written in the body, a top-level cell, or a header or footer.
  *
  * The spare is shaped before it is split, so both halves carry the shape: a
- * paragraph shaped like the one before it needs no format call. That matters
- * because every paragraph format call lays out its whole section again.
+ * paragraph shaped like the one before it needs no format call.
  */
 import type { HwpDocument } from '@rhwp/core'
 import { call, callNumber } from './engine'
@@ -209,7 +208,7 @@ export class ParagraphCursor {
   /** the shape the spare carries; null = the place's own */
   private spareShape: string | null = null
 
-  constructor(private place: PlaceOps) {}
+  constructor(private readonly place: PlaceOps) {}
 
   get ops(): PlaceOps {
     return this.place
@@ -236,13 +235,6 @@ export class ParagraphCursor {
     this.place.merge(p + 1)
     this.written--
     // p keeps its own shape, which whatever was written into it may have changed
-    this.spareShape = null
-  }
-
-  /** the spare moved to another place (a new body section): go on writing there */
-  moveTo(ops: PlaceOps): void {
-    this.place = ops
-    // the move may have reshaped the spare
     this.spareShape = null
   }
 

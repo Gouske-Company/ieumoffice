@@ -13,6 +13,7 @@ export default defineConfig({
       '@genoffice/docx-engine/zip-splice': local('../../packages/docx-engine/src/zip-splice.ts'),
       '@genoffice/docx-engine': local('../../packages/docx-engine/src/index.ts'),
       '@genoffice/odt-engine': local('../../packages/odt-engine/src/index.ts'),
+      '@genoffice/docx2hwp': local('../../packages/docx2hwp/src/index.ts'),
       '@genoffice/font-metrics/resolve': local('../../packages/font-metrics/src/resolve.ts'),
       '@genoffice/font-metrics/word-faces.json': local(
         '../../packages/font-metrics/word-faces.json',

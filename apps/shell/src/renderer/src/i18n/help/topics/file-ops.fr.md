@@ -27,6 +27,7 @@ Règles : l’extension est conservée automatiquement ; les caractères interdi
 
 - **⌘S / ctrl+S** enregistre le fichier courant ; un fichier sans titre demande d’abord l’emplacement et le nom.
 - Dans la plupart des éditeurs, la liste des types de fichier de la boîte Enregistrer sous propose aussi les formats d’exportation (PDF, images, autres formats de document). En choisir un n’écrit qu’une copie ; le document ouvert et son onglet restent sur le fichier d’origine. Les images de plusieurs pages sont réparties en `nom-01.png`, `nom-02.png`, ….
+- **Docs** : la liste Enregistrer sous propose aussi .hwp et .hwpx (Fichier ▸ Exporter en document HWP… fait de même). Si un élément ne peut pas être repris, comme des commentaires, des équations ou des zones de texte, vous en êtes averti avant l’écriture du fichier.
 - **Enregistrer sous** écrit un nouveau fichier et laisse l’original intact ; les modifications suivantes ciblent le nouveau fichier.
 - Chaque enregistrement est atomique (fichier temporaire puis renommage) ; quitter en cours d’écriture ne peut pas corrompre le fichier.
 - L’enregistrement automatique suit le commutateur de chaque éditeur ; un nouveau document sans fichier ne commence qu’après sa première sauvegarde (voir [Démarrage rapide](help://getting-started)).

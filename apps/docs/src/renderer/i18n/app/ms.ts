@@ -589,4 +589,10 @@ export const ms = {
   appMergeSourceLoaded: '{name} dimuatkan ({n} rekod)',
   appMergeWritten: '{n} dokumen ditulis',
   appMergeNothingToWrite: 'Tiada untuk ditulis',
+  appExportingHwp: 'Mengeksport dokumen HWP…',
+  appExportedHwp: 'Dokumen HWP dieksport: {path}',
+  appExportHwpFailed: 'Eksport HWP gagal: {error}',
+  appExportHwpCanceled: 'Eksport HWP dibatalkan',
+  appExportHwpReadback:
+    'Dokumen ini tidak dapat ditulis tepat sebagai .hwp. Cuba simpan sebagai .hwpx.',
 } satisfies Record<keyof typeof zh, string>

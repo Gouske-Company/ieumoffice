@@ -27,6 +27,7 @@ Regels: de extensie blijft automatisch behouden; ongeldige tekens, afsluitende p
 
 - **⌘S / ctrl+S** slaat het huidige bestand op; een naamloos bestand vraagt eerst om locatie en naam.
 - In de meeste editors biedt de lijst met bestandstypen in het venster Opslaan als ook de exportformaten (PDF, afbeeldingen, andere documentformaten). Kies je er een, dan wordt alleen een kopie geschreven; het geopende document en zijn tabblad blijven bij het oorspronkelijke bestand. Afbeeldingen van meerdere pagina’s worden verdeeld over `naam-01.png`, `naam-02.png`, ….
+- **Docs**: de lijst Opslaan als biedt ook .hwp en .hwpx (Bestand ▸ Exporteren als HWP-document… doet hetzelfde). Als iets niet kan worden overgenomen, zoals opmerkingen, vergelijkingen of tekstvakken, hoort u dat voordat het bestand wordt geschreven.
 - **Opslaan als…** schrijft een nieuw bestand en laat het origineel ongemoeid; latere bewerkingen gaan naar het nieuwe bestand.
 - Elk opslaan is atomair (tijdelijk bestand + hernoemen); tussentijds afsluiten kan het bestand niet beschadigen.
 - Automatisch opslaan volgt de schakelaar van elke editor; een nieuw document zonder eigen bestand begint pas na de eerste keer opslaan (zie [Snel starten](help://getting-started)).

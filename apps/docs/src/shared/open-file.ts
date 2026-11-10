@@ -2,7 +2,7 @@
 export type DocFormat = 'docx' | 'odt'
 
 /** Save As choices: the document's own formats, or a copy written by an export */
-export type SaveAsKind = DocFormat | 'pdf' | 'html' | 'md' | 'png'
+export type SaveAsKind = DocFormat | 'pdf' | 'hwp' | 'hwpx' | 'html' | 'md' | 'png'
 
 /** `.docx` → docx, `.odt` → odt, anything else → null (not a Word-editor document) */
 export function docFormatOfPath(filePath: string): DocFormat | null {

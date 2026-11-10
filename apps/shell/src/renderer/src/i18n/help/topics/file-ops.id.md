@@ -27,6 +27,7 @@ Aturannya: ekstensi dipertahankan otomatis; karakter terlarang, titik di akhir, 
 
 - **⌘S / ctrl+S** menyimpan file saat ini; file tanpa nama akan lebih dulu meminta lokasi dan nama.
 - Di sebagian besar editor, daftar jenis berkas di dialog Simpan Sebagai juga menawarkan format ekspor (PDF, gambar, format dokumen lain). Memilih salah satunya hanya menulis salinan; dokumen yang terbuka dan tabnya tetap pada berkas asli. Gambar dari beberapa halaman dipecah menjadi `nama-01.png`, `nama-02.png`, ….
+- **Docs**: daftar Simpan Sebagai juga menawarkan .hwp dan .hwpx (File ▸ Ekspor sebagai dokumen HWP… sama saja). Jika ada yang tidak bisa dipindahkan, seperti komentar, persamaan, atau kotak teks, Anda diberi tahu sebelum berkas ditulis.
 - **Simpan Sebagai…** menulis berkas baru dan membiarkan aslinya tidak tersentuh; penyuntingan setelahnya menyasar berkas baru.
 - Setiap penyimpanan bersifat atomik (berkas sementara + ganti nama); berhenti di tengah penulisan tidak akan merusak file.
 - Simpan Otomatis mengikuti tombol di setiap editor; dokumen baru tanpa berkas sendiri mulai setelah penyimpanan pertamanya (lihat [Mulai cepat](help://getting-started)).

@@ -584,4 +584,10 @@ export const cs = {
   appMergeSourceLoaded: 'Načteno {name} ({n} záznamů)',
   appMergeWritten: 'Zapsáno dokumentů: {n}',
   appMergeNothingToWrite: 'Není co zapsat',
+  appExportingHwp: 'Exportuje se dokument HWP…',
+  appExportedHwp: 'Dokument HWP byl exportován: {path}',
+  appExportHwpFailed: 'Export do HWP se nezdařil: {error}',
+  appExportHwpCanceled: 'Export do HWP byl zrušen',
+  appExportHwpReadback:
+    'Tento dokument nelze přesně zapsat jako .hwp. Zkuste ho uložit jako .hwpx.',
 } satisfies Record<keyof typeof zh, string>

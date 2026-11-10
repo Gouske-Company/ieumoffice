@@ -591,4 +591,10 @@ export const ru = {
   appMergeSourceLoaded: 'Загружено {name} (записей: {n})',
   appMergeWritten: 'Записано документов: {n}',
   appMergeNothingToWrite: 'Нечего записывать',
+  appExportingHwp: 'Экспорт документа HWP…',
+  appExportedHwp: 'Документ HWP экспортирован: {path}',
+  appExportHwpFailed: 'Не удалось экспортировать в HWP: {error}',
+  appExportHwpCanceled: 'Экспорт в HWP отменён',
+  appExportHwpReadback:
+    'Этот документ не удалось точно записать в формате .hwp. Попробуйте сохранить его как .hwpx.',
 } satisfies Record<keyof typeof zh, string>

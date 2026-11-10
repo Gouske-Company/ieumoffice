@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "paths": {
+      "@genoffice/docx-engine": ["../docx-engine/src/index.ts"]
+    }
+  },
+  "include": ["src", "tests"]
+}

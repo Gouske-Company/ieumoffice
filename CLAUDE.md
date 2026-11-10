@@ -67,6 +67,7 @@ openoffice/
 │   ├── electron-utils/AGENTS.md   ← 뒷단 공용 도구
 │   ├── docx-engine/AGENTS.md      ← 워드 문서 엔진
 │   ├── odt-engine/AGENTS.md       ← ODT 열기·되돌려 쓰기·docx → ODT
+│   ├── docx2hwp/AGENTS.md         ← 워드 → 한글(.hwp, .hwpx) 변환
 │   ├── pptx-engine/AGENTS.md      ← 파워포인트 문서 모델
 │   ├── pptx-ops/AGENTS.md         ← 슬라이드 편집 연산
 │   ├── pptx-render/AGENTS.md      ← 슬라이드 그리기

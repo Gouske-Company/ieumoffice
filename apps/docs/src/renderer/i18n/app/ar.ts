@@ -578,4 +578,9 @@ export const ar = {
   appMergeSourceLoaded: 'تم تحميل {name} ({n} سجلًا)',
   appMergeWritten: 'تمت كتابة {n} مستندًا',
   appMergeNothingToWrite: 'لا يوجد ما يكتب',
+  appExportingHwp: 'جارٍ تصدير مستند HWP…',
+  appExportedHwp: 'تم تصدير مستند HWP: {path}',
+  appExportHwpFailed: 'فشل التصدير إلى HWP: {error}',
+  appExportHwpCanceled: 'تم إلغاء التصدير إلى HWP',
+  appExportHwpReadback: 'تعذّرت كتابة هذا المستند بصيغة .hwp بدقة. جرّب حفظه بصيغة .hwpx.',
 } satisfies Record<keyof typeof zh, string>

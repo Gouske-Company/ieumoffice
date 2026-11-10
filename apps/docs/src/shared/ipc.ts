@@ -215,6 +215,7 @@ export type MenuCommand =
   | 'goto'
   | 'print'
   | 'export-pdf'
+  | 'export-hwp'
   | 'export-html'
   | 'export-markdown'
   | 'export-images'
@@ -675,6 +676,14 @@ export interface DesktopApi {
     html: string,
     outPath?: string,
   ): Promise<{ ok: boolean; path?: string; error?: string }>
+  /** the document's docx as a .hwp or .hwpx copy; main asks before writing a copy that loses
+   *  something. outPath is only honored when the Save As dialog chose that exact path */
+  exportHwp(
+    defaultName: string,
+    docx: ArrayBuffer,
+    outPath?: string,
+    passwordSet?: boolean,
+  ): Promise<HwpExportResult>
   exportMarkdown(
     defaultName: string,
     markdown: string,
@@ -819,3 +828,12 @@ export interface DesktopApi {
 
 /** mirrors VIEW_IMAGE_CHANNEL in @genoffice/electron-utils (kept literal so the preload stays free of main-only deps) */
 export const VIEW_IMAGE_CHANNEL = 'genoffice:view-image'
+
+/** docs:export-hwp: no error and no code = the user canceled */
+export interface HwpExportResult {
+  ok: boolean
+  path?: string
+  /** 'hwp-readback': the .hwp would not read back as written; a .hwpx can */
+  code?: 'not-docx' | 'hwp-readback' | 'failed' | 'unauthorized'
+  error?: string
+}

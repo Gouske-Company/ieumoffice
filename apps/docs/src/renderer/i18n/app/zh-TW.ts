@@ -569,4 +569,9 @@ export const zhTW = {
   appMergeSourceLoaded: '已載入資料來源 {name}（{n} 筆記錄）',
   appMergeWritten: '已寫出 {n} 個文件',
   appMergeNothingToWrite: '沒有可寫出的文件',
+  appExportingHwp: '正在匯出 HWP 文件…',
+  appExportedHwp: '已匯出 HWP 文件：{path}',
+  appExportHwpFailed: 'HWP 文件匯出失敗：{error}',
+  appExportHwpCanceled: '已取消匯出 HWP 文件',
+  appExportHwpReadback: '無法將此文件準確寫成 .hwp。請嘗試另存為 .hwpx。',
 } satisfies Record<keyof typeof zh, string>

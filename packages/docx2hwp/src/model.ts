@@ -152,8 +152,8 @@ export interface Cell {
     readonly bottom: HwpUnit
     readonly left: HwpUnit
   }
-  /** paragraphs only: a nested table arrives flattened into them */
-  readonly body: readonly Para[]
+  /** paragraphs and nested tables, in Word's order */
+  readonly body: Story
 }
 
 export interface CellBorders {

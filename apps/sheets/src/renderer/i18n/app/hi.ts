@@ -1563,4 +1563,8 @@ export const hi = {
   appSpellUnavailable: 'इस विंडो में वर्तनी जाँच उपलब्ध नहीं है।',
   appSpellReplaceAll: 'सबको "{suggestion}" से बदलें',
   appSpellChangedAll: '"{word}" वाले {count} सेल ठीक किए गए।',
+
+  // ── ODS import ──
+  appOdsImportNotice: 'ODS को xlsx प्रति के रूप में खोला गया। सहेजने पर xlsx फ़ाइल लिखी जाएगी।',
+  appOdsFormulasDropped: '{count} सूत्रों में केवल मान रखे गए।',
 } satisfies Record<keyof typeof zh, string>

@@ -17,8 +17,8 @@ export interface LegacyWorkbookConverter {
   convertWorkbook(input: { path: string; targetPath: string }): Promise<unknown>
 }
 
-export type LegacyWorkbookConversion =
-  /// A real .xls (or another container calamine reads): the sidecar converted it.
+export type LegacyWorkbookConversionKind =
+  /// A real .xls/.ods (or another container calamine reads): the sidecar converted it.
   | 'workbook'
   /// An HTML table export: converted here, because the sidecar only reads containers.
   | 'html'
@@ -26,6 +26,13 @@ export type LegacyWorkbookConversion =
   | 'html-no-table'
   /// An HTML page past the size this import path reads into memory.
   | 'html-too-large'
+
+export interface LegacyWorkbookConversion {
+  readonly kind: LegacyWorkbookConversionKind
+  /// formulas the conversion could not translate (an .ods conversion); 0 when
+  /// the copy was built here or the sidecar did not report any
+  readonly formulasDropped: number
+}
 
 /**
  * Converts a legacy spreadsheet into a minimal .xlsx. Web systems regularly
@@ -41,15 +48,26 @@ export async function convertLegacyWorkbook(
 ): Promise<LegacyWorkbookConversion> {
   const head = await readHead(source)
   if (!looksLikeHtmlWorkbook(head)) {
-    await client.convertWorkbook({ path: source, targetPath: target })
-    return 'workbook'
+    const result = await client.convertWorkbook({ path: source, targetPath: target })
+    return { kind: 'workbook', formulasDropped: formulasDroppedOf(result) }
   }
-  if ((await stat(source)).size > MAX_HTML_IMPORT_BYTES) return 'html-too-large'
+  if ((await stat(source)).size > MAX_HTML_IMPORT_BYTES) {
+    return { kind: 'html-too-large', formulasDropped: 0 }
+  }
   const html = decodeHtmlBuffer(await readFile(source), preferredCharset)
   const tables = parseHtmlTables(html)
-  if (tables.length === 0) return 'html-no-table'
+  if (tables.length === 0) return { kind: 'html-no-table', formulasDropped: 0 }
   await writeFile(target, await htmlTablesToXlsxBuffer(tables))
-  return 'html'
+  return { kind: 'html', formulasDropped: 0 }
+}
+
+/// What the sidecar reported, or 0 for an older binary that does not say.
+function formulasDroppedOf(result: unknown): number {
+  const reported =
+    typeof result === 'object' && result !== null
+      ? (result as { formulasDropped?: unknown }).formulasDropped
+      : undefined
+  return typeof reported === 'number' && Number.isInteger(reported) && reported >= 0 ? reported : 0
 }
 
 async function readHead(path: string): Promise<Uint8Array> {

@@ -24,15 +24,20 @@ export interface ReadCell {
   texts: string[]
   fill: string | null
   verticalAlign: number
+  /** tables inside the cell; `para` is the cell paragraph holding each */
+  tables: NestedTable[]
 }
 
-export interface ReadTable {
+export interface NestedTable {
   para: number
   rows: number
   cols: number
+  cells: ReadCell[]
+}
+
+export interface ReadTable extends NestedTable {
   /** the table's own fill: none when only cells are filled */
   tableFill: string
-  cells: ReadCell[]
 }
 
 export interface ReadBack {
@@ -78,9 +83,17 @@ export async function readBack(engine: HwpEngine, bytes: Uint8Array): Promise<Re
       }
     }
     const bodyControls = controls.filter((c) => c.list === 0)
+    const lists = (JSON.parse(doc.getCursorModel()) as { lists: CellList[] }).lists
     const tables = bodyControls
       .filter((c) => c.ctrlId === 'tbl')
-      .map((c) => tableOf(doc, c.para, c.controlIndex))
+      .map((c) => ({
+        ...tableAt(doc, lists, c.para, [], 0, c.para, c.controlIndex),
+        tableFill: (
+          JSON.parse(doc.getTableProperties(0, c.para, c.controlIndex)) as {
+            fillType: string
+          }
+        ).fillType,
+      }))
     const notes = bodyControls
       .filter((c) => c.ctrlId === 'fn' || c.ctrlId === 'en')
       .map((c) => ({
@@ -172,30 +185,79 @@ function headerText(doc: HwpDocument, header: boolean): string | null {
   return (JSON.parse(doc.getHeaderFooterParaInfo(0, header, 0, 0)) as { text: string }).text
 }
 
-function tableOf(doc: HwpDocument, para: number, control: number): ReadTable {
-  const dims = JSON.parse(doc.getTableDimensions(0, para, control)) as {
+/** a cell's paragraph list in the engine's cursor model */
+interface CellList {
+  listId: number
+  isCell: boolean
+  hostListId: number
+  hostPara: number
+  controlIndex: number
+  cellIndex: number
+}
+
+interface Step {
+  controlIndex: number
+  cellIndex: number
+  cellParaIndex: number
+}
+
+/**
+ * The table `control` in paragraph `para` of the list `hostList` (0 = the
+ * body), reached from body paragraph `bodyPara` through `steps`.
+ */
+function tableAt(
+  doc: HwpDocument,
+  lists: CellList[],
+  bodyPara: number,
+  steps: Step[],
+  hostList: number,
+  para: number,
+  control: number,
+): NestedTable {
+  const path = (cell: number, p: number) =>
+    JSON.stringify([...steps, { controlIndex: control, cellIndex: cell, cellParaIndex: p }])
+  const dims = JSON.parse(doc.getTableDimensionsByPath(0, bodyPara, path(0, 0))) as {
     rowCount: number
     colCount: number
     cellCount: number
   }
-  const table = JSON.parse(doc.getTableProperties(0, para, control)) as { fillType: string }
   const cells: ReadCell[] = []
   for (let cell = 0; cell < dims.cellCount; cell++) {
-    const info = JSON.parse(doc.getCellInfo(0, para, control, cell))
-    const props = JSON.parse(doc.getCellProperties(0, para, control, cell))
-    const path = (p: number) =>
-      JSON.stringify([{ controlIndex: control, cellIndex: cell, cellParaIndex: p }])
-    const paraCount = doc.getCellParagraphCountByPath(0, para, path(0))
+    const info = JSON.parse(doc.getCellInfoByPath(0, bodyPara, path(cell, 0)))
+    const props = JSON.parse(doc.getCellPropertiesByPath(0, bodyPara, path(cell, 0), cell))
+    const paraCount = doc.getCellParagraphCountByPath(0, bodyPara, path(cell, 0))
     const texts = Array.from({ length: paraCount }, (_, p) => {
-      const length = doc.getCellParagraphLengthByPath(0, para, path(p))
-      return length ? doc.getTextInCellByPath(0, para, path(p), 0, length) : ''
+      const length = doc.getCellParagraphLengthByPath(0, bodyPara, path(cell, p))
+      return length ? doc.getTextInCellByPath(0, bodyPara, path(cell, p), 0, length) : ''
     })
+    const own = lists.find(
+      (l) =>
+        l.isCell &&
+        l.hostListId === hostList &&
+        l.hostPara === para &&
+        l.controlIndex === control &&
+        l.cellIndex === cell,
+    )!
+    const tables = lists
+      .filter((l) => l.isCell && l.hostListId === own.listId && l.cellIndex === 0)
+      .map((l) =>
+        tableAt(
+          doc,
+          lists,
+          bodyPara,
+          [...steps, { controlIndex: control, cellIndex: cell, cellParaIndex: l.hostPara }],
+          own.listId,
+          l.hostPara,
+          l.controlIndex,
+        ),
+      )
     cells.push({
       ...info,
       texts,
       fill: props.fillType === 'none' ? null : props.fillColor,
       verticalAlign: props.verticalAlign,
+      tables,
     })
   }
-  return { para, rows: dims.rowCount, cols: dims.colCount, tableFill: table.fillType, cells }
+  return { para, rows: dims.rowCount, cols: dims.colCount, cells }
 }

@@ -362,6 +362,12 @@ export const AI_PROVIDER_ADAPTERS: Record<AiProviderId, ProviderAdapter> = {
     capabilities: { auth: 'api-key', vision: false },
     resolveEndpoint: fixedEndpoint('openai-compatible', 'https://api.upstage.ai/v1'),
   },
+  exaone: {
+    meta: metaOf('exaone'),
+    // K-EXAONE 2.5 is text-only: an image part answers invalid_request_error
+    capabilities: { auth: 'api-key', vision: false },
+    resolveEndpoint: fixedEndpoint('openai-compatible', 'https://api.exaone.ai/v1'),
+  },
   openrouter: {
     meta: metaOf('openrouter'),
     capabilities: { auth: 'api-key', vision: true },

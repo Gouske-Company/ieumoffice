@@ -1565,4 +1565,8 @@ export const ms = {
   appSpellUnavailable: 'Semakan ejaan tidak tersedia dalam tetingkap ini.',
   appSpellReplaceAll: 'Ganti semua dengan "{suggestion}"',
   appSpellChangedAll: '{count} sel dengan "{word}" telah dibetulkan.',
+
+  // ── ODS import ──
+  appOdsImportNotice: 'ODS dibuka sebagai salinan xlsx. Menyimpan akan menulis fail xlsx.',
+  appOdsFormulasDropped: 'Pada {count} formula, hanya nilainya dikekalkan.',
 } satisfies Record<keyof typeof zh, string>

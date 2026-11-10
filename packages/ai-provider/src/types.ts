@@ -27,6 +27,7 @@ export type AiProviderId =
   | 'xai'
   | 'mistral'
   | 'upstage'
+  | 'exaone'
   | 'openrouter'
   | 'requesty'
   | 'opper'

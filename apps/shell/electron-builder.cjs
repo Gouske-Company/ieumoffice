@@ -337,13 +337,25 @@ function ensureThirdPartyNotices() {
 // A mind map file and a book keep the program the user already opens them
 // with, and HWP and HWPX must not be taken from Hancom Office on a PC that has
 // it, so Windows takes none of the four as the extension's default. A Visio
-// drawing is only imported (as a new diagram), so it keeps its program too.
+// drawing is only imported (as a new diagram), and an ODS spreadsheet opens as
+// a converted .xlsx copy that saves as .xlsx (decision 0119), so both keep
+// their program too.
 // They are still offered in Explorer's "Open with": build/installer.nsh
-// writes a product-own ProgId with the per-type document icon for each, so
-// choosing this app for them shows the Hangul, mind-map, book or diagram icon
-// instead of the bare app icon (the .ico files ship via win.extraResources
-// below).
-const WIN_OPEN_WITH_ONLY_EXTS = new Set(['txt', 'json', 'xmind', 'hwp', 'hwpx', 'epub', 'vsdx'])
+// writes a product-own ProgId with a document icon for each (the per-type
+// icon, or the xlsx icon for .ods), so choosing this app for them shows the
+// Hangul, mind-map, book, diagram or spreadsheet icon instead of the bare app
+// icon (the per-type .ico files ship via win.extraResources below; xlsx.ico
+// comes with the .xlsx association).
+const WIN_OPEN_WITH_ONLY_EXTS = new Set([
+  'txt',
+  'json',
+  'xmind',
+  'hwp',
+  'hwpx',
+  'epub',
+  'vsdx',
+  'ods',
+])
 // NSIS registers each association under a ProgId taken from its `name`
 // (HKCU\Software\Classes\<name>). The upstream app registers the bare names
 // below ("Word Document"), so sharing them would let either install overwrite
@@ -404,6 +416,20 @@ const FILE_ASSOCIATIONS = [
     role: 'Editor',
     icon: 'xlsx',
     mimeType: 'text/tab-separated-values',
+  },
+  {
+    // Open With only (decision 0119): an ODS file opens as a converted .xlsx
+    // copy and saves as .xlsx, so installing must not take over the program
+    // the user already opens it with. Windows leaves it out
+    // (WIN_OPEN_WITH_ONLY_EXTS) and macOS ranks the app an alternate; the NSIS
+    // script offers it with the xlsx icon the .xlsx association installs.
+    ext: 'ods',
+    name: 'OpenDocument Spreadsheet',
+    description: 'OpenDocument Spreadsheet',
+    role: 'Editor',
+    rank: 'Alternate',
+    icon: 'xlsx',
+    mimeType: 'application/vnd.oasis.opendocument.spreadsheet',
   },
   {
     ext: 'pdf',

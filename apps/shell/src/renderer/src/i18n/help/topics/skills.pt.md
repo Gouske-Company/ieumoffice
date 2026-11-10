@@ -76,6 +76,16 @@ Por baixo da pré-visualização aparece sempre: «Instale habilidades somente d
 - Nenhum ficheiro é gravado até clicar em **Salvar**. Se clicar em **Cancelar**, a conversa guarda-a apenas como «Proposta de habilidade não salva».
 - Também pode pedir para alterar uma habilidade existente, por exemplo «Altera a habilidade de atas para a nossa maneira de trabalhar». O cartão passa a chamar-se **Alterar habilidade**. Uma das minhas habilidades é substituída com **Substituir**; uma habilidade integrada ou de outro programa é guardada como cópia em minhas habilidades e a original é desativada.
 
+## Escolher onde uma habilidade é usada
+
+Uma habilidade que só serve para um tipo de documento, como estilizar slides ou organizar uma planilha, pode aparecer apenas no painel de IA desse editor. Nos outros editores, a lista `/` e a lista de habilidades que a IA usa por conta própria ficam mais curtas, e a IA acerta mais a habilidade certa.
+
+- Para uma das minhas habilidades, abra **Editar** e escolha **Todos os editores** ou **Somente estes editores** em **Onde é usada**. Os editores escolhidos ficam gravados no arquivo da habilidade e a acompanham quando você a exporta ou a leva para outro programa.
+- Para uma habilidade integrada ou de outro programa, mude em **Onde é usada** dentro de **Ver conteúdo**. Isso fica guardado apenas nas configurações deste PC; o arquivo da habilidade não muda.
+- Uma habilidade que não é usada em todos os editores mostra isso na sua linha, por exemplo "Usada em: Apresentação".
+- Quando a IA cria uma habilidade que só serve para um formato, ela também propõe onde usá-la; caso contrário, deixa todos os editores. Você pode mudar em **Onde é usada** no cartão antes de salvar.
+- Perguntar à IA no Início e a janela do agente usam todas as habilidades ativadas, onde quer que estejam definidas para uso.
+
 ## Adicionar um documento como modelo
 
 Quando cria uma habilidade no painel de IA de um editor, o documento atual pode ir junto como modelo. Marque **Salvar também este documento como modelo** no cartão, e o botão divide-se em dois.

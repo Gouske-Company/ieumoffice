@@ -238,6 +238,7 @@ describe('ask panel skill tools', () => {
       description: 'Reviews a lease the way we do.',
       body: '1. Pets\n2. Deposit',
       invoke: 'auto',
+      editors: 'all',
     })
     expect(host.textContent).toContain('Saved · lease-review')
   })

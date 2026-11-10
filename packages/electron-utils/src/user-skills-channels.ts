@@ -71,6 +71,12 @@ export type UserSkillInvokeValue = 'auto' | 'manual'
 
 export type UserSkillUnreadable = 'no-frontmatter' | 'bad-name' | 'too-large' | 'unreadable'
 
+/**
+ * Where a skill is used, as it crosses: every editor, or editor ids
+ * (`@genoffice/agent-core/skill-editors`). Each end keeps the ids it knows.
+ */
+export type UserSkillEditorsValue = 'all' | string[]
+
 /** One skill as the screens see it (no folder paths) */
 export interface UserSkillView {
   /** `source:name`, `plugin:<plugin>:<name>` */
@@ -93,6 +99,8 @@ export interface UserSkillView {
   templateExists: boolean
   /** a builtin only the agent window uses */
   agentOnly: boolean
+  /** the editors the skill is used in (the person's choice, else its file); absent: every editor */
+  editors?: string[] | undefined
   unreadable: UserSkillUnreadable | undefined
   files: number
   bytes: number
@@ -125,6 +133,8 @@ export interface UserSkillContent {
   /** SKILL.md after the front matter */
   body: string
   template: string | undefined
+  /** `metadata.ieum-editors` as the file says it (known ids); absent: every editor */
+  editors?: string[] | undefined
   /** every file in the folder, `/` between parts */
   files: Array<{ rel: string; size: number }>
 }
@@ -193,6 +203,8 @@ export interface UserSkillSaveInput {
   name?: string | undefined
   description: string
   body: string
+  /** written to `metadata.ieum-editors`; absent keeps what the file has */
+  editors?: UserSkillEditorsValue | undefined
 }
 
 /**
@@ -219,6 +231,8 @@ export interface UserSkillCardSaveInput {
   targetId?: string | undefined
   /** replace an own skill of the same name when copying another source's skill */
   overwrite?: boolean | undefined
+  /** written to `metadata.ieum-editors`; absent keeps what the file has */
+  editors?: UserSkillEditorsValue | undefined
 }
 
 /**
@@ -377,16 +391,34 @@ export function invokeOf(value: unknown): UserSkillInvokeValue | undefined {
   return value === 'auto' || value === 'manual' ? value : undefined
 }
 
-/** A state change: on/off and when it is used; nothing else */
-export function statePatchOf(
-  value: unknown,
-): { enabled?: boolean; invoke?: UserSkillInvokeValue } | undefined {
+/** A where-used value: `'all'` or a short list of short ids; `null` when malformed */
+export function editorsValueOf(value: unknown): UserSkillEditorsValue | undefined | null {
+  if (value === undefined) return undefined
+  if (value === 'all') return 'all'
+  if (!Array.isArray(value) || value.length > 32) return null
+  if (!value.every((id) => typeof id === 'string' && id.length <= 32)) return null
+  return [...(value as string[])]
+}
+
+/** What a state change may set: on/off, when it is used, and where (skills the person cannot edit) */
+export interface UserSkillStatePatch {
+  enabled?: boolean
+  invoke?: UserSkillInvokeValue
+  editors?: UserSkillEditorsValue
+}
+
+/** A state change: on/off, when it is used and where; nothing else */
+export function statePatchOf(value: unknown): UserSkillStatePatch | undefined {
   if (!isRecord(value)) return undefined
-  const patch: { enabled?: boolean; invoke?: UserSkillInvokeValue } = {}
+  const patch: UserSkillStatePatch = {}
   if (typeof value.enabled === 'boolean') patch.enabled = value.enabled
   const invoke = invokeOf(value.invoke)
   if (invoke) patch.invoke = invoke
-  return patch.enabled === undefined && patch.invoke === undefined ? undefined : patch
+  const editors = editorsValueOf(value.editors)
+  if (editors) patch.editors = editors
+  return patch.enabled === undefined && patch.invoke === undefined && patch.editors === undefined
+    ? undefined
+    : patch
 }
 
 /** Longest SKILL.md body the app writes (well under the folder limit) */
@@ -402,7 +434,9 @@ export function saveInputOf(value: unknown): UserSkillSaveInput | undefined {
   if (value.id !== undefined && !id) return undefined
   const name = value.name === undefined ? undefined : text(value.name, 512)
   if (value.name !== undefined && name === undefined) return undefined
-  return { id, title, name, description, body }
+  const editors = editorsValueOf(value.editors)
+  if (editors === null) return undefined
+  return { id, title, name, description, body, ...(editors ? { editors } : {}) }
 }
 
 /** Largest template a card may hand over (the folder limit) */
@@ -433,6 +467,8 @@ export function cardSaveInputOf(value: unknown): UserSkillCardSaveInput | undefi
   if (template === null) return undefined
   const targetId = value.targetId === undefined ? undefined : skillIdOf(value.targetId)
   if (value.targetId !== undefined && !targetId) return undefined
+  const editors = editorsValueOf(value.editors)
+  if (editors === null) return undefined
   return {
     title,
     name,
@@ -442,6 +478,7 @@ export function cardSaveInputOf(value: unknown): UserSkillCardSaveInput | undefi
     template,
     targetId,
     overwrite: value.overwrite === true,
+    ...(editors ? { editors } : {}),
   }
 }
 

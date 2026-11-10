@@ -76,6 +76,16 @@ Di bawah pratinjau selalu tertulis: "Pasang skill hanya dari sumber yang Anda pe
 - Tidak ada file yang ditulis sebelum Anda mengeklik **Simpan**. Jika Anda mengeklik **Batal**, percakapan hanya menyimpannya sebagai "Usulan skill yang tidak disimpan".
 - Anda juga bisa meminta agar skill yang sudah ada diubah, misalnya "Ubah skill notulen rapat sesuai cara kita bekerja". Kartunya lalu berjudul **Ubah skill**. Skill saya ditimpa dengan **Ganti**; skill bawaan atau skill dari program lain disimpan sebagai salinan di skill saya dan skill aslinya dinonaktifkan.
 
+## Memilih tempat skill dipakai
+
+Skill yang hanya cocok untuk satu jenis dokumen, misalnya menata slide atau merapikan spreadsheet, bisa ditampilkan hanya di panel AI editor itu. Di editor lain, daftar `/` dan daftar skill yang dipakai AI sendiri jadi lebih pendek, sehingga AI lebih sering memilih skill yang tepat.
+
+- Untuk skill saya, buka **Edit** lalu pilih **Semua editor** atau **Hanya editor ini** di **Tempat dipakai**. Editor yang dipilih ditulis di berkas skill, jadi ikut terbawa saat skill diekspor atau dipindah ke program lain.
+- Untuk skill bawaan dan skill dari program lain, ubah di **Tempat dipakai** pada **Lihat isi**. Pilihan ini hanya disimpan di pengaturan PC ini; berkas skill tidak berubah.
+- Skill yang tidak dipakai di semua editor menyebutkannya di barisnya, misalnya "Dipakai di: Presentasi".
+- Saat AI membuat skill yang hanya cocok untuk satu format, AI juga mengusulkan tempat dipakainya; jika tidak, skill tetap untuk semua editor. Anda bisa mengubahnya di **Tempat dipakai** pada kartu sebelum menyimpan.
+- Tanya AI di Beranda dan jendela agen memakai semua skill yang aktif, di mana pun skill itu diatur untuk dipakai.
+
 ## Menambahkan dokumen sebagai templat
 
 Saat Anda membuat skill di panel AI sebuah editor, dokumen yang sedang terbuka bisa ikut disertakan sebagai templat. Centang **Simpan juga dokumen ini sebagai templat** di kartu, dan tombolnya menjadi dua.

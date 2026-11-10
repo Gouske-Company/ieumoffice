@@ -101,7 +101,8 @@ export function writeSkillSettings(path: string, settings: UserSkillSettings): v
     const kept: UserSkillStateSetting = {}
     if (typeof state.enabled === 'boolean') kept.enabled = state.enabled
     if (state.invoke === 'auto' || state.invoke === 'manual') kept.invoke = state.invoke
-    if (kept.enabled !== undefined || kept.invoke !== undefined) states[id] = kept
+    if (state.editors) kept.editors = state.editors
+    if (Object.keys(kept).length > 0) states[id] = kept
   }
   const value: { states?: typeof states; hiddenBuiltins?: string[] } = {}
   if (Object.keys(states).length > 0) value.states = states

@@ -179,6 +179,18 @@ describe('writing front matter', () => {
     })
   })
 
+  it('writes, keeps and takes out the editors without touching the rest', () => {
+    const base =
+      '---\nname: deck\nlicense: MIT\ndescription: d\nmetadata:\n  author: me # kept\n  ieum-title: T\n---\nBody\n'
+    const input = { name: 'deck', description: 'd', title: 'T', body: 'Body\n' }
+    const written = renderSkillMd({ ...input, editors: 'slides docs' }, base)
+    expect(written).toBe(
+      '---\nname: deck\nlicense: MIT\ndescription: d\nmetadata:\n  author: me # kept\n  ieum-title: T\n  ieum-editors: slides docs\n---\nBody\n',
+    )
+    expect(renderSkillMd(input, written)).toBe(written)
+    expect(renderSkillMd({ ...input, editors: null }, written)).toBe(base)
+  })
+
   it('drops the app values it is told to drop and adds extra keys', () => {
     const base = '---\nname: a\ndescription: b\nmetadata:\n  ieum-title: T\n---\nx'
     expect(renderSkillMd({ name: 'a', description: 'b', body: 'x' }, base)).toBe(

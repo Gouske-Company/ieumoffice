@@ -76,6 +76,16 @@ Di bawah pratonton sentiasa tertulis: "Pasang kemahiran hanya daripada sumber ya
 - Tiada fail ditulis sehingga anda mengklik **Simpan**. Jika anda mengklik **Batal**, perbualan hanya menyimpannya sebagai "Cadangan kemahiran yang tidak disimpan".
 - Anda juga boleh meminta supaya kemahiran sedia ada diubah, contohnya "Ubah kemahiran minit mesyuarat mengikut cara kita bekerja". Kad itu kemudian bertajuk **Ubah kemahiran**. Kemahiran saya ditulis ganti dengan **Ganti**; kemahiran terbina dalam atau kemahiran daripada program lain disimpan sebagai salinan dalam kemahiran saya dan kemahiran asal dimatikan.
 
+## Memilih tempat kemahiran digunakan
+
+Kemahiran yang hanya sesuai untuk satu jenis dokumen, seperti menggayakan slaid atau mengemaskan hamparan, boleh dipaparkan dalam panel AI editor itu sahaja. Dalam editor lain, senarai `/` dan senarai kemahiran yang digunakan AI sendiri menjadi lebih pendek, jadi AI lebih kerap memilih kemahiran yang betul.
+
+- Untuk kemahiran saya, buka **Sunting** dan pilih **Semua editor** atau **Editor ini sahaja** di **Tempat digunakan**. Editor yang dipilih ditulis dalam fail kemahiran, jadi ia ikut sama apabila kemahiran dieksport atau dibawa ke program lain.
+- Untuk kemahiran terbina dalam atau kemahiran program lain, tukar di **Tempat digunakan** dalam **Lihat kandungan**. Pilihan ini disimpan dalam tetapan PC ini sahaja; fail kemahiran tidak berubah.
+- Kemahiran yang tidak digunakan dalam semua editor menyatakannya pada barisnya, contohnya "Digunakan dalam: Persembahan".
+- Apabila AI membuat kemahiran yang hanya sesuai untuk satu format, AI turut mencadangkan tempat ia digunakan; jika tidak, ia dibiarkan untuk semua editor. Anda boleh menukarnya di **Tempat digunakan** pada kad sebelum menyimpan.
+- Tanya AI di Laman Utama dan tetingkap ejen menggunakan semua kemahiran yang dihidupkan, di mana pun ia ditetapkan untuk digunakan.
+
 ## Menambah dokumen sebagai templat
 
 Apabila anda membuat kemahiran dalam panel AI sesebuah editor, dokumen semasa boleh disertakan sebagai templat. Tandakan **Simpan juga dokumen ini sebagai templat** pada kad, dan butang itu menjadi dua.

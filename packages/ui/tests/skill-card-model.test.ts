@@ -4,6 +4,7 @@ import {
   initialSkillCardDraft,
   isSkillCardSavedMessage,
   readStoredSkillCards,
+  skillCardEditorsBlocked,
   skillCardMode,
   skillCardNameVerdict,
   skillCardSaveBlock,
@@ -14,6 +15,7 @@ import {
   skillNameCheckOf,
 } from '../src/skill-card-model'
 import { skillRequestText } from '../src/skill-send'
+import { handedDraftOf, handedProposalOf } from '../src/skill-template-model'
 
 const NEW: SkillProposal = {
   key: 'k1',
@@ -58,6 +60,7 @@ describe('the card mode and its starting fields', () => {
       body: '1. Date',
       invoke: 'auto',
       withTemplate: false,
+      editors: 'all',
     })
     expect(initialSkillCardDraft({ ...NEW, wantsTemplate: true }).withTemplate).toBe(true)
     // a change without a name keeps the changed skill's name
@@ -127,6 +130,7 @@ describe('what Save hands to the shell', () => {
       description: 'Writes minutes.',
       body: '1. Date',
       invoke: 'manual',
+      editors: 'all',
     })
   })
 
@@ -272,5 +276,44 @@ describe('the skills attached to a request', () => {
       { id: 'plugin:a&b:c', title: 't', body: 'b', files: ['x.md'], mcpServers: [] },
     ])
     expect(attachedSkillIdsOf(`question${text}`)).toEqual(['app:home-letter', 'plugin:a&b:c'])
+  })
+})
+
+describe('where a skill from a card is used', () => {
+  it('starts at every editor when the model named none, whatever editor the card is in', () => {
+    expect(initialSkillCardDraft(NEW).editors).toBe('all')
+  })
+
+  it('starts at what the model named', () => {
+    expect(initialSkillCardDraft({ ...NEW, editors: ['slides'] }).editors).toEqual(['slides'])
+  })
+
+  it('starts a change at where the changed skill is used now, unless the model named some', () => {
+    const changed = { ...OWN, target: { ...OWN.target!, editors: ['sheets' as const] } }
+    expect(initialSkillCardDraft(changed).editors).toEqual(['sheets'])
+    expect(initialSkillCardDraft({ ...changed, editors: ['hwp'] }).editors).toEqual(['hwp'])
+  })
+
+  it('hands the chosen editors to the shell, and waits while none is checked', () => {
+    const draft = { ...initialSkillCardDraft(NEW), editors: ['slides' as const] }
+    expect(skillCardSaveInput(draft, NEW).editors).toEqual(['slides'])
+    expect(skillCardEditorsBlocked(draft)).toBe(false)
+    expect(skillCardEditorsBlocked({ editors: [] })).toBe(true)
+    expect(skillCardEditorsBlocked({ editors: 'all' })).toBe(false)
+  })
+})
+
+describe('where-used across a template preview tab', () => {
+  it('carries the model’s editors, the changed skill’s and the person’s choice', () => {
+    const proposal = handedProposalOf({
+      ...OWN,
+      editors: ['slides', 'nope'],
+      target: { ...OWN.target, editors: ['sheets'] },
+    })
+    expect(proposal?.editors).toEqual(['slides'])
+    expect(proposal?.target?.editors).toEqual(['sheets'])
+    expect(handedDraftOf({ editors: 'all' })?.editors).toBe('all')
+    expect(handedDraftOf({ editors: ['hwp', 'nope'] })?.editors).toEqual(['hwp'])
+    expect(handedDraftOf({})).not.toHaveProperty('editors')
   })
 })

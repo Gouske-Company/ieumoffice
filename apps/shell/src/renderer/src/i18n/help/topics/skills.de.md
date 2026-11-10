@@ -76,6 +76,16 @@ Unter der Vorschau steht immer: „Installieren Sie Skills nur aus Quellen, dene
 - Bis Sie auf **Speichern** klicken, wird keine Datei geschrieben. Klicken Sie auf **Abbrechen**, behält der Chat ihn nur als „Nicht gespeicherter Skill-Vorschlag“.
 - Sie können auch darum bitten, einen vorhandenen Skill zu ändern, etwa „Passe den Protokoll-Skill an unsere Arbeitsweise an“. Die Karte heißt dann **Skill ändern**. Einer meiner Skills wird mit **Ersetzen** überschrieben; ein integrierter Skill oder einer aus einem anderen Programm wird als Kopie unter meinen Skills gespeichert, und das Original wird ausgeschaltet.
 
+## Festlegen, wo ein Skill genutzt wird
+
+Ein Skill, der nur zu einer Art Dokument passt, etwa Folien gestalten oder eine Tabelle aufräumen, kann nur im KI-Bereich dieses Editors erscheinen. In den anderen Editoren werden die `/`-Liste und die Liste der Skills, die die KI selbst nutzt, kürzer, und die KI wählt öfter den passenden Skill.
+
+- Für einen meiner Skills öffnen Sie **Bearbeiten** und wählen unter **Wo sie genutzt wird** **Alle Editoren** oder **Nur diese Editoren**. Die gewählten Editoren stehen in der Datei des Skills und gehen mit, wenn Sie ihn exportieren oder in ein anderes Programm übernehmen.
+- Für einen integrierten Skill oder einen aus einem anderen Programm ändern Sie es unter **Wo sie genutzt wird** in **Inhalt ansehen**. Das wird nur in den Einstellungen dieses PCs gespeichert; die Datei des Skills bleibt unverändert.
+- Ein Skill, der nicht in allen Editoren genutzt wird, zeigt das in seiner Zeile, zum Beispiel „Genutzt in: Präsentation“.
+- Wenn die KI einen Skill erstellt, der nur zu einem Format passt, schlägt sie auch vor, wo er genutzt wird; sonst bleibt es bei allen Editoren. Vor dem Speichern können Sie es auf der Karte unter **Wo sie genutzt wird** ändern.
+- „KI fragen“ auf der Startseite und das Agentenfenster nutzen alle eingeschalteten Skills, egal wo sie genutzt werden sollen.
+
 ## Ein Dokument als Vorlage mitgeben
 
 Wenn Sie im KI-Bereich eines Editors einen Skill erstellen, kann das aktuelle Dokument als Vorlage mitgehen. Haken Sie auf der Karte **Dieses Dokument als Vorlage mitspeichern** an, dann werden aus der Schaltfläche zwei.

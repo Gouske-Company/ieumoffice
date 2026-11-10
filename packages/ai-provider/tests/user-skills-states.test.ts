@@ -30,6 +30,7 @@ function fake(source: UserSkillSource, name: string, extra: Partial<UserSkill> =
     mcpServers: [],
     github: false,
     agentOnly: false,
+    fileEditors: undefined,
     files: 1,
     bytes: 10,
     unreadable: undefined,
@@ -216,5 +217,34 @@ describe('priority among enabled skills', () => {
       { hiddenBuiltins: ['a'] },
     )
     expect(pickEnabledUserSkills(skills).chosen).toEqual([])
+  })
+})
+
+describe('where a skill is used', () => {
+  it('follows the skill file when the person chose nothing', () => {
+    const [skill] = resolveUserSkillStates([fake('app', 'deck', { fileEditors: ['slides'] })], {})
+    expect(skill!.editors).toEqual(['slides'])
+  })
+
+  it('takes the person’s choice over the skill file, and "all" means every editor', () => {
+    const skills = [
+      fake('builtin', 'a', { fileEditors: ['slides'] }),
+      fake('user', 'b', { fileEditors: ['slides'] }),
+      fake('codex', 'c'),
+    ]
+    const resolved = resolveUserSkillStates(skills, {
+      states: {
+        'builtin:a': { editors: ['sheets', 'docs'] },
+        'user:b': { editors: 'all' },
+        'codex:c': { editors: ['hwp'] },
+      },
+    })
+    expect(resolved.map((s) => s.editors)).toEqual([['docs', 'sheets'], undefined, ['hwp']])
+  })
+
+  it('reads a stored choice of the wrong kind as no choice', () => {
+    expect(
+      normalizeUserSkillSettings({ states: { 'user:a': { editors: 'slides', enabled: true } } }),
+    ).toEqual({ states: { 'user:a': { enabled: true } }, hiddenBuiltins: [] })
   })
 })

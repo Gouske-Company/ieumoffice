@@ -5,6 +5,7 @@ import {
   windowUserSkillsBridge,
   type AgentMessage,
   type AgentSkill,
+  type SkillEditorId,
   type SkillProposal,
   type UserSkillText,
   type UserSkillsBridgeLike,
@@ -41,6 +42,8 @@ import {
 // ---- the capability an AI panel composes ------------------------------------
 
 export interface PanelUserSkillsOptions {
+  /** the editor this panel belongs to: skills set for other editors are not used; none in home ask */
+  editor?: SkillEditorId | undefined
   /** the UI language now (the loop lives longer than one render) */
   lang: () => Lang
   /** the loop's history: skills the request carries as chips are not listed again */
@@ -68,6 +71,7 @@ export function panelUserSkills(options: PanelUserSkillsOptions): AgentSkill[] {
   if (!bridge) return []
   return [
     createBridgedUserSkillsSkill(bridge, {
+      editor: options.editor,
       messages: options.messages,
       onProposal: options.onProposal,
       onUsed: options.onUsed,

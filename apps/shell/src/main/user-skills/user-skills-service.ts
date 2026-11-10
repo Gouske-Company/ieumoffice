@@ -12,7 +12,16 @@ import { randomBytes } from 'node:crypto'
 import { copyFile, mkdir, readFile, realpath, rename, rm, stat, writeFile } from 'node:fs/promises'
 import { basename, dirname, extname, isAbsolute, join, resolve } from 'node:path'
 import {
+  skillEditorScope,
+  skillEditorsChoiceOf,
+  skillEditorsOf,
+  type SkillEditorId,
+} from '@genoffice/agent-core/skill-editors'
+import {
+  IEUM_EDITORS_KEY,
   IEUM_SOURCE_FILE,
+  IEUM_TEMPLATE_KEY,
+  IEUM_TITLE_KEY,
   SKILL_STAGING_PREFIX,
   SKILL_TEXT_EXTENSIONS,
   SkillImportError,
@@ -57,11 +66,13 @@ import type {
   UserSkillAiRead,
   UserSkillCardSaveInput,
   UserSkillContent,
+  UserSkillEditorsValue,
   UserSkillImportCandidateView,
   UserSkillImportPreview,
   UserSkillInstallRequest,
   UserSkillNameProblem,
   UserSkillSaveInput,
+  UserSkillStatePatch,
   UserSkillTemplateInput,
   UserSkillView,
   UserSkillsFail,
@@ -218,6 +229,7 @@ function viewOf(
     template: skill.template,
     templateExists: skill.templateExists,
     agentOnly: skill.agentOnly,
+    ...(skill.editors ? { editors: skill.editors } : {}),
     unreadable: skill.unreadable,
     files: skill.files,
     bytes: skill.bytes,
@@ -289,19 +301,46 @@ function clearState(settings: UserSkillSettings, id: string): void {
   }
 }
 
-/** Keep only what differs from the initial state of the source */
+/**
+ * Keep only what differs from the initial state of the source. A where-used
+ * choice that says what the skill's file says is not kept either.
+ */
 function setStateValue(
   settings: UserSkillSettings,
   id: string,
   source: UserSkillSource,
-  patch: { enabled?: boolean; invoke?: UserSkillInvoke },
+  patch: { enabled?: boolean; invoke?: UserSkillInvoke; editors?: UserSkillEditorsValue },
+  fileEditors?: readonly SkillEditorId[] | undefined,
 ): void {
   const initial = initialUserSkillState(source)
-  const next = { ...settings.states[id], ...patch }
+  const { editors, ...rest } = patch
+  const next = { ...settings.states[id], ...rest }
+  if (editors !== undefined) {
+    const choice = skillEditorsChoiceOf(editors)
+    const sameAsFile = String(skillEditorScope(choice, fileEditors)) === String(fileEditors)
+    if (choice && !sameAsFile) next.editors = choice
+    else delete next.editors
+  }
   if (next.enabled === initial.enabled) delete next.enabled
   if (next.invoke === initial.invoke) delete next.invoke
   clearState(settings, id)
-  if (next.enabled !== undefined || next.invoke !== undefined) settings.states[id] = next
+  if (Object.keys(next).length > 0) settings.states[id] = next
+}
+
+/**
+ * The `metadata.ieum-editors` text a save writes: unchanged when the choice
+ * says what the file says (ids this app does not know stay), `null` (taken
+ * out) for every editor.
+ */
+function editorsTextOf(
+  choice: UserSkillEditorsValue | undefined,
+  base: string | undefined,
+): string | null | undefined {
+  if (choice === undefined) return undefined
+  const written = base === undefined ? undefined : parseSkillMd(base)?.metadata[IEUM_EDITORS_KEY]
+  const wanted = skillEditorScope(skillEditorsChoiceOf(choice), undefined)
+  if (String(wanted) === String(skillEditorsOf(written))) return undefined
+  return wanted ? wanted.join(' ') : null
 }
 
 export function createUserSkillsService(deps: UserSkillsServiceDeps) {
@@ -408,6 +447,7 @@ export function createUserSkillsService(deps: UserSkillsServiceDeps) {
     template: UserSkillTemplateInput | undefined
     targetId: string | undefined
     overwrite: boolean
+    editors: UserSkillEditorsValue | undefined
   }
 
   /**
@@ -453,7 +493,14 @@ export function createUserSkillsService(deps: UserSkillsServiceDeps) {
       }
       const base = await readSkillMdText(dir)
       const text = renderSkillMd(
-        { name, description, title, template: templatePath ?? target.template, body: request.body },
+        {
+          name,
+          description,
+          title,
+          template: templatePath ?? target.template,
+          editors: editorsTextOf(request.editors, base),
+          body: request.body,
+        },
         base,
       )
       try {
@@ -508,7 +555,14 @@ export function createUserSkillsService(deps: UserSkillsServiceDeps) {
       const base = target ? await readSkillMdText(target.dir) : undefined
       const keptTemplate = target && base !== undefined ? target.template : undefined
       const text = renderSkillMd(
-        { name, description, title, template: templatePath ?? keptTemplate, body: request.body },
+        {
+          name,
+          description,
+          title,
+          template: templatePath ?? keptTemplate,
+          editors: editorsTextOf(request.editors, base),
+          body: request.body,
+        },
         base,
       )
       if (template) {
@@ -576,6 +630,7 @@ export function createUserSkillsService(deps: UserSkillsServiceDeps) {
           description: skill.description,
           body: parsed?.body ?? text ?? '',
           template: skill.template,
+          ...(skill.fileEditors ? { editors: skill.fileEditors } : {}),
           files: listed.files
             .filter((file) => file.rel !== IEUM_SOURCE_FILE)
             .map((file) => ({ rel: file.rel, size: file.size })),
@@ -583,15 +638,16 @@ export function createUserSkillsService(deps: UserSkillsServiceDeps) {
       }
     },
 
-    async setState(
-      id: string,
-      patch: { enabled?: boolean; invoke?: UserSkillInvoke },
-    ): Promise<UserSkillsResult> {
+    /** On/off, when it is used, and where; an own skill's where-used is in its file */
+    async setState(id: string, patch: UserSkillStatePatch): Promise<UserSkillsResult> {
       const skill = await find(id)
       if (!skill) return fail('not-found')
       if (patch.enabled === true && skill.hidden) return fail('hidden')
       if (patch.enabled === true && skill.unreadable) return fail('unreadable')
-      changeSettings((settings) => setStateValue(settings, skill.id, skill.source, patch))
+      if (patch.editors !== undefined && (await ownedDir(skill))) return fail('invalid')
+      changeSettings((settings) =>
+        setStateValue(settings, skill.id, skill.source, patch, skill.fileEditors),
+      )
       return { ok: true }
     },
 
@@ -653,6 +709,26 @@ export function createUserSkillsService(deps: UserSkillsServiceDeps) {
       const work = await makeWorkDir()
       try {
         await copyFolderInto(skill.dir, work)
+        // the copy is mine to edit: the person's where-used choice goes into its file
+        const base = await readSkillMdText(work)
+        const parsed = base === undefined ? undefined : parseSkillMd(base)
+        const editors = editorsTextOf(skill.editors ?? 'all', base)
+        if (parsed && editors !== undefined) {
+          await writeFile(
+            join(work, 'SKILL.md'),
+            renderSkillMd(
+              {
+                name: parsed.name ?? skill.name,
+                description: parsed.description ?? '',
+                title: parsed.metadata[IEUM_TITLE_KEY],
+                template: parsed.metadata[IEUM_TEMPLATE_KEY],
+                editors,
+                body: parsed.body,
+              },
+              base,
+            ),
+          )
+        }
         await place(work, skill.name, taken)
       } catch (error) {
         return failureOf(error)
@@ -699,6 +775,7 @@ export function createUserSkillsService(deps: UserSkillsServiceDeps) {
         template: undefined,
         targetId: input.id,
         overwrite: false,
+        editors: input.editors,
       })
     },
 
@@ -717,6 +794,7 @@ export function createUserSkillsService(deps: UserSkillsServiceDeps) {
         template: input.template,
         targetId: input.targetId,
         overwrite: input.overwrite === true,
+        editors: input.editors,
       })
     },
 

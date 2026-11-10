@@ -76,6 +76,16 @@ Sotto l'anteprima compare sempre: «Installa abilità solo da fonti affidabili. 
 - Nessun file viene scritto finché non fai clic su **Salva**. Se fai clic su **Annulla**, la chat la conserva solo come «Proposta di abilità non salvata».
 - Puoi anche chiedere di cambiare un'abilità esistente, per esempio «Cambia l'abilità dei verbali come facciamo noi». In quel caso la scheda si intitola **Modifica abilità**. Una delle mie abilità viene sovrascritta con **Sostituisci**; un'abilità integrata o di un altro programma viene salvata come copia tra le mie abilità e l'originale viene disattivato.
 
+## Scegliere dove si usa una skill
+
+Una skill adatta a un solo tipo di documento, come curare l’aspetto delle diapositive o riordinare un foglio di calcolo, può comparire solo nel pannello IA di quell’editor. Negli altri editor l’elenco `/` e l’elenco delle skill che l’IA usa da sola si accorciano, e l’IA sceglie più spesso la skill giusta.
+
+- Per una delle mie skill, apri **Modifica** e scegli **Tutti gli editor** o **Solo questi editor** in **Dove si usa**. Gli editor scelti vengono scritti nel file della skill e la seguono quando la esporti o la porti in un altro programma.
+- Per una skill integrata o di un altro programma, cambialo in **Dove si usa** dentro **Vedi contenuto**. La scelta resta solo nelle impostazioni di questo PC; il file della skill non cambia.
+- Una skill che non si usa in tutti gli editor lo indica nella sua riga, per esempio "Usata in: Presentazione".
+- Quando l’IA crea una skill adatta a un solo formato, propone anche dove usarla; altrimenti lascia tutti gli editor. Puoi cambiarlo in **Dove si usa** sulla scheda prima di salvare.
+- Chiedi all’IA nella Home e la finestra dell’agente usano tutte le skill attive, ovunque siano impostate.
+
 ## Aggiungere un documento come modello
 
 Quando crei un'abilità nel pannello IA di un editor, il documento attuale può accompagnarla come modello. Spunta **Salva anche questo documento come modello** sulla scheda e il pulsante si sdoppia.

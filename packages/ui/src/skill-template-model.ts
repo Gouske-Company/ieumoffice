@@ -1,4 +1,4 @@
-import type { SkillProposal } from '@genoffice/agent-core'
+import { SKILL_EDITORS, skillEditorsOf, type SkillProposal } from '@genoffice/agent-core'
 import type { SkillCardDraft } from './skill-card-model'
 import { skillDisplayName, type SkillChipRef, type SkillChipView } from './skill-picker-model'
 
@@ -213,7 +213,14 @@ export function handedProposalOf(raw: unknown): SkillProposal | null {
     ) {
       return null
     }
-    target = { id: t.id, name: t.name, title: t.title, owned: t.owned === true, source: t.source }
+    target = {
+      id: t.id,
+      name: t.name,
+      title: t.title,
+      owned: t.owned === true,
+      source: t.source,
+      editors: skillEditorsOf(t.editors),
+    }
   }
   return {
     key,
@@ -222,6 +229,7 @@ export function handedProposalOf(raw: unknown): SkillProposal | null {
     description,
     body,
     wantsTemplate: true,
+    editors: skillEditorsOf(raw.editors),
     target,
   }
 }
@@ -235,6 +243,11 @@ export function handedDraftOf(raw: unknown): Partial<SkillCardDraft> | undefined
     if (typeof value === 'string') draft[field] = value
   }
   if (raw.invoke === 'auto' || raw.invoke === 'manual') draft.invoke = raw.invoke
+  if (raw.editors === 'all') draft.editors = 'all'
+  else if (Array.isArray(raw.editors)) {
+    const checked = raw.editors as unknown[]
+    draft.editors = SKILL_EDITORS.filter((id) => checked.includes(id))
+  }
   return draft
 }
 

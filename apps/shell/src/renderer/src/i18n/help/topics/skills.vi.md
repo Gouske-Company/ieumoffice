@@ -76,6 +76,16 @@ Bên dưới bản xem trước luôn có dòng: "Chỉ cài kỹ năng từ ngu
 - Không có tệp nào được ghi cho đến khi bạn nhấn **Lưu**. Nếu bạn nhấn **Hủy**, cuộc trò chuyện chỉ giữ lại nó dưới dạng "Đề xuất kỹ năng chưa lưu".
 - Bạn cũng có thể nhờ sửa một kỹ năng sẵn có, chẳng hạn "Sửa kỹ năng biên bản cuộc họp theo cách chúng ta vẫn làm". Khi đó thẻ có tiêu đề **Sửa kỹ năng**. Một kỹ năng của tôi sẽ bị ghi đè bằng **Thay thế**; kỹ năng có sẵn hoặc kỹ năng từ chương trình khác được lưu thành một bản sao trong kỹ năng của tôi và bản gốc bị tắt.
 
+## Chọn nơi dùng kỹ năng
+
+Kỹ năng chỉ hợp với một loại tài liệu, như trang trí trang chiếu hay sắp xếp bảng tính, có thể chỉ hiện trong bảng AI của trình soạn thảo đó. Danh sách `/` và danh sách kỹ năng AI tự dùng ở các trình soạn thảo khác ngắn lại, nên AI chọn đúng kỹ năng hơn.
+
+- Với kỹ năng của tôi, mở **Chỉnh sửa** và chọn **Mọi trình soạn thảo** hoặc **Chỉ các trình soạn thảo đã chọn** ở **Nơi dùng**. Các trình soạn thảo đã chọn được ghi vào tệp của kỹ năng, nên vẫn đi theo khi bạn xuất kỹ năng hay chuyển sang chương trình khác.
+- Với kỹ năng có sẵn và kỹ năng của chương trình khác, đổi ở **Nơi dùng** trong **Xem nội dung**. Lựa chọn này chỉ lưu trong cài đặt của máy này; tệp của kỹ năng giữ nguyên.
+- Kỹ năng không dùng ở mọi trình soạn thảo sẽ ghi rõ trên dòng của nó, ví dụ "Dùng trong: Bản trình bày".
+- Khi AI tạo một kỹ năng chỉ hợp với một định dạng, AI đề xuất luôn nơi dùng; nếu không, kỹ năng dùng ở mọi trình soạn thảo. Bạn có thể đổi ở **Nơi dùng** trên thẻ trước khi lưu.
+- Hỏi AI ở Trang chủ và cửa sổ tác tử dùng mọi kỹ năng đang bật, bất kể nơi dùng.
+
 ## Thêm tài liệu làm mẫu
 
 Khi bạn tạo kỹ năng trong bảng AI của một trình soạn thảo, tài liệu hiện tại có thể được lưu kèm làm mẫu. Đánh dấu **Lưu kèm tài liệu này làm mẫu** trên thẻ, và nút sẽ tách thành hai.

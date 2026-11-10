@@ -1,5 +1,10 @@
 import type { Lang } from '@genoffice/i18n'
-import { RESERVED_USER_SKILL_NAMES } from '@genoffice/agent-core'
+import {
+  RESERVED_USER_SKILL_NAMES,
+  skillEditorsOf,
+  skillUsedIn,
+  type SkillEditorId,
+} from '@genoffice/agent-core'
 import { mcpServerListOf } from '@genoffice/agent-core/skill-mcp-refs'
 import { builtinSkillDesc, isBuiltinSkillName } from './strings-builtin-skills'
 import { skillPickerText } from './strings-skill-picker'
@@ -186,13 +191,15 @@ export function skillDisplayName(skill: { name: string; title?: string | undefin
 /**
  * The rows of the list from the bridge's answer: enabled skills only (skills
  * used only when called are listed too), never hidden or unreadable ones;
- * the regular panels leave out agent-only skills. Rows show the skill's name;
- * builtins use their descriptions in the UI language.
+ * the regular panels leave out agent-only skills, and an editor's panel the
+ * skills set for other editors. Rows show the skill's name; builtins use
+ * their descriptions in the UI language.
  */
 export function pickerSkillsOf(
   raw: unknown,
   lang: Lang,
   surface: SkillPickerSurface = 'panel',
+  editor?: SkillEditorId | undefined,
 ): SkillPickerItem[] {
   if (!Array.isArray(raw)) return []
   const items: SkillPickerItem[] = []
@@ -204,6 +211,7 @@ export function pickerSkillsOf(
     if (!id.includes(':') || !name || !source) continue
     if (view.enabled !== true || view.hidden === true || view.unreadable) continue
     if (view.agentOnly === true && surface !== 'agent') continue
+    if (surface !== 'agent' && !skillUsedIn(skillEditorsOf(view.editors), editor)) continue
     if (RESERVED_USER_SKILL_NAMES.has(name.toLowerCase())) continue
     const plugin = typeof view.plugin === 'string' ? view.plugin : undefined
     const builtin = source === 'builtin' && isBuiltinSkillName(name)

@@ -424,7 +424,11 @@ export function AiPanel({ host, filePath, onCollapse }: AiPanelProps): ReactElem
   /** the skills called with `/` or `$`: the list, the chips and the text a request gets */
   /** this window's MCP servers (user MCP spec 7.5); the chips name the ones not usable now */
   const mcpWindow = useMcpWindow()
-  const skills = useComposerSkills({ lang, usableMcpServers: mcpWindow.state?.usableServers() })
+  const skills = useComposerSkills({
+    lang,
+    editor: 'epub',
+    usableMcpServers: mcpWindow.state?.usableServers(),
+  })
   const skillsRef = useRef(skills)
   skillsRef.current = skills
   /** the skill cards `propose_skill` shows; nothing is written before their Save */
@@ -742,6 +746,7 @@ export function AiPanel({ host, filePath, onCollapse }: AiPanelProps): ReactElem
         createFilesSkill(availableAttachments),
         // the person's skills: use_skill, read_skill_file, propose_skill (app-run tools)
         ...panelUserSkills({
+          editor: 'epub',
           lang: () => langRef.current,
           messages: () => loopRef.current?.messages ?? [],
           // use_skill names the MCP servers it expects that are not usable now (spec 8)

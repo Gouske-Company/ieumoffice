@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Lang } from '@genoffice/i18n'
+import { skillEditorsOf } from '@genoffice/agent-core/skill-editors'
+import { skillEditorsSummary } from '@genoffice/ui'
 import type {
   UserSkillImportPreview,
   UserSkillInvokeValue,
@@ -534,6 +536,7 @@ function SkillRow({
   if (view.hasScripts) badges.push('badgeScripts')
   if (view.agentOnly) badges.push('badgeAgentOnly')
   const mcpServers = skillMcpServersNeeded(view, usableMcpServers)
+  const usedIn = skillEditorsSummary(lang, skillEditorsOf(view.editors))
 
   return (
     <div
@@ -557,6 +560,7 @@ function SkillRow({
               {text('unreadableNote', { reason: text(unreadableKey(unreadable)) })}
             </div>
           )}
+          {usedIn && <div className="set-field-desc skl-row-editors">{usedIn}</div>}
           {(badges.length > 0 || mcpServers.length > 0) && (
             <div className="skl-badges">
               {badges.map((key) => (

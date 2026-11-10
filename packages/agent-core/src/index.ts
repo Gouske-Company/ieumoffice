@@ -164,3 +164,4 @@ export type {
   UserMcpSkill,
 } from './user-mcp-skill'
 export * from './skill-mcp-refs'
+export * from './skill-editors'

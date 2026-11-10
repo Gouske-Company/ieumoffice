@@ -14,6 +14,7 @@ import { basename, dirname, extname, isAbsolute, join, resolve } from 'node:path
 import JSZip from 'jszip'
 import type { SkillProposal } from '@genoffice/agent-core'
 import { REDACT_NS } from '@genoffice/agent-core/redact-range'
+import { skillEditorsOf } from '@genoffice/agent-core/skill-editors'
 import {
   IEUM_TEMPLATE_KEY,
   MAX_USER_SKILL_BYTES,
@@ -113,6 +114,8 @@ export interface AgentSkillListEntry {
   title: string
   owned: boolean
   unreadable?: unknown
+  /** where the skill is used (the list's value); absent: every editor */
+  editors?: unknown
 }
 
 export type AgentSkillProposalResult =
@@ -188,6 +191,7 @@ export function agentSkillProposalOf(
       title: entry.title || entry.name,
       owned: entry.owned,
       source: entry.source,
+      editors: skillEditorsOf(entry.editors),
     }
   }
   return {

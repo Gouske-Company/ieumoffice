@@ -301,3 +301,24 @@ describe('chips', () => {
     expect(skillChipRefsOf('x')).toEqual([])
   })
 })
+
+describe('pickerSkillsOf in an editor', () => {
+  const raw = [
+    view({ id: 'app:deck', name: 'deck', editors: ['slides'] }),
+    view({ id: 'app:notes', name: 'notes' }),
+  ]
+  const ids = (
+    surface: Parameters<typeof pickerSkillsOf>[2],
+    editor?: Parameters<typeof pickerSkillsOf>[3],
+  ) => pickerSkillsOf(raw, 'ko', surface, editor).map((s) => s.id)
+
+  it('lists a slides skill in the slides panel and leaves it out of the sheets panel', () => {
+    expect(ids('panel', 'slides')).toEqual(['app:deck', 'app:notes'])
+    expect(ids('panel', 'sheets')).toEqual(['app:notes'])
+  })
+
+  it('lists it where no editor is given (home ask) and in the agent window', () => {
+    expect(ids('panel')).toEqual(['app:deck', 'app:notes'])
+    expect(ids('agent', 'sheets')).toEqual(['app:deck', 'app:notes'])
+  })
+})

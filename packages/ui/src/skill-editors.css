@@ -1,0 +1,39 @@
+/* the "where it is used" chooser of the skill card and Settings → Skills */
+.ai-skill-editors {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.ai-skill-editors legend {
+  margin-bottom: 2px;
+  padding: 0;
+  color: var(--text-secondary);
+}
+
+.ai-skill-editors-modes,
+.ai-skill-editors-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+
+.ai-skill-editors label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-primary);
+}
+
+.ai-skill-editors-hint {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.ai-skill-editors-hint.is-error {
+  color: var(--danger);
+}

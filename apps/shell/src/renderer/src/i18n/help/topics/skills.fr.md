@@ -76,6 +76,16 @@ Sous l’aperçu figure toujours ce message : « N’installez que des compéten
 - Aucun fichier n’est écrit tant que vous n’avez pas cliqué sur **Enregistrer**. Si vous cliquez sur **Annuler**, la conversation la garde seulement comme « Proposition de compétence non enregistrée ».
 - Vous pouvez aussi demander à modifier une compétence existante, par exemple « Adapte la compétence de compte rendu à notre façon de faire ». La carte s’intitule alors **Modifier la compétence**. Une de mes compétences est écrasée avec **Remplacer** ; une compétence intégrée ou issue d’un autre programme est enregistrée comme copie dans mes compétences et l’original est désactivé.
 
+## Choisir où utiliser une compétence
+
+Une compétence qui ne convient qu’à un type de document, comme la mise en forme de diapositives ou le rangement d’un tableur, peut n’apparaître que dans le panneau IA de cet éditeur. Dans les autres éditeurs, la liste `/` et la liste des compétences que l’IA utilise d’elle-même raccourcissent, et l’IA choisit plus souvent la bonne compétence.
+
+- Pour une de mes compétences, ouvrez **Modifier** et choisissez **Tous les éditeurs** ou **Seulement ces éditeurs** sous **Où l’utiliser**. Les éditeurs choisis sont écrits dans le fichier de la compétence et la suivent quand vous l’exportez ou la passez à un autre programme.
+- Pour une compétence intégrée ou celle d’un autre programme, changez-le sous **Où l’utiliser** dans **Voir le contenu**. Ce choix est enregistré uniquement dans les réglages de ce PC ; le fichier de la compétence ne change pas.
+- Une compétence qui n’est pas utilisée dans tous les éditeurs l’indique sur sa ligne, par exemple « Utilisée dans : Présentation ».
+- Quand l’IA crée une compétence qui ne convient qu’à un format, elle propose aussi où l’utiliser ; sinon elle laisse tous les éditeurs. Vous pouvez le changer sous **Où l’utiliser** sur la carte avant d’enregistrer.
+- Demander à l’IA sur l’accueil et la fenêtre agent utilisent toutes les compétences activées, quel que soit l’endroit choisi.
+
 ## Joindre un document comme modèle
 
 Quand vous créez une compétence dans le panneau IA d’un éditeur, le document en cours peut l’accompagner comme modèle. Cochez **Enregistrer aussi ce document comme modèle** sur la carte : le bouton se dédouble.

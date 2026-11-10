@@ -75,6 +75,8 @@ export const SKILL_TEMPLATE_FOLDER = 'assets'
 /** Front matter keys of this app, under `metadata` */
 export const IEUM_TITLE_KEY = 'ieum-title'
 export const IEUM_TEMPLATE_KEY = 'ieum-template'
+/** the editors the skill is for, ids separated by spaces; absent: every editor (decision 0122) */
+export const IEUM_EDITORS_KEY = 'ieum-editors'
 
 /**
  * Which enabled skill wins when two share a name, first wins. Plugins among

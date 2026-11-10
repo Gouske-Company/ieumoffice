@@ -76,6 +76,16 @@ Pod náhledem je vždy uvedeno: „Instalujte dovednosti jen ze zdrojů, kterým
 - Dokud nekliknete na **Uložit**, žádný soubor se nezapíše. Pokud kliknete na **Zrušit**, rozhovor ji ponechá jen jako „Neuložený návrh dovednosti“.
 - Můžete také požádat o změnu existující dovednosti, například „Uprav dovednost pro zápisy tak, jak to děláme my“. Karta se pak jmenuje **Změnit dovednost**. Jedna z mých dovedností se přepíše tlačítkem **Nahradit**; vestavěná dovednost nebo dovednost z jiného programu se uloží jako kopie do mých dovedností a originál se vypne.
 
+## Volba, kde se dovednost používá
+
+Dovednost, která se hodí jen pro jeden druh dokumentu, třeba úprava vzhledu snímků nebo uklizení tabulky, může být vidět jen v panelu AI daného editoru. V ostatních editorech se seznam `/` i seznam dovedností, které AI používá sama, zkrátí a AI častěji vybere tu správnou.
+
+- U mé dovednosti otevřete **Upravit** a v části **Kde se používá** zvolte **Všechny editory** nebo **Jen tyto editory**. Vybrané editory se zapíší do souboru dovednosti, takže ji provázejí i při exportu nebo přenesení do jiného programu.
+- U vestavěné dovednosti nebo dovednosti jiného programu to změníte v části **Kde se používá** v **Zobrazit obsah**. Volba se ukládá jen do nastavení tohoto počítače; soubor dovednosti se nemění.
+- Dovednost, která se nepoužívá ve všech editorech, to ukazuje ve svém řádku, například „Používá se v: Prezentace“.
+- Když AI vytváří dovednost, která se hodí jen pro jeden formát, navrhne i to, kde se má používat; jinak ponechá všechny editory. Před uložením to můžete změnit v části **Kde se používá** na kartě.
+- Zeptat se AI na domovské stránce a okno agenta používají všechny zapnuté dovednosti bez ohledu na to, kde se mají používat.
+
 ## Přidání dokumentu jako šablony
 
 Když vytváříte dovednost v panelu AI editoru, může s ní jako šablona jít i aktuální dokument. Zaškrtněte na kartě **Uložit i tento dokument jako šablonu** a z tlačítka budou dvě.

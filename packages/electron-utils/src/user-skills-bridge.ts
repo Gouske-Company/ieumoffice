@@ -14,12 +14,12 @@ import {
   type UserSkillCollisionChoice,
   type UserSkillContent,
   type UserSkillImportPreview,
-  type UserSkillInvokeValue,
   type UserSkillNameProblem,
   type UserSkillPreviewEnded,
   type UserSkillPreviewInput,
   type UserSkillPreviewOutcome,
   type UserSkillSaveInput,
+  type UserSkillStatePatch,
   type UserSkillTemplateOpenInput,
   type UserSkillUpdateCheck,
   type UserSkillView,
@@ -31,10 +31,8 @@ export interface UserSkillsBridge {
   list(): Promise<UserSkillView[]>
   /** a skill's text for the read-only view and the editor */
   read(id: string): Promise<UserSkillsResult<{ skill: UserSkillContent }>>
-  setState(
-    id: string,
-    patch: { enabled?: boolean; invoke?: UserSkillInvokeValue },
-  ): Promise<UserSkillsResult>
+  /** on/off, when it is used, and where (for skills the person cannot edit) */
+  setState(id: string, patch: UserSkillStatePatch): Promise<UserSkillsResult>
   /** hide a builtin (it goes off) */
   hideBuiltin(id: string): Promise<UserSkillsResult>
   /** show hidden builtins again in their initial state; all of them without names */

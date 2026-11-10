@@ -135,6 +135,13 @@ export {
   type SkillProposalCardProps,
 } from './SkillProposalCard'
 export {
+  SkillEditorsChooser,
+  skillEditorName,
+  skillEditorsSummary,
+  type SkillEditorsDraft,
+} from './SkillEditorsChooser'
+export { skillEditorsText, type SkillEditorsStringKey } from './strings-skill-editors'
+export {
   panelUserSkills,
   useSkillProposals,
   type PanelUserSkillsOptions,

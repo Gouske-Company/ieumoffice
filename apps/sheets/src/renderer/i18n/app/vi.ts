@@ -548,6 +548,9 @@ export const vi = {
   appCsvExportNeedsFullLoad: 'Xuất CSV cần sổ làm việc được tải đầy đủ — vui lòng đợi tải xong.',
   appCsvExportTooLarge: 'Trang tính quá lớn để xuất dưới dạng CSV.',
   appCsvExportCanceled: 'Đã hủy xuất CSV.',
+  appOdsExported: 'Đã xuất {path}.',
+  appOdsExportCanceled: 'Đã hủy xuất ODS.',
+  appOdsExportFailed: 'Xuất ODS thất bại.',
   appCsvExported: 'Đã xuất {path}.',
   appCsvExportedActiveOnly:
     'CSV chỉ chứa một trang tính đơn — đã xuất trang tính hiện hoạt "{name}" ra {path}.',

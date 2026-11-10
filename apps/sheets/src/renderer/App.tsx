@@ -533,6 +533,7 @@ import {
   type PageLayoutContext,
 } from './page-layout-actions'
 import { handleExportCsv as handleExportCsvImpl, type CsvExportContext } from './csv-export'
+import { handleExportOds as handleExportOdsImpl, type OdsExportContext } from './ods-export'
 import { effectivePageBreaks, installPageBreakPreview } from './page-break-preview'
 import { mapProtectedRanges } from './protected-ranges'
 import {
@@ -1197,6 +1198,10 @@ export function App({
     }
   }
 
+  function odsExportContext(): OdsExportContext {
+    return { lazyWorkbookRef, setMessage }
+  }
+
   function saveContext(): SaveContext {
     return {
       univerRef,
@@ -1210,6 +1215,7 @@ export function App({
       },
       exportPdfCopy: (saveAsPath) =>
         handleExportPdfImpl(pageLayoutContext(), undefined, saveAsPath),
+      exportOdsCopy: (saveAsPath) => handleExportOdsImpl(odsExportContext(), saveAsPath),
     }
   }
 
@@ -5129,6 +5135,8 @@ export function App({
       void handleExportPdfImpl(pageLayoutContext())
     } else if (action === 'export-csv') {
       void handleExportCsvImpl(csvExportContext())
+    } else if (action === 'export-ods') {
+      void handleExportOdsImpl(odsExportContext())
     } else if (action === 'undo' || action === 'redo') {
       // The shell's own text fields (AI prompt, dialog inputs) keep native
       // text undo; everywhere else ⌘Z means workbook history.

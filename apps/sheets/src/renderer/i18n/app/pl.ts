@@ -578,6 +578,9 @@ export const pl = {
     'Eksport do CSV wymaga w pełni załadowanego skoroszytu — poczekaj na zakończenie ładowania.',
   appCsvExportTooLarge: 'Arkusz jest za duży, aby wyeksportować go do CSV.',
   appCsvExportCanceled: 'Anulowano eksport do CSV.',
+  appOdsExported: 'Wyeksportowano {path}.',
+  appOdsExportCanceled: 'Anulowano eksport do ODS.',
+  appOdsExportFailed: 'Eksport do ODS nie powiódł się.',
   appCsvExported: 'Wyeksportowano {path}.',
   appCsvExportedActiveOnly:
     'Pliki CSV zawierają tylko jeden arkusz — aktywny arkusz „{name}” wyeksportowano do {path}.',

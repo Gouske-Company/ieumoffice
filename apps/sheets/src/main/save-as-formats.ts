@@ -1,52 +1,61 @@
 /// Save As format list: the workbook's own format first, then every format the
-/// open workbook can be copied to (CSV and PDF of the active sheet). A pick of
-/// a copy format writes nothing here — the save handler hands the path back so
-/// the renderer runs the existing export for it, and the open workbook keeps
-/// its path, its unsaved edits and its recovery identity.
+/// open workbook can be copied to (CSV, ODS of the whole workbook, and PDF of
+/// the active sheet). A pick of a copy format writes nothing here — the save
+/// handler hands the path back so the renderer runs the existing export for it,
+/// and the open workbook keeps its path, its unsaved edits and its recovery
+/// identity.
 
 export type SheetsSaveAsPick =
   | { readonly kind: 'workbook'; readonly path: string }
   | { readonly kind: 'csv'; readonly path: string }
+  | { readonly kind: 'ods'; readonly path: string }
   | { readonly kind: 'pdf'; readonly path: string }
 
-type FilterLabel = 'filterXlsx' | 'filterXlsm' | 'filterCsv' | 'filterPdfActiveSheet'
+type FilterLabel = 'filterXlsx' | 'filterXlsm' | 'filterCsv' | 'filterOds' | 'filterPdfActiveSheet'
 
 /// The dialog's file types. A macro workbook keeps .xlsm as its only workbook
 /// type (the untouched VBA parts round-trip through the save); CSV stays off
-/// that list as before. PDF is offered on an explicit Save As only: the first
-/// Save of a new or converted workbook can be the save-before-close, where a
-/// PDF pick would write a copy and then cancel the close.
+/// that list as before. ODS and PDF are whole-workbook / active-sheet copies
+/// offered on an explicit Save As only: the first Save of a new or converted
+/// workbook can be the save-before-close, where a copy pick would write a file
+/// and then cancel the close.
 export function sheetsSaveAsFilters(
   macroEnabled: boolean,
-  offerPdf: boolean,
+  offerCopies: boolean,
   label: (key: FilterLabel) => string,
 ): { name: string; extensions: string[] }[] {
-  const pdf = offerPdf ? [{ name: label('filterPdfActiveSheet'), extensions: ['pdf'] }] : []
+  const copies = offerCopies
+    ? [
+        { name: label('filterOds'), extensions: ['ods'] },
+        { name: label('filterPdfActiveSheet'), extensions: ['pdf'] },
+      ]
+    : []
   return macroEnabled
-    ? [{ name: label('filterXlsm'), extensions: ['xlsm'] }, ...pdf]
+    ? [{ name: label('filterXlsm'), extensions: ['xlsm'] }, ...copies]
     : [
         { name: label('filterXlsx'), extensions: ['xlsx'] },
         { name: label('filterCsv'), extensions: ['csv'] },
-        ...pdf,
+        ...copies,
       ]
 }
 
 /// The suggested path without its workbook extension: with copy formats on
 /// offer, the file type chosen in the dialog supplies the extension.
 export function sheetsSaveAsSuggestion(defaultPath: string): string {
-  return defaultPath.replace(/\.(xlsx|xlsm|xls|csv|tsv)$/i, '')
+  return defaultPath.replace(/\.(xlsx|xlsm|xls|csv|tsv|ods)$/i, '')
 }
 
-/// What the person picked. A typed .pdf or .csv selects that copy where it is
-/// offered; anything else is the workbook, whose extension is added when
+/// What the person picked. A typed .pdf, .ods or .csv selects that copy where
+/// it is offered; anything else is the workbook, whose extension is added when
 /// missing (a bare name from dialogs that add none, e.g. some Linux desktops).
 export function resolveSheetsSaveAsPick(
   filePath: string,
   macroEnabled: boolean,
-  offerPdf: boolean,
+  offerCopies: boolean,
 ): SheetsSaveAsPick {
   const lower = filePath.toLowerCase()
-  if (offerPdf && lower.endsWith('.pdf')) return { kind: 'pdf', path: filePath }
+  if (offerCopies && lower.endsWith('.pdf')) return { kind: 'pdf', path: filePath }
+  if (offerCopies && lower.endsWith('.ods')) return { kind: 'ods', path: filePath }
   if (!macroEnabled && lower.endsWith('.csv')) return { kind: 'csv', path: filePath }
   const ext = macroEnabled ? 'xlsm' : 'xlsx'
   return {

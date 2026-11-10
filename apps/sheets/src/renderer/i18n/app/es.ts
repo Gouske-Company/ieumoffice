@@ -595,6 +595,9 @@ export const es = {
     'La exportación a CSV requiere el libro completamente cargado — espere a que termine la carga.',
   appCsvExportTooLarge: 'La hoja es demasiado grande para exportarla como CSV.',
   appCsvExportCanceled: 'Exportación a CSV cancelada.',
+  appOdsExported: 'Se exportó {path}.',
+  appOdsExportCanceled: 'Exportación a ODS cancelada.',
+  appOdsExportFailed: 'La exportación a ODS falló.',
   appCsvExported: 'Se exportó {path}.',
   appCsvExportedActiveOnly:
     'Los archivos CSV solo contienen una hoja — se exportó la hoja activa «{name}» a {path}.',

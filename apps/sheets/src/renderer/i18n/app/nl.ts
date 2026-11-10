@@ -589,6 +589,9 @@ export const nl = {
     'CSV-export vereist een volledig geladen werkmap — wacht tot het laden is voltooid.',
   appCsvExportTooLarge: 'Het blad is te groot om als CSV te exporteren.',
   appCsvExportCanceled: 'CSV-export geannuleerd.',
+  appOdsExported: '{path} geëxporteerd.',
+  appOdsExportCanceled: 'ODS-export geannuleerd.',
+  appOdsExportFailed: 'Exporteren naar ODS is mislukt.',
   appCsvExported: '{path} geëxporteerd.',
   appCsvExportedActiveOnly:
     'CSV-bestanden bevatten slechts één blad — het actieve blad “{name}” is geëxporteerd naar {path}.',

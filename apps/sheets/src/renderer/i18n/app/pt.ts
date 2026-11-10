@@ -593,6 +593,9 @@ export const pt = {
     'A exportação de CSV requer a pasta de trabalho totalmente carregada — aguarde o carregamento terminar.',
   appCsvExportTooLarge: 'A planilha é grande demais para exportar como CSV.',
   appCsvExportCanceled: 'Exportação de CSV cancelada.',
+  appOdsExported: '{path} exportado.',
+  appOdsExportCanceled: 'Exportação para ODS cancelada.',
+  appOdsExportFailed: 'Falha ao exportar em ODS.',
   appCsvExported: '{path} exportado.',
   appCsvExportedActiveOnly:
     'Arquivos CSV contêm apenas uma planilha — a planilha ativa “{name}” foi exportada para {path}.',

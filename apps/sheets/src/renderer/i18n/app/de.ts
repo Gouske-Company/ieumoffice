@@ -602,6 +602,9 @@ export const de = {
     'Der CSV-Export erfordert die vollständig geladene Arbeitsmappe — warten Sie, bis das Laden abgeschlossen ist.',
   appCsvExportTooLarge: 'Das Blatt ist zu groß für den CSV-Export.',
   appCsvExportCanceled: 'CSV-Export abgebrochen.',
+  appOdsExported: '{path} exportiert.',
+  appOdsExportCanceled: 'ODS-Export abgebrochen.',
+  appOdsExportFailed: 'ODS-Export fehlgeschlagen.',
   appCsvExported: '{path} exportiert.',
   appCsvExportedActiveOnly:
     'CSV-Dateien enthalten nur ein Blatt — das aktive Blatt „{name}“ wurde nach {path} exportiert.',

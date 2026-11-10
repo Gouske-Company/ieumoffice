@@ -589,6 +589,9 @@ export const ja = {
     'CSV エクスポートにはブックの完全読み込みが必要です — 読み込みの完了をお待ちください。',
   appCsvExportTooLarge: 'シートが大きすぎるため、CSV をエクスポートできません。',
   appCsvExportCanceled: 'CSV エクスポートをキャンセルしました。',
+  appOdsExported: '{path} をエクスポートしました。',
+  appOdsExportCanceled: 'ODS へのエクスポートを中止しました。',
+  appOdsExportFailed: 'ODS へのエクスポートに失敗しました。',
   appCsvExported: '{path} をエクスポートしました。',
   appCsvExportedActiveOnly:
     'CSV ファイルには 1 枚のシートしか含められません — アクティブなシート「{name}」を {path} にエクスポートしました。',

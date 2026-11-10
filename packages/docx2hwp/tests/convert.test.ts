@@ -1,10 +1,16 @@
 import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { beforeAll, describe, expect, it } from 'vitest'
+import { parseDocx } from '@genoffice/docx-engine'
 import { convert } from '../src/convert'
+import { exportDocument, withNewDocument } from '../src/engine'
 import { Docx2HwpError, HwpEngine, docxToHwp, type HwpFormat } from '../src/index'
+import { LossLedger } from '../src/losses'
+import { lowerDocument } from '../src/lower'
+import type { Cell, HwpPlan } from '../src/model'
+import { writePlan } from '../src/write'
 import { CORPUS, FIXTURES } from './helpers/paths'
-import { readBack, type ReadBack } from './helpers/read-back'
+import { readBack, type ReadBack, type ReadCell } from './helpers/read-back'
 
 let engine: HwpEngine
 beforeAll(async () => {
@@ -201,12 +207,75 @@ describe.each(['hwpx', 'hwp'] as const)('%s', (format) => {
     expect(back.body.some((p) => p.controls.includes('gso'))).toBe(true)
   })
 
+  it('builds a table inside a table cell, between the paragraphs Word put around it', async () => {
+    const { back, losses } = await converted(`${FIXTURES}/nested.docx`, format)
+    expect(losses).toEqual([])
+    expect(back.body.map((p) => p.text)).toEqual(['중첩 표 시험', '', '표 뒤 문단'])
+    expect(back.tables).toHaveLength(1)
+    const [outer] = back.tables
+    expect(outer).toMatchObject({ para: 1, rows: 2, cols: 2 })
+    expect(outer.cells.map((c) => [c.texts.join('|'), c.tables.length])).toEqual([
+      ['바깥 1', 0],
+      ['앞 문단||뒤 문단', 1],
+      ['바깥 3', 0],
+      ['바깥 4', 0],
+    ])
+    const [inner] = outer.cells[1].tables
+    expect(inner).toMatchObject({ para: 1, rows: 3, cols: 3 })
+    const grid = (cells: ReadCell[]) =>
+      cells.map((c) => [c.row, c.col, c.rowSpan, c.colSpan, c.texts.join('|'), c.fill])
+    expect(grid(inner.cells)).toEqual([
+      [0, 0, 1, 2, '합친 칸', '#fff2cc'],
+      [0, 2, 1, 1, '셋', null],
+      [1, 0, 2, 1, '세로', null],
+      [1, 1, 1, 1, '굵은 글', null],
+      [1, 2, 1, 1, '가', null],
+      [2, 1, 1, 1, '나', null],
+      [2, 2, 1, 1, '깊은 앞||', null],
+    ])
+    expect(new Set(inner.cells.map((c) => c.verticalAlign))).toEqual(new Set([0]))
+    const [deep] = inner.cells[6].tables
+    expect(deep).toMatchObject({ para: 1, rows: 1, cols: 2 })
+    expect(grid(deep.cells)).toEqual([
+      [0, 0, 1, 1, '깊은 1', null],
+      [0, 1, 1, 1, '깊은 2', '#ddebf7'],
+    ])
+  })
+
   it('carries the right tab stop with its dot leader', async () => {
     const { back, losses } = await converted(`${FIXTURES}/tabs.docx`, format)
     expect(losses).toEqual([])
     expect(back.body[1].para.tabStops).toEqual([{ position: 80000, type: 1, fill: 2 }])
     expect(back.body[0].text).toBe('성명:\t홍길동\t학번:\t20261234')
   })
+})
+
+it('writes a nested table the engine refuses as its paragraphs, and says so', async () => {
+  const ledger = new LossLedger()
+  const plan = lowerDocument(await parseDocx(readFileSync(`${FIXTURES}/nested.docx`)), ledger)
+  // no rows: the engine refuses to paste an empty table
+  const frameless = (cell: Cell): Cell => ({
+    ...cell,
+    body: cell.body.map((b) => (b.kind === 'table' ? { ...b, rowHeights: [] } : b)),
+  })
+  const refusing: HwpPlan = {
+    ...plan,
+    body: plan.body.map((b) => (b.kind === 'table' ? { ...b, cells: b.cells.map(frameless) } : b)),
+  }
+  const bytes = withNewDocument(engine, (doc) => {
+    writePlan(doc, refusing, ledger)
+    return exportDocument(doc, 'hwpx').bytes
+  })
+  const back = await readBack(engine, bytes)
+  expect(ledger.list()).toEqual([{ feature: 'nested_table', kind: 'changed', count: 1 }])
+  expect(back.body.map((p) => p.text)).toEqual(['중첩 표 시험', '', '표 뒤 문단'])
+  const host = back.tables[0].cells[1]
+  expect(host.tables).toEqual([])
+  expect(host.texts).toEqual([
+    '앞 문단',
+    ...['합친 칸', '셋', '세로', '굵은 글', '가', '나', '깊은 앞', '깊은 1', '깊은 2', ''],
+    '뒤 문단',
+  ])
 })
 
 it('refuses bytes that are not a Word document', async () => {
@@ -227,14 +296,16 @@ describe('writing strategy', () => {
     return { back, losses }
   }
 
-  // eight puts a section boundary between the mixed document's first heading and its table
-  it.each(
-    [
+  // eight puts a section boundary between the mixed document's first heading and its table;
+  // one starts a section with the table whose nested tables are built after it
+  it.each([
+    ...[
       `${FIXTURES}/notice.docx`,
       `${CORPUS}/06-with-footnotes.docx`,
       `${CORPUS}/15-mixed-content.docx`,
     ].flatMap((path) => [3, 8].map((chunk) => [path, chunk] as const)),
-  )(
+    [`${FIXTURES}/nested.docx`, 1] as const,
+  ])(
     'writing %s in sections of %i paragraphs reads back as one section does',
     async (path, chunk) => {
       const chunked = await summary(path, { batch: true, sectionChunk: chunk })

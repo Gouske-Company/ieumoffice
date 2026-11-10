@@ -6,11 +6,12 @@
  * second dialog. The spreadsheet engine, the archive writer and the PDF
  * renderer are stubs; the files are real.
  */
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { basename, join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { setUiLang } from '@genoffice/i18n'
 import { IPC_CHANNELS } from '../src/shared/ipc-channels'
 import { workbookSaveResultSchema } from '../src/shared/desktop-api'
 import { legacyCopyName } from '../src/main/recovery-policy'
@@ -67,6 +68,8 @@ const saveDialogs: {
   defaultPath?: string
   filters?: { name: string; extensions: string[] }[]
 }[] = []
+/** the warning boxes the save handler showed */
+const messageBoxes: { type?: string; message?: string; buttons?: string[] }[] = []
 const userDataDirRef = { value: '' }
 
 vi.mock('electron', () => ({
@@ -98,7 +101,10 @@ vi.mock('electron', () => ({
   },
   desktopCapturer: {},
   dialog: {
-    showMessageBox: async () => ({ response: 0 }),
+    showMessageBox: async (...args: unknown[]) => {
+      messageBoxes.push(args.at(-1) as (typeof messageBoxes)[number])
+      return { response: 0 }
+    },
     showSaveDialog: async (...args: unknown[]) => {
       saveDialogs.push(args.at(-1) as (typeof saveDialogs)[number])
       return { canceled: false, filePath: saveDialogAnswer.value }
@@ -260,7 +266,9 @@ beforeEach(() => {
   userDataDirRef.value = mkdtempSync(join(tmpdir(), 'genoffice-sheets-save-as-user-'))
   saveDialogs.length = 0
   saveDialogAnswer.value = ''
+  messageBoxes.length = 0
   pdfExports.length = 0
+  setUiLang('en')
   resetSheetsShuttingDown()
 })
 
@@ -306,7 +314,7 @@ describe('Save As format list', () => {
     expect(sheetsSaveAsSuggestion('/d/v1.2 notes')).toBe('/d/v1.2 notes')
   })
 
-  it('reads the pick from the extension; a bare name is the workbook', () => {
+  it('reads the pick from the extension; a bare name asks for one when copies are offered', () => {
     expect(resolveSheetsSaveAsPick('/d/a.pdf', false, true)).toEqual({
       kind: 'pdf',
       path: '/d/a.pdf',
@@ -331,13 +339,24 @@ describe('Save As format list', () => {
       kind: 'workbook',
       path: '/d/a.xlsx',
     })
+    // with copies on offer a bare name cannot say which format was meant:
+    // writing .xlsx would ignore the filter the person picked
     expect(resolveSheetsSaveAsPick('/d/a', false, true)).toEqual({
-      kind: 'workbook',
-      path: '/d/a.xlsx',
+      kind: 'needs-extension',
+      path: '/d/a',
     })
     expect(resolveSheetsSaveAsPick('/d/a', true, true)).toEqual({
-      kind: 'workbook',
-      path: '/d/a.xlsm',
+      kind: 'needs-extension',
+      path: '/d/a',
+    })
+    // a dot in a folder name is not an extension
+    expect(resolveSheetsSaveAsPick('/d/v1.2 notes/Budget', false, true)).toEqual({
+      kind: 'needs-extension',
+      path: '/d/v1.2 notes/Budget',
+    })
+    expect(resolveSheetsSaveAsPick('C:\\docs\\Budget', false, true)).toEqual({
+      kind: 'needs-extension',
+      path: 'C:\\docs\\Budget',
     })
     // CSV is not offered for a macro workbook: the typed name stays a workbook name
     expect(resolveSheetsSaveAsPick('/d/a.csv', true, true)).toEqual({
@@ -353,6 +372,16 @@ describe('Save As format list', () => {
     expect(resolveSheetsSaveAsPick('/d/a.ods', false, false)).toEqual({
       kind: 'workbook',
       path: '/d/a.ods.xlsx',
+    })
+    // outside an explicit Save As no copies are offered, so a bare name stays
+    // the workbook and keeps its added extension
+    expect(resolveSheetsSaveAsPick('/d/a', false, false)).toEqual({
+      kind: 'workbook',
+      path: '/d/a.xlsx',
+    })
+    expect(resolveSheetsSaveAsPick('C:\\docs\\Budget', true, false)).toEqual({
+      kind: 'workbook',
+      path: 'C:\\docs\\Budget.xlsm',
     })
   })
 
@@ -467,12 +496,55 @@ describe('Save As in the workbook tab', () => {
     expect(pdfExports).toEqual([])
   })
 
+  it('an extensionless pick warns and writes nothing', async () => {
+    const path = writeWorkbook('Budget.xlsx')
+    const tab = newTab()
+    const opened = await openWorkbook(tab, path)
+    // some Linux dialogs do not append the chosen filter's extension
+    saveDialogAnswer.value = join(dir, 'Budget')
+
+    const result = await call(
+      tab,
+      IPC_CHANNELS.saveWorkbook,
+      saveRequest(opened.sessionId, 'save-as'),
+    )
+
+    expect(result).toEqual({ canceled: true })
+    expect(messageBoxes).toHaveLength(1)
+    expect(messageBoxes[0]).toMatchObject({ type: 'warning' })
+    expect(messageBoxes[0]?.message).toBe(
+      'Add an extension to the file name, for example report.xlsx or report.ods.',
+    )
+    // nothing was guessed or written, and the workbook is untouched
+    expect(readdirSync(dir)).toEqual(['Budget.xlsx'])
+    expect(readFileSync(path, 'utf8')).toBe('original-bytes')
+    expect(existsSync(join(dir, 'Budget.xlsx'))).toBe(true)
+  })
+
+  it('an .ods pick still returns the ODS copy', async () => {
+    const path = writeWorkbook('Budget.xlsx')
+    const tab = newTab()
+    const opened = await openWorkbook(tab, path)
+    const target = join(dir, 'Budget.ods')
+    saveDialogAnswer.value = target
+
+    const result = await call(
+      tab,
+      IPC_CHANNELS.saveWorkbook,
+      saveRequest(opened.sessionId, 'save-as'),
+    )
+
+    expect(result).toEqual({ canceled: true, odsSaveAsPath: target })
+    expect(existsSync(target)).toBe(false)
+    expect(readFileSync(path, 'utf8')).toBe('original-bytes')
+    expect(messageBoxes).toHaveLength(0)
+  })
+
   it('the workbook pick still saves and moves the session to the new file', async () => {
     const path = writeWorkbook('Budget.xlsx')
     const tab = newTab()
     const opened = await openWorkbook(tab, path)
-    // a bare name (some Linux dialogs) becomes the workbook type
-    saveDialogAnswer.value = join(dir, 'Copy')
+    saveDialogAnswer.value = join(dir, 'Copy.xlsx')
 
     const saved = (await call(
       tab,
@@ -485,6 +557,7 @@ describe('Save As in the workbook tab', () => {
     expect(readFileSync(join(dir, 'Copy.xlsx'), 'utf8')).toBe('original-bytes-saved')
     expect(readFileSync(path, 'utf8')).toBe('original-bytes')
     expect(sheetsPendingEditCount(tab.id)).toBe(0)
+    expect(messageBoxes).toHaveLength(0)
   })
 
   it('offers .xlsm and ODS/PDF copies for a macro workbook', async () => {

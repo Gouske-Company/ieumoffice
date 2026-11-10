@@ -1572,4 +1572,6 @@ export const ms = {
   // ── ODS import ──
   appOdsImportNotice: 'ODS dibuka sebagai salinan xlsx. Menyimpan akan menulis fail xlsx.',
   appOdsFormulasDropped: 'Pada {count} formula, hanya nilainya dikekalkan.',
+  saveAsNeedsExtension:
+    'Tambahkan sambungan pada nama fail, contohnya laporan.xlsx atau laporan.ods.',
 } satisfies Record<keyof typeof zh, string>

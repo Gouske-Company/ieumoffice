@@ -1474,4 +1474,5 @@ export const zhTW = {
   // ── ODS import ──
   appOdsImportNotice: '已將 ODS 作為 xlsx 副本開啟。儲存時將儲存為 xlsx 檔案。',
   appOdsFormulasDropped: '有 {count} 個公式僅保留了值。',
+  saveAsNeedsExtension: '請在檔案名稱後加上副檔名，例如 報告.xlsx、報告.ods。',
 } satisfies Record<keyof typeof zh, string>

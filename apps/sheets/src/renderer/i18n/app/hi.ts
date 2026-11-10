@@ -1570,4 +1570,5 @@ export const hi = {
   // ── ODS import ──
   appOdsImportNotice: 'ODS को xlsx प्रति के रूप में खोला गया। सहेजने पर xlsx फ़ाइल लिखी जाएगी।',
   appOdsFormulasDropped: '{count} सूत्रों में केवल मान रखे गए।',
+  saveAsNeedsExtension: 'फ़ाइल नाम में एक्सटेंशन जोड़ें, जैसे report.xlsx या report.ods.',
 } satisfies Record<keyof typeof zh, string>

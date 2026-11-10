@@ -1633,4 +1633,6 @@ export const de = {
   appOdsImportNotice:
     'Die ODS-Datei wurde als xlsx-Kopie geöffnet. Beim Speichern wird eine xlsx-Datei geschrieben.',
   appOdsFormulasDropped: 'Bei {count} Formeln blieben nur die Werte erhalten.',
+  saveAsNeedsExtension:
+    'Fügen Sie dem Dateinamen eine Erweiterung hinzu, zum Beispiel Bericht.xlsx oder Bericht.ods.',
 } satisfies Record<keyof typeof zh, string>

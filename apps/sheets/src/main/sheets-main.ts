@@ -353,6 +353,7 @@ const tMain = createI18n({
     csvKeepFormatMsg: '继续以 CSV 格式保存吗?',
     csvKeepFormatDetail:
       'CSV 只保留单张工作表的纯文本值——公式、格式和其他工作表不会存入 .csv 文件。',
+    saveAsNeedsExtension: '请在文件名后加上扩展名，例如 报告.xlsx、报告.ods。',
   },
   en: {
     filterSpreadsheets: 'Spreadsheets',
@@ -436,6 +437,8 @@ const tMain = createI18n({
     csvKeepFormatMsg: 'Keep saving in CSV format?',
     csvKeepFormatDetail:
       'CSV keeps plain values of a single sheet only — formulas, formatting, and any additional sheets are not saved to the .csv file.',
+    saveAsNeedsExtension:
+      'Add an extension to the file name, for example report.xlsx or report.ods.',
   },
   vi: {
     filterSpreadsheets: 'Bảng tính',
@@ -520,6 +523,7 @@ const tMain = createI18n({
     csvKeepFormatMsg: 'Tiếp tục lưu ở định dạng CSV?',
     csvKeepFormatDetail:
       'CSV chỉ giữ các giá trị thuần của một trang tính duy nhất — các công thức, định dạng và mọi trang tính bổ sung sẽ không được lưu vào tệp .csv.',
+    saveAsNeedsExtension: 'Hãy thêm phần mở rộng vào tên tệp, ví dụ bao-cao.xlsx hoặc bao-cao.ods.',
   },
   ja: {
     filterSpreadsheets: 'スプレッドシート',
@@ -607,6 +611,7 @@ const tMain = createI18n({
     csvKeepFormatMsg: 'CSV 形式のまま保存しますか?',
     csvKeepFormatDetail:
       'CSV は 1 枚のシートの値のみを保持します。数式、書式、追加のシートは .csv ファイルには保存されません。',
+    saveAsNeedsExtension: 'ファイル名に拡張子を付けてください。例: 報告書.xlsx、報告書.ods',
   },
   ko: {
     filterSpreadsheets: '스프레드시트',
@@ -690,6 +695,7 @@ const tMain = createI18n({
     csvKeepFormatMsg: 'CSV 형식으로 계속 저장하시겠습니까?',
     csvKeepFormatDetail:
       'CSV는 시트 하나의 값만 유지합니다 — 수식, 서식, 추가 시트는 .csv 파일에 저장되지 않습니다.',
+    saveAsNeedsExtension: '파일 이름에 확장자를 붙여 주세요. 예: 보고서.xlsx, 보고서.ods',
   },
   fr: {
     filterSpreadsheets: 'Feuilles de calcul',
@@ -779,6 +785,8 @@ const tMain = createI18n({
     csvKeepFormatMsg: 'Continuer à enregistrer au format CSV ?',
     csvKeepFormatDetail:
       "Le CSV ne conserve que les valeurs d'une seule feuille — les formules, la mise en forme et les feuilles supplémentaires ne sont pas enregistrées dans le fichier .csv.",
+    saveAsNeedsExtension:
+      'Ajoutez une extension au nom du fichier, par exemple rapport.xlsx ou rapport.ods.',
   },
   de: {
     filterSpreadsheets: 'Tabellenkalkulationen',
@@ -867,6 +875,8 @@ const tMain = createI18n({
     csvKeepFormatMsg: 'Weiter im CSV-Format speichern?',
     csvKeepFormatDetail:
       'CSV speichert nur die Werte eines einzelnen Blatts – Formeln, Formatierungen und weitere Blätter werden nicht in der .csv-Datei gespeichert.',
+    saveAsNeedsExtension:
+      'Fügen Sie dem Dateinamen eine Erweiterung hinzu, zum Beispiel Bericht.xlsx oder Bericht.ods.',
   },
   es: {
     filterSpreadsheets: 'Hojas de cálculo',
@@ -954,6 +964,8 @@ const tMain = createI18n({
     csvKeepFormatMsg: '¿Seguir guardando en formato CSV?',
     csvKeepFormatDetail:
       'CSV solo conserva los valores de una única hoja: las fórmulas, el formato y las hojas adicionales no se guardan en el archivo .csv.',
+    saveAsNeedsExtension:
+      'Añada una extensión al nombre del archivo, por ejemplo informe.xlsx o informe.ods.',
   },
   th: {
     filterSpreadsheets: 'สเปรดชีต',
@@ -1037,6 +1049,7 @@ const tMain = createI18n({
     csvKeepFormatMsg: 'บันทึกเป็นรูปแบบ CSV ต่อไปหรือไม่',
     csvKeepFormatDetail:
       'CSV เก็บเฉพาะค่าของชีตเดียวเท่านั้น — สูตร การจัดรูปแบบ และชีตอื่น ๆ จะไม่ถูกบันทึกลงในไฟล์ .csv',
+    saveAsNeedsExtension: 'เพิ่มนามสกุลให้ชื่อไฟล์ เช่น report.xlsx หรือ report.ods',
   },
   id: {
     filterSpreadsheets: 'Lembar bentang',
@@ -1122,6 +1135,8 @@ const tMain = createI18n({
     csvKeepFormatMsg: 'Terus menyimpan dalam format CSV?',
     csvKeepFormatDetail:
       'CSV hanya menyimpan nilai dari satu lembar — rumus, pemformatan, dan lembar tambahan tidak disimpan ke file .csv.',
+    saveAsNeedsExtension:
+      'Tambahkan ekstensi pada nama berkas, misalnya laporan.xlsx atau laporan.ods.',
   },
   ru: {
     filterSpreadsheets: 'Электронные таблицы',
@@ -1207,6 +1222,7 @@ const tMain = createI18n({
     csvKeepFormatMsg: 'Продолжить сохранение в формате CSV?',
     csvKeepFormatDetail:
       'CSV сохраняет только значения одного листа — формулы, форматирование и дополнительные листы не сохраняются в файле .csv.',
+    saveAsNeedsExtension: 'Добавьте расширение к имени файла, например отчёт.xlsx или отчёт.ods.',
   },
   ar: {
     filterSpreadsheets: 'جداول البيانات',
@@ -1286,6 +1302,7 @@ const tMain = createI18n({
     csvKeepFormatMsg: 'هل تريد متابعة الحفظ بتنسيق CSV؟',
     csvKeepFormatDetail:
       'يحتفظ CSV بقيم ورقة واحدة فقط — لا تُحفظ الصيغ والتنسيق والأوراق الإضافية في ملف .csv.',
+    saveAsNeedsExtension: 'أضف امتدادًا إلى اسم الملف، مثل report.xlsx أو report.ods.',
   },
   pt: {
     filterSpreadsheets: 'Planilhas',
@@ -1372,6 +1389,8 @@ const tMain = createI18n({
     csvKeepFormatMsg: 'Continuar salvando no formato CSV?',
     csvKeepFormatDetail:
       'O CSV mantém apenas os valores de uma única planilha — fórmulas, formatação e planilhas adicionais não são salvas no arquivo .csv.',
+    saveAsNeedsExtension:
+      'Adicione uma extensão ao nome do arquivo, por exemplo relatório.xlsx ou relatório.ods.',
   },
   it: {
     filterSpreadsheets: 'Fogli di calcolo',
@@ -1460,6 +1479,8 @@ const tMain = createI18n({
     csvKeepFormatMsg: 'Continuare a salvare in formato CSV?',
     csvKeepFormatDetail:
       'Il CSV conserva solo i valori di un singolo foglio: formule, formattazione e fogli aggiuntivi non vengono salvati nel file .csv.',
+    saveAsNeedsExtension:
+      'Aggiungi un’estensione al nome del file, ad esempio report.xlsx o report.ods.',
   },
   pl: {
     filterSpreadsheets: 'Arkusze kalkulacyjne',
@@ -1546,6 +1567,8 @@ const tMain = createI18n({
     csvKeepFormatMsg: 'Kontynuować zapisywanie w formacie CSV?',
     csvKeepFormatDetail:
       'CSV zachowuje tylko wartości jednego arkusza — formuły, formatowanie i dodatkowe arkusze nie są zapisywane w pliku .csv.',
+    saveAsNeedsExtension:
+      'Dodaj rozszerzenie do nazwy pliku, na przykład raport.xlsx lub raport.ods.',
   },
   cs: {
     filterSpreadsheets: 'Tabulky',
@@ -1630,6 +1653,8 @@ const tMain = createI18n({
     csvKeepFormatMsg: 'Pokračovat v ukládání ve formátu CSV?',
     csvKeepFormatDetail:
       'CSV zachovává pouze hodnoty jednoho listu — vzorce, formátování a další listy se do souboru .csv neuloží.',
+    saveAsNeedsExtension:
+      'Přidejte k názvu souboru příponu, například sestava.xlsx nebo sestava.ods.',
   },
   nl: {
     filterSpreadsheets: 'Spreadsheets',
@@ -1718,6 +1743,8 @@ const tMain = createI18n({
     csvKeepFormatMsg: 'Doorgaan met opslaan in CSV-indeling?',
     csvKeepFormatDetail:
       'CSV bewaart alleen de waarden van één blad — formules, opmaak en extra bladen worden niet in het .csv-bestand opgeslagen.',
+    saveAsNeedsExtension:
+      'Voeg een extensie toe aan de bestandsnaam, bijvoorbeeld rapport.xlsx of rapport.ods.',
   },
   ms: {
     filterSpreadsheets: 'Hamparan',
@@ -1803,6 +1830,8 @@ const tMain = createI18n({
     csvKeepFormatMsg: 'Terus simpan dalam format CSV?',
     csvKeepFormatDetail:
       'CSV hanya menyimpan nilai satu helaian — formula, pemformatan dan helaian tambahan tidak disimpan ke fail .csv.',
+    saveAsNeedsExtension:
+      'Tambahkan sambungan pada nama fail, contohnya laporan.xlsx atau laporan.ods.',
   },
   he: {
     filterSpreadsheets: 'גיליונות אלקטרוניים',
@@ -1883,6 +1912,7 @@ const tMain = createI18n({
     csvKeepFormatMsg: 'להמשיך לשמור בתבנית CSV?',
     csvKeepFormatDetail:
       'CSV שומר רק את הערכים של גיליון אחד — נוסחאות, עיצוב וגיליונות נוספים אינם נשמרים בקובץ ה-.csv.',
+    saveAsNeedsExtension: 'הוסיפו סיומת לשם הקובץ, למשל report.xlsx או report.ods.',
   },
   hi: {
     filterSpreadsheets: 'स्प्रेडशीट',
@@ -1969,6 +1999,7 @@ const tMain = createI18n({
     csvKeepFormatMsg: 'CSV प्रारूप में सहेजना जारी रखें?',
     csvKeepFormatDetail:
       'CSV केवल एक शीट के मान रखता है — सूत्र, स्वरूपण और अतिरिक्त शीट .csv फ़ाइल में सहेजे नहीं जाते।',
+    saveAsNeedsExtension: 'फ़ाइल नाम में एक्सटेंशन जोड़ें, जैसे report.xlsx या report.ods.',
   },
   'zh-TW': {
     filterSpreadsheets: '電子試算表',
@@ -2046,6 +2077,7 @@ const tMain = createI18n({
     csvActiveSheetOnlyNotice: 'CSV 檔案只包含一張工作表——只會匯出目前工作表「{name}」。',
     csvKeepFormatMsg: '要繼續以 CSV 格式儲存嗎?',
     csvKeepFormatDetail: 'CSV 只保留單張工作表的純值——公式、格式和其他工作表不會存入 .csv 檔案。',
+    saveAsNeedsExtension: '請在檔案名稱後加上副檔名，例如 報告.xlsx、報告.ods。',
   },
 })
 const tm = (key: Parameters<typeof tMain>[1], params?: Parameters<typeof tMain>[2]) =>
@@ -4627,6 +4659,23 @@ export function registerSheetsIpc(): void {
       })
       if (selection.canceled || !selection.filePath) return { canceled: true }
       const pick = resolveSheetsSaveAsPick(selection.filePath, macroEnabled, offerCopies)
+      // Some Linux dialogs do not append the chosen filter's extension. A bare
+      // name cannot tell the workbook apart from a CSV/ODS/PDF copy, and
+      // guessing the workbook would silently write an .xlsx after the person
+      // picked the ODS filter; ask for an extension instead of saving.
+      if (pick.kind === 'needs-extension') {
+        const parent = dialogParent(event)
+        const options = {
+          type: 'warning' as const,
+          message: tm('saveAsNeedsExtension'),
+          buttons: [tm('btnCloseDialog')],
+          defaultId: 0,
+          noLink: true,
+        }
+        if (parent && !parent.isDestroyed()) await dialog.showMessageBox(parent, options)
+        else await dialog.showMessageBox(options)
+        return { canceled: true }
+      }
       // A CSV pick can't ride the xlsx pipeline: hand the path back so the
       // renderer serializes the active sheet through the CSV export channel.
       if (pick.kind === 'csv') return { canceled: true, csvSaveAsPath: pick.path }

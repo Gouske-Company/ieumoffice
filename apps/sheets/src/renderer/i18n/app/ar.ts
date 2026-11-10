@@ -1531,4 +1531,5 @@ export const ar = {
   // ── ODS import ──
   appOdsImportNotice: 'تم فتح ملف ODS كنسخة xlsx. سيؤدي الحفظ إلى حفظ ملف xlsx.',
   appOdsFormulasDropped: 'تم الاحتفاظ بقيم {count} من الصيغ فقط دون صيغها.',
+  saveAsNeedsExtension: 'أضف امتدادًا إلى اسم الملف، مثل report.xlsx أو report.ods.',
 } satisfies Record<keyof typeof zh, string>

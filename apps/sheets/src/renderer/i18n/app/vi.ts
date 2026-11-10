@@ -1560,4 +1560,5 @@ export const vi = {
   // ── ODS import ──
   appOdsImportNotice: 'Đã mở ODS dưới dạng bản sao xlsx. Khi lưu sẽ ghi tệp xlsx.',
   appOdsFormulasDropped: 'Chỉ giữ lại giá trị của {count} công thức.',
+  saveAsNeedsExtension: 'Hãy thêm phần mở rộng vào tên tệp, ví dụ bao-cao.xlsx hoặc bao-cao.ods.',
 } satisfies Record<keyof typeof zh, string>

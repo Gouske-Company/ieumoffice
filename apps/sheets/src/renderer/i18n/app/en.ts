@@ -1547,4 +1547,5 @@ export const en = {
   // ── ODS import ──
   appOdsImportNotice: 'Opened the ODS as an xlsx copy. Saving writes an xlsx file.',
   appOdsFormulasDropped: '{count} formulas were kept as values only.',
+  saveAsNeedsExtension: 'Add an extension to the file name, for example report.xlsx or report.ods.',
 } satisfies Record<keyof typeof zh, string>

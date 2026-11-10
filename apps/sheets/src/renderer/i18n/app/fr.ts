@@ -1644,4 +1644,6 @@ export const fr = {
   appOdsImportNotice:
     "L'ODS a été ouvert en tant que copie xlsx. L'enregistrement écrira un fichier xlsx.",
   appOdsFormulasDropped: 'Seules les valeurs de {count} formules ont été conservées.',
+  saveAsNeedsExtension:
+    'Ajoutez une extension au nom du fichier, par exemple rapport.xlsx ou rapport.ods.',
 } satisfies Record<keyof typeof zh, string>

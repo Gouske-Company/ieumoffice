@@ -272,6 +272,16 @@ export const AI_PROVIDERS: AiProviderMeta[] = [
     keyPlaceholder: 'up_...',
   },
   {
+    id: 'exaone',
+    label: 'EXAONE',
+    // LG AI Research's API (docs.exaone.ai): GET api.exaone.ai/v1/models lists
+    // this one id (2026-11-10), and it answered a tool call, a streamed tool
+    // call and the turn after a tool result. Text only, 512K context.
+    models: ['k-exaone_v2.5'],
+    defaultModel: 'k-exaone_v2.5',
+    keyPlaceholder: 'sk-...',
+  },
+  {
     id: 'openrouter',
     label: 'OpenRouter',
     // vendor-prefixed slugs exactly as openrouter.ai/api/v1/models lists them —

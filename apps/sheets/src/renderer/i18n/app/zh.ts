@@ -1502,4 +1502,5 @@ export const zh = {
   // ── ODS import ──
   appOdsImportNotice: '已将 ODS 作为 xlsx 副本打开。保存时将保存为 xlsx 文件。',
   appOdsFormulasDropped: '有 {count} 个公式仅保留了值。',
+  saveAsNeedsExtension: '请在文件名后加上扩展名，例如 报告.xlsx、报告.ods。',
 }

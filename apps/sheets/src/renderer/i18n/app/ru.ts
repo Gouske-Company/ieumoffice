@@ -1589,4 +1589,5 @@ export const ru = {
   // ── ODS import ──
   appOdsImportNotice: 'Файл ODS открыт как копия xlsx. При сохранении будет записан файл xlsx.',
   appOdsFormulasDropped: 'В {count} формулах остались только значения.',
+  saveAsNeedsExtension: 'Добавьте расширение к имени файла, например отчёт.xlsx или отчёт.ods.',
 } satisfies Record<keyof typeof zh, string>

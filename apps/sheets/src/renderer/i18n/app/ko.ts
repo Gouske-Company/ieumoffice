@@ -1589,4 +1589,5 @@ export const ko = {
   // ── ODS import ──
   appOdsImportNotice: 'ODS를 xlsx 사본으로 열었습니다. 저장하면 xlsx로 저장됩니다.',
   appOdsFormulasDropped: '수식 {count}개는 값만 남겼습니다.',
+  saveAsNeedsExtension: '파일 이름에 확장자를 붙여 주세요. 예: 보고서.xlsx, 보고서.ods',
 } satisfies Record<keyof typeof zh, string>

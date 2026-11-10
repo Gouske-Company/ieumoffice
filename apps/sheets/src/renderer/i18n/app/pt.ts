@@ -1614,4 +1614,6 @@ export const pt = {
   // ── ODS import ──
   appOdsImportNotice: 'O ODS foi aberto como uma cópia xlsx. Salvar gravará um arquivo xlsx.',
   appOdsFormulasDropped: 'Em {count} fórmulas, apenas os valores foram mantidos.',
+  saveAsNeedsExtension:
+    'Adicione uma extensão ao nome do arquivo, por exemplo relatório.xlsx ou relatório.ods.',
 } satisfies Record<keyof typeof zh, string>

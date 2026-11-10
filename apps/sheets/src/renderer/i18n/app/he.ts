@@ -1507,4 +1507,5 @@ export const he = {
   // ── ODS import ──
   appOdsImportNotice: 'קובץ ה-ODS נפתח כעותק xlsx. השמירה תכתוב קובץ xlsx.',
   appOdsFormulasDropped: 'ב-{count} נוסחאות נשמרו הערכים בלבד.',
+  saveAsNeedsExtension: 'הוסיפו סיומת לשם הקובץ, למשל report.xlsx או report.ods.',
 } satisfies Record<keyof typeof zh, string>

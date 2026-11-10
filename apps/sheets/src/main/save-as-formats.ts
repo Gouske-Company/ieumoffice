@@ -10,6 +10,7 @@ export type SheetsSaveAsPick =
   | { readonly kind: 'csv'; readonly path: string }
   | { readonly kind: 'ods'; readonly path: string }
   | { readonly kind: 'pdf'; readonly path: string }
+  | { readonly kind: 'needs-extension'; readonly path: string }
 
 type FilterLabel = 'filterXlsx' | 'filterXlsm' | 'filterCsv' | 'filterOds' | 'filterPdfActiveSheet'
 
@@ -45,9 +46,18 @@ export function sheetsSaveAsSuggestion(defaultPath: string): string {
   return defaultPath.replace(/\.(xlsx|xlsm|xls|csv|tsv|ods)$/i, '')
 }
 
+/// A dot after the last path separator means the name carries an extension;
+/// a dot only in a folder name does not.
+function hasExtension(filePath: string): boolean {
+  const separator = Math.max(filePath.lastIndexOf('/'), filePath.lastIndexOf('\\'))
+  return filePath.indexOf('.', separator + 1) >= 0
+}
+
 /// What the person picked. A typed .pdf, .ods or .csv selects that copy where
 /// it is offered; anything else is the workbook, whose extension is added when
-/// missing (a bare name from dialogs that add none, e.g. some Linux desktops).
+/// missing. With copies on offer a bare name cannot say which format was
+/// meant, so the save handler asks for an extension instead of guessing the
+/// workbook — writing .xlsx there would ignore the filter the person chose.
 export function resolveSheetsSaveAsPick(
   filePath: string,
   macroEnabled: boolean,
@@ -57,6 +67,7 @@ export function resolveSheetsSaveAsPick(
   if (offerCopies && lower.endsWith('.pdf')) return { kind: 'pdf', path: filePath }
   if (offerCopies && lower.endsWith('.ods')) return { kind: 'ods', path: filePath }
   if (!macroEnabled && lower.endsWith('.csv')) return { kind: 'csv', path: filePath }
+  if (offerCopies && !hasExtension(filePath)) return { kind: 'needs-extension', path: filePath }
   const ext = macroEnabled ? 'xlsm' : 'xlsx'
   return {
     kind: 'workbook',

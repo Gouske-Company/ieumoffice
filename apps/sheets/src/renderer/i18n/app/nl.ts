@@ -1613,4 +1613,6 @@ export const nl = {
   appOdsImportNotice:
     'Het ODS-bestand is geopend als een xlsx-kopie. Opslaan schrijft een xlsx-bestand.',
   appOdsFormulasDropped: 'Van {count} formules zijn alleen de waarden behouden.',
+  saveAsNeedsExtension:
+    'Voeg een extensie toe aan de bestandsnaam, bijvoorbeeld rapport.xlsx of rapport.ods.',
 } satisfies Record<keyof typeof zh, string>

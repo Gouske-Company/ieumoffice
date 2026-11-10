@@ -1621,4 +1621,5 @@ export const ja = {
   // ── ODS import ──
   appOdsImportNotice: 'ODS を xlsx のコピーとして開きました。保存すると xlsx ファイルになります。',
   appOdsFormulasDropped: '数式 {count} 個は値のみ残しました。',
+  saveAsNeedsExtension: 'ファイル名に拡張子を付けてください。例: 報告書.xlsx、報告書.ods',
 } satisfies Record<keyof typeof zh, string>

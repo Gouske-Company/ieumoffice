@@ -145,6 +145,19 @@ describe('listFolder', () => {
     expect(isSupportedTreeFile('novel.epub')).toBe(true)
   })
 
+  it('lists OpenDocument spreadsheets', () => {
+    touch('budget.ods')
+    touch('BUDGET2.ODS')
+    touch('photo.png')
+
+    expect(
+      listFolder(root, new Set())
+        .files.map((f) => f.name)
+        .sort(),
+    ).toEqual(['BUDGET2.ODS', 'budget.ods'])
+    expect(isSupportedTreeFile('BUDGET.ODS')).toBe(true)
+  })
+
   it('lists diagrams, draw.io pictures and Visio drawings, but not plain pictures', () => {
     touch('flow.drawio')
     touch('flow.dio')

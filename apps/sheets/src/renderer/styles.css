@@ -1836,6 +1836,15 @@ button.check-item:hover {
   white-space: nowrap;
 }
 
+/* The ODS line is a sentence, not a short chip: let it shrink with an ellipsis
+ * so the transient message keeps room at a large interface scale. */
+.status-ods {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .status-right {
   display: flex;
   align-items: center;

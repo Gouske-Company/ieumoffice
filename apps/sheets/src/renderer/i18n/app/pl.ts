@@ -1590,4 +1590,8 @@ export const pl = {
   appSpellUnavailable: 'Sprawdzanie pisowni jest niedostępne w tym oknie.',
   appSpellReplaceAll: 'Zamień wszystkie na „{suggestion}”',
   appSpellChangedAll: 'Poprawiono {count} komórek ze słowem „{word}”.',
+
+  // ── ODS import ──
+  appOdsImportNotice: 'Plik ODS otwarto jako kopię xlsx. Zapis utworzy plik xlsx.',
+  appOdsFormulasDropped: 'W {count} formułach zachowano tylko wartości.',
 } satisfies Record<keyof typeof zh, string>

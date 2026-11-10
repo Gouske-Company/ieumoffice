@@ -1607,4 +1607,8 @@ export const it = {
   appSpellUnavailable: 'Il controllo ortografico non è disponibile in questa finestra.',
   appSpellReplaceAll: 'Sostituisci tutto con «{suggestion}»',
   appSpellChangedAll: 'Corrette {count} celle di «{word}».',
+
+  // ── ODS import ──
+  appOdsImportNotice: "L'ODS è stato aperto come copia xlsx. Il salvataggio scriverà un file xlsx.",
+  appOdsFormulasDropped: 'Di {count} formule sono stati mantenuti solo i valori.',
 } satisfies Record<keyof typeof zh, string>

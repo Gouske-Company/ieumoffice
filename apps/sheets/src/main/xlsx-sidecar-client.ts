@@ -39,6 +39,14 @@ interface SidecarResponse {
   }
 }
 
+/// The `convert_workbook` answer: how much of the source reached the new .xlsx.
+export interface WorkbookConversionResult {
+  readonly sheets: number
+  readonly cells: number
+  /// formulas the converter could not translate; those cells kept their value
+  readonly formulasDropped: number
+}
+
 export class XlsxSidecarClient {
   private process: ChildProcessWithoutNullStreams | null = null
   private lines: Interface | null = null
@@ -134,8 +142,25 @@ export class XlsxSidecarClient {
     return this.request({ command: 'read_media', ...input })
   }
 
-  async convertWorkbook(input: { path: string; targetPath: string }): Promise<unknown> {
-    return this.request({ command: 'convert_workbook', ...input }, ARCHIVE_TIMEOUT_MS)
+  /// Converts a legacy container (.xls) or an .ods into a fresh .xlsx. The
+  /// answer names what was carried over; an older sidecar may not report the
+  /// fields, so each falls back to 0 and the copy still opens.
+  async convertWorkbook(input: {
+    path: string
+    targetPath: string
+  }): Promise<WorkbookConversionResult> {
+    const result =
+      (await this.request<{
+        readonly sheets?: unknown
+        readonly cells?: unknown
+        readonly formulasDropped?: unknown
+      }>({ command: 'convert_workbook', ...input }, ARCHIVE_TIMEOUT_MS)) ?? {}
+    return {
+      sheets: typeof result.sheets === 'number' ? result.sheets : 0,
+      cells: typeof result.cells === 'number' ? result.cells : 0,
+      // an older sidecar does not report formulas it could not translate
+      formulasDropped: typeof result.formulasDropped === 'number' ? result.formulasDropped : 0,
+    }
   }
 
   async archiveManifest(path: string): Promise<unknown> {

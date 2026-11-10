@@ -68,4 +68,21 @@ describe('preload whitelist names every sidecar wire field', () => {
       .map(([, where]) => where)
     expect(missing).toEqual([])
   })
+
+  it('covers the top-level fields of workbookFileSchema', () => {
+    const keys = new Map<string, string>()
+    objectKeys(workbookFileSchema, 'file', keys)
+    // Main-process session flags the renderer never reads, so the preload
+    // rightly does not forward them (recovery gating and quiet saves stay in
+    // main). Every other top-level field must survive the whitelist.
+    const mainOnly = new Set(['unsavedNew', 'automaticRecoveryDisabled'])
+    const topLevel = [...keys.entries()].filter(
+      ([key, where]) => where.split('.').length === 2 && !mainOnly.has(key),
+    )
+    expect(topLevel.length).toBeGreaterThan(20)
+    const missing = topLevel
+      .filter(([key]) => !preloadSource.includes(key))
+      .map(([, where]) => where)
+    expect(missing).toEqual([])
+  })
 })

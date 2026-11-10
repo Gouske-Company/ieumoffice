@@ -19,12 +19,12 @@ export const DROP_OPEN_CHANNEL = 'app:open-dropped-files'
  *  draw.io picture is known by its double extension (`.drawio.svg`,
  *  `.drawio.png`); a plain picture is not a document. */
 export const OPENABLE_DOC_RE =
-  /\.(docx|odt|xlsx|xlsm|xls|csv|tsv|pptx|pdf|md|markdown|html|htm|xmind|mm|hwp|hwpx|epub|drawio|dio|vsdx|drawio\.svg|drawio\.png)$/i
+  /\.(docx|odt|xlsx|xlsm|xls|csv|tsv|ods|pptx|pdf|md|markdown|html|htm|xmind|mm|hwp|hwpx|epub|drawio|dio|vsdx|drawio\.svg|drawio\.png)$/i
 
 /** Recognized-but-unsupported formats: kept in the sent payload so the shell
  *  can show its "not supported" dialog instead of dropping them silently.
  *  Mirrors UNSUPPORTED_LAUNCH_RE in apps/shell/src/main/launch-paths.ts. */
-export const KNOWN_UNSUPPORTED_DOC_RE = /\.(doc|rtf|ppt|pps|odp|ods|xlsb|pages|key|numbers)$/i
+export const KNOWN_UNSUPPORTED_DOC_RE = /\.(doc|rtf|ppt|pps|odp|xlsb|pages|key|numbers)$/i
 
 /** upper bound on how many files one drop may ask to open */
 const MAX_DROPPED_FILES = 20

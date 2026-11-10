@@ -1,9 +1,11 @@
 /// Save As format list: the workbook's own format first, then every format the
 /// open workbook can be copied to (CSV, ODS of the whole workbook, and PDF of
 /// the active sheet). A pick of a copy format writes nothing here — the save
-/// handler hands the path back so the renderer runs the existing export for it,
-/// and the open workbook keeps its path, its unsaved edits and its recovery
-/// identity.
+/// handler hands the path back so the renderer runs the existing export for it.
+/// The open workbook keeps its path and recovery identity; ODS saves the open
+/// workbook first, while CSV/PDF leave pending edits as they are. An
+/// extensionless pick is refused when copies are offered: the dialog cannot
+/// report which filter supplied it, and guessing would write the wrong format.
 
 export type SheetsSaveAsPick =
   | { readonly kind: 'workbook'; readonly path: string }

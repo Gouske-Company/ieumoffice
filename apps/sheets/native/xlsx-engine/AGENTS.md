@@ -84,8 +84,9 @@
   - `ods_export.rs`가 `WorkbookSessions`의 세션 모델(값·수식·스타일·병합·크기·시트 메타데이터)을 그대로 읽어 `mimetype`·`META-INF/manifest.xml`·`content.xml`·`styles.xml`·`meta.xml`·`settings.xml`을 만든다. 시트는 `read_range` 창 단위로 읽고 행마다 바로 쓰며, 꾸러미는 대상 옆 임시 파일에 쓴 뒤 이름을 바꾼다. 대상 경로가 원본과 같으면 거절한다.
   - `odf_formula::to_odf`가 엑셀 수식을 `of:=` 문법으로 되돌린다(`[.B1]`·`[.B1:.B2]`·`[$Sheet.$A$1]`, `,`→`;`). 정의된 이름, 배열 상수, 구조적·외부 참조, 3-D 참조, OpenFormula에 없는 함수는 **그 셀의 수식만 버리고 값은 남기며** `formulasDropped`로 센다.
   - `ods_styles.rs`가 글꼴·글자색·채우기·테두리·맞춤과 엑셀 숫자 서식(`0.00`, `#,##0`, `%`, 통화, 날짜·시간)을 ODF 자동 스타일과 데이터 스타일로 옮긴다. 알 수 없는 서식은 데이터 스타일 없이 값만 쓴다.
+  - 배열 수식(`CellRecord.array_ref`)과 함수 호출 밖 쉼표(합집합)는 수식을 쓰지 않고 값만 남겨 `formulasDropped`로 센다. `[h]:mm:ss` 같은 경과 시간 서식은 `number:truncate-on-overflow="false"`로 24시간을 넘겨도 그대로 보인다.
   - 옮기지 않는 것: 차트·그림·조건부 서식·데이터 유효성 검사·피벗·메모·매크로. 개수를 `dropped`(charts·images·conditionalFormats·validations·pivots·comments)로 돌려준다. 인쇄 설정은 용지·방향·여백·배율만 페이지 스타일로 옮기고, 한 페이지에 맞추기·머리글·꼬리말·인쇄 영역·반복 제목은 옮기지 않는다. 틀 고정은 `settings.xml`에 적는다. 이름 정의, 하이퍼링크, 자동 필터, 표(목록), 윤곽, 셀 안의 글자별 서식(rich text)도 옮기지 않는다.
-  - 시험: `ods_export::tests` 전체(`writes_values_formulas_dates_merges_sizes_and_styles`·`counts_the_features_that_do_not_travel`·`collapses_long_empty_stretches_into_repeated_rows`·`refuses_a_target_that_is_the_source_and_leaves_no_partial_file`), `ods_styles::tests` 전체, `odf_formula::tests`의 `to_odf` 시험들, `main.rs`의 `convert_to_ods_reports_the_package_it_wrote`.
+  - 시험: `ods_export::tests` 전체(`writes_values_formulas_dates_merges_sizes_and_styles`·`counts_the_features_that_do_not_travel`·`collapses_long_empty_stretches_into_repeated_rows`·`refuses_a_target_that_is_the_source_and_leaves_no_partial_file`·`drops_array_formula_masters_and_keeps_their_values`), `ods_styles::tests` 전체, `odf_formula::tests`의 `to_odf` 시험들(`a_comma_separates_arguments_only_inside_a_call` 포함), `main.rs`의 `convert_to_ods_reports_the_package_it_wrote`.
 
 ## 테스트
 

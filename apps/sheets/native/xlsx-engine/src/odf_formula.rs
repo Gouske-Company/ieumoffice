@@ -1,15 +1,18 @@
-//! OpenFormula → Excel formula translation for the `.ods` import.
+//! Formula translation between Excel syntax and OpenFormula, in both
+//! directions the `.ods` bridge needs.
 //!
 //! An ODS cell keeps its formula in the `table:formula` attribute, written in
 //! OpenFormula: `of:=SUM([.B1:.B2])`, with references in brackets, arguments
 //! separated by `;` and an `of:` namespace ahead of the `=`. calamine hands
 //! that text over verbatim, and an .xlsx carrying it does not calculate:
 //! Excel matches `[.B1:.B2]` to nothing and shows the cached value forever.
+//! `translate` rewrites that text for the import, and `to_odf` writes the
+//! export's `table:formula` back the other way (decision 0119).
 //!
-//! The converter therefore translates the pieces both dialects spell the same
-//! way and refuses the rest (decision 0119). A refused formula leaves the cell
-//! with its cached value only, and the count of refused cells travels back to
-//! the caller as `formulasDropped`. Refusing is the safe direction: a wrong
+//! Both directions translate the pieces the two dialects spell the same way
+//! and refuse the rest (decision 0119). A refused formula leaves the cell with
+//! its cached value only, and the count of refused cells travels back to the
+//! caller as `formulasDropped`. Refusing is the safe direction: a wrong
 //! translation would silently change the numbers in the document.
 
 /// Translates one `table:formula` value into Excel syntax.
@@ -111,6 +114,20 @@ fn expression(text: &str) -> Option<String> {
 
 fn is_identifier_start(character: char) -> bool {
     character.is_alphabetic() || character == '_'
+}
+
+/// The end of a word in an Excel formula: a function name may carry a dot
+/// (`ERROR.TYPE`) and a reference may carry `$` markers.
+fn word_end(text: &str) -> usize {
+    let mut end = 0;
+    for character in text.chars() {
+        if !(character.is_alphanumeric() || character == '_' || character == '.' || character == '$')
+        {
+            break;
+        }
+        end += character.len_utf8();
+    }
+    end
 }
 
 /// Function names may carry a namespace (`COM.MICROSOFT.`), so a dot is part
@@ -408,6 +425,313 @@ fn strip_prefix_ignore_case<'a>(text: &'a str, prefix: &str) -> Option<&'a str> 
         .then(|| &text[prefix.len()..])
 }
 
+/// Excel functions that OpenFormula 1.2 does not define. Excel stores them
+/// with the `_xlfn.` marker, which the index strips before the exporter sees
+/// the text, so a name that reaches `to_odf` cannot be told apart from one
+/// both dialects share. Writing one unchanged would make LibreOffice read a
+/// name it does not know, so the formula is refused and the cached value
+/// stays. The list is the Excel-2013-and-later set that only the
+/// `COM.MICROSOFT.` namespace covers.
+const EXCEL_ONLY_FUNCTIONS: [&str; 45] = [
+    "ANCHORARRAY",
+    "BYCOL",
+    "BYROW",
+    "CHOOSECOLS",
+    "CHOOSEROWS",
+    "CONCAT",
+    "DROP",
+    "EXPAND",
+    "FIELDVALUE",
+    "FILTER",
+    "FILTERXML",
+    "HSTACK",
+    "IFS",
+    "IMAGE",
+    "ISOMITTED",
+    "LAMBDA",
+    "LET",
+    "MAKEARRAY",
+    "MAP",
+    "MAXIFS",
+    "MINIFS",
+    "NUMBERVALUE",
+    "RANDARRAY",
+    "REDUCE",
+    "SCAN",
+    "SEQUENCE",
+    "SINGLE",
+    "SORT",
+    "SORTBY",
+    "STOCKHISTORY",
+    "SWITCH",
+    "TAKE",
+    "TEXTBEFORE",
+    "TEXTAFTER",
+    "TEXTJOIN",
+    "TEXTSPLIT",
+    "TOCOL",
+    "TOROW",
+    "UNIQUE",
+    "VSTACK",
+    "WEBSERVICE",
+    "WRAPCOLS",
+    "WRAPROWS",
+    "XLOOKUP",
+    "XMATCH",
+];
+
+/// Translates one Excel formula into the OpenFormula value a `table:formula`
+/// attribute carries: `SUM(B1:B2)` → `of:=SUM([.B1:.B2])`.
+///
+/// `None` means "not confidently translatable" — the exporter keeps the cell's
+/// cached value and counts it in `formulasDropped`. The refused shapes are the
+/// mirror of `translate`'s: a defined name (a bare word that is neither a
+/// function call nor a reference), an array constant, a structured or external
+/// reference, an error literal, the intersection and union operators, an
+/// Excel-only function, and a 3-D reference.
+pub(crate) fn to_odf(raw: &str) -> Option<String> {
+    let body = raw.trim_start();
+    let body = body.strip_prefix('=').map(str::trim_start).unwrap_or(body);
+    if body.is_empty() {
+        return None;
+    }
+    let mut out = String::with_capacity(body.len() + 8);
+    out.push_str("of:=");
+    let mut rest = body;
+    // Excel's intersection operator is a space between two references; a
+    // space anywhere else is layout and is dropped.
+    let mut previous_reference = false;
+    while let Some(character) = rest.chars().next() {
+        match character {
+            '"' => {
+                let (literal, remainder) = string_literal(rest)?;
+                out.push_str(literal);
+                rest = remainder;
+                previous_reference = false;
+            }
+            '\'' => {
+                // A quoted name can only be a sheet ahead of `!`; Excel's
+                // string literals use double quotes.
+                let quoted = rest.strip_prefix('\'')?;
+                let (name, remainder) = quoted_name(quoted)?;
+                let remainder = remainder.strip_prefix('!')?;
+                let (reference, remainder) = reference_at(remainder, Some(&name))?;
+                out.push_str(&reference);
+                rest = remainder;
+                previous_reference = true;
+            }
+            character if character.is_whitespace() => {
+                rest = rest.trim_start();
+                if previous_reference
+                    && rest
+                        .chars()
+                        .next()
+                        .is_some_and(|next| next.is_alphabetic() || next == '$' || next == '\'')
+                {
+                    return None;
+                }
+            }
+            // Arguments: OpenFormula separates them with `;`.
+            ',' => {
+                out.push(';');
+                rest = &rest[1..];
+                previous_reference = false;
+            }
+            '.' => {
+                if !rest[1..]
+                    .chars()
+                    .next()
+                    .is_some_and(|next| next.is_ascii_digit())
+                {
+                    return None;
+                }
+                let end = number_end(rest);
+                out.push_str(&rest[..end]);
+                rest = &rest[end..];
+                previous_reference = false;
+            }
+            character if character.is_ascii_digit() => {
+                // A whole-row range starts with a digit: `1:2`.
+                if let Some((reference, remainder)) = reference_at(rest, None) {
+                    out.push_str(&reference);
+                    rest = remainder;
+                    previous_reference = true;
+                } else {
+                    let end = number_end(rest);
+                    out.push_str(&rest[..end]);
+                    rest = &rest[end..];
+                    previous_reference = false;
+                }
+            }
+            character if is_identifier_start(character) || character == '$' => {
+                let (token, remainder, is_reference) = word_at(rest)?;
+                out.push_str(&token);
+                rest = remainder;
+                previous_reference = is_reference;
+            }
+            // Array constants, structured and external references, error
+            // literals, the spill and implicit-intersection operators, a
+            // stray range colon, and an argument separator the stored formula
+            // already rewrote.
+            '{' | '}' | '[' | ']' | ';' | ':' | '#' | '@' | '!' | '~' => return None,
+            _ => {
+                out.push(character);
+                rest = &rest[character.len_utf8()..];
+                previous_reference = false;
+            }
+        }
+    }
+    Some(out)
+}
+
+/// One word and what follows it: a function call, a sheet-qualified
+/// reference, a bare `TRUE`/`FALSE`, or a reference. The returned flag says
+/// whether the copied token was a reference (the intersection check needs it).
+fn word_at(text: &str) -> Option<(String, &str, bool)> {
+    let end = word_end(text);
+    if end == 0 {
+        return None;
+    }
+    let word = &text[..end];
+    let after = text[end..].trim_start();
+    if after.starts_with('(') {
+        if word.contains('.') && !word.eq_ignore_ascii_case("ERROR.TYPE") {
+            return None;
+        }
+        if EXCEL_ONLY_FUNCTIONS
+            .iter()
+            .any(|function| word.eq_ignore_ascii_case(function))
+        {
+            return None;
+        }
+        return Some((word.to_owned(), &text[end..], false));
+    }
+    if let Some(qualified) = after.strip_prefix('!') {
+        let (reference, remainder) = reference_at(qualified, Some(word))?;
+        return Some((reference, remainder, true));
+    }
+    if word.eq_ignore_ascii_case("TRUE") {
+        return Some(("TRUE()".to_owned(), &text[end..], false));
+    }
+    if word.eq_ignore_ascii_case("FALSE") {
+        return Some(("FALSE()".to_owned(), &text[end..], false));
+    }
+    let (reference, remainder) = reference_at(text, None)?;
+    Some((reference, remainder, true))
+}
+
+/// One endpoint of an Excel reference as written: `$A$1`, `A`, `1`.
+struct ExcelEndpoint {
+    address: String,
+    kind: AddressKind,
+}
+
+/// `A1`, `A1:B2`, `$A:$A`, `1:2` → the OpenFormula spelling and what follows.
+/// `sheet` is the qualifier the caller already read, if any; the sheet is
+/// written absolute because an Excel sheet reference never shifts with the
+/// cell.
+fn reference_at<'a>(text: &'a str, sheet: Option<&str>) -> Option<(String, &'a str)> {
+    let (first, rest) = endpoint_at(text)?;
+    let (second, rest) = match rest.strip_prefix(':') {
+        Some(after) => {
+            let (second, rest) = endpoint_at(after)?;
+            if second.kind != first.kind {
+                return None;
+            }
+            (Some(second), rest)
+        }
+        None => (None, rest),
+    };
+    // Half of a range is only a reference in Excel; a bare column would read
+    // as a defined name.
+    if second.is_none() && first.kind != AddressKind::Cell {
+        return None;
+    }
+    let mut out = String::from("[");
+    match sheet {
+        Some(name) => {
+            out.push('$');
+            out.push_str(&odf_sheet_name(name));
+            out.push('.');
+        }
+        None => out.push('.'),
+    }
+    out.push_str(&first.address);
+    if let Some(second) = second {
+        out.push(':');
+        out.push('.');
+        out.push_str(&second.address);
+    }
+    out.push(']');
+    Some((out, rest))
+}
+
+fn endpoint_at(text: &str) -> Option<(ExcelEndpoint, &str)> {
+    let mut rest = text;
+    let column_absolute = rest.starts_with('$');
+    if column_absolute {
+        rest = &rest[1..];
+    }
+    let column_end = rest
+        .find(|character: char| !character.is_ascii_alphabetic())
+        .unwrap_or(rest.len());
+    let column = &rest[..column_end];
+    rest = &rest[column_end..];
+    // Excel's last column is XFD; a longer run of letters is a name, not an
+    // address (and would overflow the column arithmetic below).
+    if column.len() > 3 {
+        return None;
+    }
+    let row_absolute = rest.starts_with('$');
+    if row_absolute {
+        rest = &rest[1..];
+    }
+    let row_end = rest
+        .find(|character: char| !character.is_ascii_digit())
+        .unwrap_or(rest.len());
+    let row = &rest[..row_end];
+    rest = &rest[row_end..];
+    let kind = match (column.is_empty(), row.is_empty()) {
+        (false, false) => AddressKind::Cell,
+        (false, true) => AddressKind::Column,
+        (true, false) => AddressKind::Row,
+        (true, true) => return None,
+    };
+    if !column.is_empty() {
+        let number = column.chars().fold(0u32, |total, character| {
+            total * 26 + (character.to_ascii_uppercase() as u32 - 'A' as u32 + 1)
+        });
+        if !(1..=16_384).contains(&number) {
+            return None;
+        }
+    }
+    if !row.is_empty() {
+        let number: u32 = row.parse().ok()?;
+        if !(1..=1_048_576).contains(&number) {
+            return None;
+        }
+    }
+    let mut address = String::with_capacity(column.len() + row.len() + 2);
+    if column_absolute && !column.is_empty() {
+        address.push('$');
+    }
+    address.push_str(column);
+    if row_absolute && !row.is_empty() {
+        address.push('$');
+    }
+    address.push_str(row);
+    Some((ExcelEndpoint { address, kind }, rest))
+}
+
+/// The sheet name inside a bracketed reference, quoted when it needs to be
+/// (the same rule the Excel side follows, with `''` for one quote).
+fn odf_sheet_name(name: &str) -> String {
+    if needs_quotes(name) {
+        format!("'{}'", name.replace('\'', "''"))
+    } else {
+        name.to_owned()
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -512,6 +836,100 @@ mod tests {
             "SUM([.A1:.A2])",
         ] {
             assert_eq!(translate(raw), None, "{raw}");
+        }
+    }
+
+    #[test]
+    fn writes_references_and_ranges_for_the_export() {
+        assert_eq!(
+            to_odf("=SUM(B1:B2)").as_deref(),
+            Some("of:=SUM([.B1:.B2])")
+        );
+        assert_eq!(to_odf("=B1*2+C3").as_deref(), Some("of:=[.B1]*2+[.C3]"));
+        assert_eq!(
+            to_odf("=SUM($A:$A)").as_deref(),
+            Some("of:=SUM([.$A:.$A])")
+        );
+        assert_eq!(to_odf("=SUM(1:2)").as_deref(), Some("of:=SUM([.1:.2])"));
+    }
+
+    #[test]
+    fn writes_sheet_qualified_references() {
+        assert_eq!(
+            to_odf("=Sheet1!$B$1").as_deref(),
+            Some("of:=[$Sheet1.$B$1]")
+        );
+        assert_eq!(
+            to_odf("='My Sheet'!A1:B2").as_deref(),
+            Some("of:=[$'My Sheet'.A1:.B2]")
+        );
+        assert_eq!(
+            to_odf("='O''Brien'!$A$1*2").as_deref(),
+            Some("of:=[$'O''Brien'.$A$1]*2")
+        );
+        // A name that reads like a cell address needs quotes as well.
+        assert_eq!(to_odf("='A1'!B2").as_deref(), Some("of:=[$'A1'.B2]"));
+    }
+
+    #[test]
+    fn rewrites_argument_separators_for_the_export() {
+        assert_eq!(
+            to_odf(r#"=IF(A1>0,"a;b","c""d")"#).as_deref(),
+            Some(r#"of:=IF([.A1]>0;"a;b";"c""d")"#)
+        );
+    }
+
+    #[test]
+    fn keeps_functions_for_the_export() {
+        assert_eq!(to_odf("=TRUE()").as_deref(), Some("of:=TRUE()"));
+        assert_eq!(
+            to_odf("=IF(TRUE,A1,FALSE)").as_deref(),
+            Some("of:=IF(TRUE();[.A1];FALSE())")
+        );
+        // A function name that also parses as an address is a call first.
+        assert_eq!(to_odf("=LOG10(A1)").as_deref(), Some("of:=LOG10([.A1])"));
+        assert_eq!(
+            to_odf("=ERROR.TYPE(A1)").as_deref(),
+            Some("of:=ERROR.TYPE([.A1])")
+        );
+    }
+
+    #[test]
+    fn refuses_what_it_cannot_write() {
+        for raw in [
+            "=MyRange",
+            "=SUM(MyRange)",
+            "={1,2}",
+            "=A1 B1",
+            "=[1]Sheet1!A1",
+            "=Table1[Column]",
+            "=#N/A",
+            "=@A1",
+            "=Sheet1:Sheet2!A1",
+            "=A1:B2:C3",
+            "=IFS(A1>0,1)",
+            "=XLOOKUP(A1,B1:B2,C1:C2)",
+            "=XMATCH(A1,B1:B2)",
+            "=NETWORKDAYS.INTL(A1,B1)",
+            "=",
+        ] {
+            assert_eq!(to_odf(raw), None, "{raw}");
+        }
+    }
+
+    #[test]
+    fn the_two_directions_round_trip_the_shared_shapes() {
+        for (excel, odf) in [
+            ("SUM(B1:B2)", "of:=SUM([.B1:.B2])"),
+            ("B1*2+C3", "of:=[.B1]*2+[.C3]"),
+            ("Sheet1!$B$1", "of:=[$Sheet1.$B$1]"),
+            ("'My Sheet'!A1:B2", "of:=[$'My Sheet'.A1:.B2]"),
+            ("SUM($A:$A)", "of:=SUM([.$A:.$A])"),
+            ("SUM(1:2)", "of:=SUM([.1:.2])"),
+            ("TRUE()", "of:=TRUE()"),
+        ] {
+            assert_eq!(to_odf(&format!("={excel}")).as_deref(), Some(odf));
+            assert_eq!(translate(odf).as_deref(), Some(excel));
         }
     }
 }

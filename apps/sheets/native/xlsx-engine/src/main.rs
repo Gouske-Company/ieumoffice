@@ -86,6 +86,12 @@ enum Command {
         path: PathBuf,
         target_path: PathBuf,
     },
+    /// `.xlsx` → `.ods`, a whole conversion (decision 0119).
+    #[serde(rename_all = "camelCase")]
+    ConvertToOds {
+        path: PathBuf,
+        target_path: PathBuf,
+    },
     #[serde(rename_all = "camelCase")]
     SaveArchive {
         source_path: PathBuf,
@@ -625,6 +631,9 @@ fn handle_request(
                 }))
             })
         }
+        Command::ConvertToOds { path, target_path } => {
+            xlsx_sidecar::ods_export::convert_to_ods(&path, &target_path).and_then(to_json_value)
+        }
         Command::ArchiveManifest { path } => archive_manifest(&path)
             .and_then(|entries| to_json_value(serde_json::json!({ "entries": entries }))),
         Command::ReadEntries {
@@ -1031,5 +1040,48 @@ mod tests {
         assert_eq!(result["sheets"], serde_json::json!(1));
         assert_eq!(result["cells"], serde_json::json!(2));
         assert_eq!(result["formulasDropped"], serde_json::json!(0));
+    }
+
+    /// `convert_to_ods` answers with the package it wrote and the features it
+    /// could not carry, through the ordinary request envelope.
+    #[test]
+    fn convert_to_ods_reports_the_package_it_wrote() {
+        let dir = tempfile::tempdir().unwrap();
+        let source = dir.path().join("book.xlsx");
+        write_workbook(&source);
+        let target = dir.path().join("book.ods");
+        let request = serde_json::json!({
+            "version": 1,
+            "requestId": "o1",
+            "command": "convert_to_ods",
+            "path": source,
+            "targetPath": target,
+        });
+        let result = expect_ok(
+            handle_line(
+                &request.to_string(),
+                &mut WorkbookSessions::new(),
+                &RecalcWorker::new(),
+                &CancelledRequests::new(),
+                &InFlightRequest::new(),
+                &Arc::new(Mutex::new(BufWriter::new(io::stdout()))),
+            )
+            .unwrap(),
+        );
+        assert_eq!(result["sheets"], serde_json::json!(1));
+        assert_eq!(result["cells"], serde_json::json!(2));
+        assert_eq!(result["formulasDropped"], serde_json::json!(0));
+        assert_eq!(result["dropped"]["charts"], serde_json::json!(0));
+        assert_eq!(result["dropped"]["conditionalFormats"], serde_json::json!(0));
+        assert_eq!(result["dropped"]["validations"], serde_json::json!(0));
+        assert_eq!(result["dropped"]["pivots"], serde_json::json!(0));
+        assert_eq!(result["dropped"]["comments"], serde_json::json!(0));
+        assert_eq!(result["dropped"]["images"], serde_json::json!(0));
+        assert!(target.exists(), "the package is written");
+        let file = std::fs::File::open(&target).unwrap();
+        let mut archive = zip::ZipArchive::new(file).unwrap();
+        assert_eq!(archive.by_index(0).unwrap().name().unwrap(), "mimetype");
+        assert!(archive.by_name("content.xml").is_ok());
+        assert!(archive.by_name("styles.xml").is_ok());
     }
 }

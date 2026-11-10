@@ -29,6 +29,8 @@ mod escher;
 pub mod external_links;
 mod odf_formula;
 mod odf_layout;
+pub mod ods_export;
+mod ods_styles;
 mod refs;
 mod sparklines;
 mod table_styles;

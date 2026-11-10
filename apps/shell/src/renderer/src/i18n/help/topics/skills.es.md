@@ -76,6 +76,16 @@ Debajo de la vista previa siempre se lee: «Instala habilidades solo de fuentes 
 - No se escribe ningún archivo hasta que hace clic en **Guardar**. Si hace clic en **Cancelar**, el chat la conserva solo como «Propuesta de habilidad sin guardar».
 - También puede pedir que se cambie una habilidad existente, por ejemplo «Cambia la habilidad de actas a nuestra manera de hacerlas». La tarjeta se titula entonces **Cambiar habilidad**. Una de mis habilidades se sobrescribe con **Reemplazar**; una habilidad integrada o de otro programa se guarda como copia en mis habilidades y la original se desactiva.
 
+## Elegir dónde se usa una habilidad
+
+Una habilidad que solo sirve para un tipo de documento, como dar estilo a diapositivas u ordenar una hoja de cálculo, puede mostrarse solo en el panel de IA de ese editor. En los demás editores, la lista `/` y la lista de habilidades que la IA usa por su cuenta se acortan, y la IA elige mejor la habilidad adecuada.
+
+- Para una de mis habilidades, abre **Editar** y elige **Todos los editores** o **Solo estos editores** en **Dónde se usa**. Los editores elegidos se escriben en el archivo de la habilidad, así que la acompañan al exportarla o al llevarla a otro programa.
+- Para una habilidad integrada o de otro programa, cámbialo en **Dónde se usa** dentro de **Ver contenido**. Se guarda solo en la configuración de este PC; el archivo de la habilidad no cambia.
+- Una habilidad que no se usa en todos los editores lo indica en su fila, por ejemplo «Se usa en: Presentación».
+- Cuando la IA crea una habilidad que solo sirve para un formato, propone también dónde usarla; si no, la deja en todos los editores. Puedes cambiarlo en **Dónde se usa** en la tarjeta antes de guardar.
+- Preguntar a la IA en Inicio y la ventana del agente usan todas las habilidades activadas, sin importar dónde se usen.
+
 ## Añadir un documento como plantilla
 
 Cuando crea una habilidad en el panel de IA de un editor, el documento actual puede ir con ella como plantilla. Marque **Guardar también este documento como plantilla** en la tarjeta y el botón se convierte en dos.

@@ -76,6 +76,16 @@ Below the preview it always says: "Install skills only from sources you trust. A
 - No file is written until you click **Save**. If you click **Cancel**, the chat keeps it only as an "Unsaved skill proposal".
 - You can also ask to change an existing skill, such as "Change the meeting minutes skill to the way we do it". The card is then titled **Change skill**. One of my skills is overwritten with **Replace**; a built-in skill or one from another program is saved as a copy in my skills and the original is turned off.
 
+## Choosing where a skill is used
+
+A skill that fits only one kind of document, such as styling slides or tidying a spreadsheet, can be shown only in that editor's AI panel. The `/` list and the list of skills the AI uses on its own get shorter in the other editors, so the AI picks the right skill more often.
+
+- For one of my skills, open **Edit** and choose **Every editor** or **Only these editors** under **Where it is used**. The editors you choose are written in the skill's file, so they go along when you export the skill or move it to another program.
+- For a built-in skill or one from another program, change it under **Where it is used** in **View contents**. This is kept in this PC's settings only; the skill's file stays as it is.
+- A skill not used in every editor says so on its row, for example "Used in: Slides".
+- When the AI makes a skill that fits only one format, it proposes where to use it; otherwise it leaves every editor. You can change it under **Where it is used** on the card before you save.
+- Ask AI on Home and the agent window use every skill that is on, wherever it is set to be used.
+
 ## Adding a document as a template
 
 When you make a skill in an editor's AI panel, the current document can go along as a template. Tick **Save this document along as a template** on the card, and the button becomes two.

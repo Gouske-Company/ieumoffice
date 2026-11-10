@@ -76,6 +76,16 @@ Onder het voorbeeld staat altijd: "Installeer alleen vaardigheden uit bronnen di
 - Er wordt geen bestand geschreven tot je op **Opslaan** klikt. Klik je op **Annuleren**, dan bewaart het gesprek hem alleen als "Niet-opgeslagen voorstel voor een vaardigheid".
 - Je kunt ook vragen een bestaande vaardigheid aan te passen, bijvoorbeeld "Pas de notulenvaardigheid aan aan hoe wij het doen". De kaart heet dan **Vaardigheid wijzigen**. Een van mijn vaardigheden wordt overschreven met **Vervangen**; een ingebouwde vaardigheid of een uit een ander programma wordt als kopie bij mijn vaardigheden opgeslagen en het origineel gaat uit.
 
+## Kiezen waar een skill wordt gebruikt
+
+Een skill die maar bij één soort document past, zoals dia’s opmaken of een spreadsheet opruimen, kan alleen in het AI-paneel van die editor verschijnen. In de andere editors worden de `/`-lijst en de lijst met skills die de AI zelf gebruikt korter, zodat de AI vaker de juiste skill kiest.
+
+- Open bij een van mijn skills **Bewerken** en kies onder **Waar gebruikt** **Alle editors** of **Alleen deze editors**. De gekozen editors worden in het bestand van de skill geschreven en gaan mee als u de skill exporteert of naar een ander programma brengt.
+- Bij een ingebouwde skill of een skill van een ander programma wijzigt u het onder **Waar gebruikt** in **Inhoud bekijken**. Dit wordt alleen in de instellingen van deze pc bewaard; het bestand van de skill blijft gelijk.
+- Een skill die niet in alle editors wordt gebruikt, laat dat zien in zijn rij, bijvoorbeeld "Gebruikt in: Presentatie".
+- Als de AI een skill maakt die maar bij één formaat past, stelt hij ook voor waar die wordt gebruikt; anders blijft het alle editors. Vóór het opslaan kunt u het op de kaart wijzigen onder **Waar gebruikt**.
+- AI vragen op de startpagina en het agentvenster gebruiken alle ingeschakelde skills, waar ze ook voor zijn ingesteld.
+
 ## Een document als sjabloon toevoegen
 
 Maak je een vaardigheid in het AI-paneel van een editor, dan kan het huidige document als sjabloon meegaan. Vink op de kaart **Dit document ook als sjabloon opslaan** aan en de knop wordt er twee.

@@ -76,6 +76,16 @@ Pod podglądem zawsze widnieje: „Instaluj umiejętności tylko z zaufanych źr
 - Żaden plik nie zostanie zapisany, dopóki nie klikniesz **Zapisz**. Jeśli klikniesz **Anuluj**, rozmowa zachowa ją tylko jako „Niezapisana propozycja umiejętności”.
 - Możesz też poprosić o zmianę istniejącej umiejętności, na przykład „Zmień umiejętność protokołu tak, jak to u nas wygląda”. Karta ma wtedy tytuł **Zmień umiejętność**. Jedna z moich umiejętności zostaje nadpisana przez **Zastąp**; umiejętność wbudowana lub z innego programu jest zapisywana jako kopia w moich umiejętnościach, a oryginał zostaje wyłączony.
 
+## Wybór, gdzie używać umiejętności
+
+Umiejętność pasującą tylko do jednego rodzaju dokumentu, na przykład do stylizowania slajdów albo porządkowania arkusza, można pokazywać tylko w panelu AI tego edytora. W pozostałych edytorach lista `/` i lista umiejętności, których AI używa samo, są krótsze, więc AI częściej wybiera właściwą umiejętność.
+
+- Dla mojej umiejętności otwórz **Edytuj** i w sekcji **Gdzie używać** wybierz **Wszystkie edytory** albo **Tylko te edytory**. Wybrane edytory są zapisywane w pliku umiejętności, więc idą za nią przy eksporcie i przeniesieniu do innego programu.
+- Dla umiejętności wbudowanej lub z innego programu zmień to w sekcji **Gdzie używać** w **Pokaż zawartość**. Wybór jest zapisywany tylko w ustawieniach tego komputera; plik umiejętności się nie zmienia.
+- Umiejętność, która nie jest używana we wszystkich edytorach, pokazuje to w swoim wierszu, na przykład „Używana w: Prezentacja”.
+- Gdy AI tworzy umiejętność pasującą tylko do jednego formatu, proponuje też, gdzie jej używać; w przeciwnym razie zostawia wszystkie edytory. Przed zapisaniem możesz to zmienić w sekcji **Gdzie używać** na karcie.
+- Zapytaj AI na stronie głównej i okno agenta używają wszystkich włączonych umiejętności, niezależnie od ustawienia, gdzie ich używać.
+
 ## Dodawanie dokumentu jako szablonu
 
 Gdy tworzysz umiejętność w panelu AI edytora, bieżący dokument może dołączyć do niej jako szablon. Zaznacz na karcie **Zapisz też ten dokument jako szablon**, a przycisk zamieni się w dwa.

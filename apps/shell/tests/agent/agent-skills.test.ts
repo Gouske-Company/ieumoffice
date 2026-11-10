@@ -666,3 +666,31 @@ describe('the one-time notice and the next-session line', () => {
     ])
   })
 })
+
+describe('where a changed skill is used, on the agent window card', () => {
+  it('starts the card at where the skill is used now', () => {
+    const made = agentSkillProposalOf(
+      {
+        title: 'T',
+        name: '',
+        description: 'D',
+        body: 'B',
+        wantsTemplate: false,
+        targetId: 'app:deck',
+        suggestedTemplatePath: '',
+      },
+      [
+        {
+          id: 'app:deck',
+          source: 'app',
+          name: 'deck',
+          title: 'D',
+          owned: true,
+          editors: ['slides'],
+        },
+      ],
+      'k',
+    )
+    expect(made.ok && made.proposal.target?.editors).toEqual(['slides'])
+  })
+})

@@ -317,10 +317,8 @@ function setStateValue(
   const next = { ...settings.states[id], ...rest }
   if (editors !== undefined) {
     const choice = skillEditorsChoiceOf(editors)
-    const same =
-      String(skillEditorScope(choice, fileEditors)) ===
-      String(skillEditorScope(undefined, fileEditors))
-    if (choice && !same) next.editors = choice
+    const sameAsFile = String(skillEditorScope(choice, fileEditors)) === String(fileEditors)
+    if (choice && !sameAsFile) next.editors = choice
     else delete next.editors
   }
   if (next.enabled === initial.enabled) delete next.enabled

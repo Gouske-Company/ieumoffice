@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Lang } from '@genoffice/i18n'
+import { skillEditorsOf } from '@genoffice/agent-core/skill-editors'
+import { SkillEditorsChooser, skillEditorsText, type SkillEditorsDraft } from '@genoffice/ui'
 import type { UserSkillsBridge } from '@genoffice/electron-utils/user-skills-bridge'
 import type {
   UserSkillSaveInput,
@@ -56,7 +58,14 @@ export function SkillEditor({
   const [checkingName, setCheckingName] = useState(false)
   const [saving, setSaving] = useState(false)
   const [errorKey, setErrorKey] = useState<SkillsStringKey | null>(null)
+  /** where the skill is used: an own skill's file value (saved with it), else the list's */
+  const [editors, setEditors] = useState<SkillEditorsDraft>(
+    () => skillEditorsOf(view?.editors) ?? 'all',
+  )
+  const [editorsFailed, setEditorsFailed] = useState(false)
   const viewId = view?.id
+  /** a skill the person cannot edit: its where-used choice goes to the settings file at once */
+  const choosesInSettings = readOnly && !!view && !view.can.edit && !view.unreadable
 
   useEffect(() => {
     if (mode === 'new' || !viewId) return
@@ -74,6 +83,7 @@ export function SkillEditor({
       setName(skill.name)
       setOriginalName(skill.name)
       setFiles(skill.files)
+      if (mode === 'edit') setEditors(skillEditorsOf(skill.editors) ?? 'all')
     })
     return () => {
       live = false
@@ -111,11 +121,12 @@ export function SkillEditor({
     !nameProblem &&
     name.trim() !== '' &&
     description.trim() !== '' &&
-    body.trim() !== ''
+    body.trim() !== '' &&
+    (editors === 'all' || editors.length > 0)
 
   const save = async () => {
     if (!canSave) return
-    const input: UserSkillSaveInput = { title: '', description, body }
+    const input: UserSkillSaveInput = { title: '', description, body, editors }
     if (mode === 'edit' && viewId) input.id = viewId
     if (nameChanged) input.name = name.trim()
     setSaving(true)
@@ -127,6 +138,15 @@ export function SkillEditor({
       return
     }
     setErrorKey(failureKey(answer.reason) ?? 'failGeneric')
+  }
+
+  const chooseInSettings = (next: SkillEditorsDraft) => {
+    setEditors(next)
+    setEditorsFailed(false)
+    if (!viewId || (next !== 'all' && next.length === 0)) return
+    void api.setState(viewId, { editors: next }).then((answer) => {
+      if (!answer.ok) setEditorsFailed(true)
+    })
   }
 
   const label = s(TITLE_KEY[mode])
@@ -204,6 +224,23 @@ export function SkillEditor({
               onChange={(e) => setBody(e.target.value)}
             />
           </label>
+
+          {(!readOnly || choosesInSettings) && (
+            <div className="skl-field">
+              <SkillEditorsChooser
+                lang={lang}
+                value={editors}
+                onChange={readOnly ? chooseInSettings : setEditors}
+                disabled={saving}
+                note={readOnly ? skillEditorsText(lang, 'settingsNote') : undefined}
+              />
+              {editorsFailed && (
+                <span className="set-field-desc skl-error" role="alert">
+                  {skillEditorsText(lang, 'changeFailed')}
+                </span>
+              )}
+            </div>
+          )}
 
           {readOnly && heading !== name && (
             <div className="skl-field">

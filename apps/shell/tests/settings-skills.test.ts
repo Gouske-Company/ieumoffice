@@ -621,9 +621,11 @@ describe('Settings → Skills screen', () => {
     const save = buttonWithText(ko('save'), dialog)!
     expect(save.disabled).toBe(true)
     const fields = [
-      ...dialog.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('input, textarea'),
+      ...dialog.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>(
+        'input:not([type="radio"]):not([type="checkbox"]), textarea',
+      ),
     ]
-    // no title field: the name, the description and the body
+    // no title field: the name, the description and the body (and where it is used)
     expect(fields).toHaveLength(3)
     const name = fields[0] as HTMLInputElement
     expect(name.getAttribute('data-field')).toBe('name')
@@ -658,6 +660,7 @@ describe('Settings → Skills screen', () => {
       name: 'meeting-notes',
       description: '회의를 정리한다',
       body: '본문',
+      editors: 'all',
     })
   })
 
@@ -724,6 +727,7 @@ describe('Settings → Skills screen', () => {
       title: '',
       description: '학교 말투',
       body: '# 새 본문',
+      editors: 'all',
       id: mine.id,
     })
   })

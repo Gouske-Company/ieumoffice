@@ -1,4 +1,4 @@
-import { proposedTitleOf, type SkillProposal } from '@genoffice/agent-core'
+import { proposedTitleOf, type SkillEditorId, type SkillProposal } from '@genoffice/agent-core'
 import type { SkillCardStringKey } from './strings-skill-card'
 
 /**
@@ -33,6 +33,8 @@ export interface SkillCardSaveInput {
   template?: SkillCardTemplate | undefined
   targetId?: string | undefined
   overwrite?: boolean | undefined
+  /** where the skill is used, written to its `metadata.ieum-editors` */
+  editors?: 'all' | SkillEditorId[] | undefined
 }
 
 /** The calls of `window.aiOfficeUserSkills` the card uses */
@@ -107,12 +109,16 @@ export interface SkillCardDraft {
   invoke: 'auto' | 'manual'
   /** "save this document along as a template" is checked */
   withTemplate: boolean
+  /** where the skill is used: every editor, or the checked ones (none checked blocks Save) */
+  editors: 'all' | SkillEditorId[]
 }
 
 /**
  * The card's starting fields: the model's text, its name (else the name of
  * the skill being changed; a new skill without one gets a suggested name),
- * "used on its own", and the template box checked when the model wants one.
+ * "used on its own", the template box checked when the model wants one, and
+ * where it is used: what the model named, else where the changed skill is
+ * used now, else every editor (never just the editor the card is shown in).
  */
 export function initialSkillCardDraft(proposal: SkillProposal): SkillCardDraft {
   return {
@@ -122,6 +128,7 @@ export function initialSkillCardDraft(proposal: SkillProposal): SkillCardDraft {
     body: proposal.body,
     invoke: 'auto',
     withTemplate: proposal.wantsTemplate,
+    editors: proposal.editors ?? proposal.target?.editors ?? 'all',
   }
 }
 
@@ -184,6 +191,11 @@ export function skillCardSaveBlock(
   return nameBlock
 }
 
+/** Whether Save waits for an editor to be checked ("only these editors" with none) */
+export function skillCardEditorsBlocked(draft: Pick<SkillCardDraft, 'editors'>): boolean {
+  return draft.editors !== 'all' && draft.editors.length === 0
+}
+
 /**
  * What Save hands to the shell. A change carries the skill it changes: the
  * shell rewrites an own skill, and copies another source's skill into mine
@@ -200,6 +212,7 @@ export function skillCardSaveInput(
     description: draft.description.trim(),
     body: draft.body,
     invoke: draft.invoke,
+    editors: draft.editors,
     ...(options.template ? { template: options.template } : {}),
     ...(proposal.target ? { targetId: proposal.target.id } : {}),
     ...(options.overwrite ? { overwrite: true } : {}),

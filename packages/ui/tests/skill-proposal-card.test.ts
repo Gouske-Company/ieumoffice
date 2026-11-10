@@ -118,6 +118,7 @@ describe('SkillProposalCard', () => {
       description: 'Writes minutes in our format.',
       body: '1. Date\n2. Decisions',
       invoke: 'manual',
+      editors: 'all',
     })
     expect(onSaved).toHaveBeenCalledWith(
       'app:minutes',
@@ -374,5 +375,48 @@ describe('useSkillProposals', () => {
     act(() => root.render(createElement(Panel, { bridge, keys })))
     expect(host.textContent).toContain('저장하지 않은 스킬 제안 · Minutes')
     expect(host.querySelector('textarea')).toBeNull()
+  })
+})
+
+describe('SkillProposalCard: where the skill is used', () => {
+  const checkbox = (editor: string) =>
+    host.querySelector<HTMLInputElement>(`input[type="checkbox"][value="${editor}"]`)
+  const radio = (label: string) =>
+    [...host.querySelectorAll('label')]
+      .find((l) => l.textContent === label)!
+      .querySelector<HTMLInputElement>('input')!
+
+  it('starts at every editor when the model named none', async () => {
+    const bridge = fakeBridge()
+    renderCard(NEW, bridge)
+    await settle()
+    expect(radio('Every editor').checked).toBe(true)
+    expect(checkbox('slides')).toBeNull()
+  })
+
+  it('starts at the editors the model named and saves the person’s change', async () => {
+    const bridge = fakeBridge()
+    renderCard({ ...NEW, editors: ['slides'] }, bridge)
+    await settle()
+    expect(radio('Only these editors').checked).toBe(true)
+    expect(checkbox('slides')!.checked).toBe(true)
+    expect(checkbox('sheets')!.checked).toBe(false)
+    act(() => checkbox('sheets')!.click())
+    await act(async () => button('Save')!.click())
+    await settle()
+    expect(bridge.saveFromCard).toHaveBeenCalledWith(
+      expect.objectContaining({ editors: ['sheets', 'slides'] }),
+    )
+  })
+
+  it('does not save while no editor is checked', async () => {
+    const bridge = fakeBridge()
+    renderCard({ ...NEW, editors: ['slides'] }, bridge)
+    await settle()
+    act(() => checkbox('slides')!.click())
+    expect(button('Save')!.disabled).toBe(true)
+    expect(host.textContent).toContain('Choose at least one editor')
+    act(() => radio('Every editor').click())
+    expect(button('Save')!.disabled).toBe(false)
   })
 })

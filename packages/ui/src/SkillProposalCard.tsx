@@ -3,6 +3,7 @@ import type { Lang } from '@genoffice/i18n'
 import { USE_SKILL_TOOL, type SkillProposal } from '@genoffice/agent-core'
 import {
   initialSkillCardDraft,
+  skillCardEditorsBlocked,
   skillCardMode,
   skillCardNameVerdict,
   skillCardSaveBlock,
@@ -17,6 +18,8 @@ import {
   type SkillCardTemplate,
 } from './skill-card-model'
 import { skillCardText, type SkillCardStringKey } from './strings-skill-card'
+import { SkillEditorsChooser } from './SkillEditorsChooser'
+import { skillEditorsText } from './strings-skill-editors'
 import './skill-card.css'
 
 /** Wait after the last keystroke before the name is checked */
@@ -135,11 +138,12 @@ export function SkillProposalCard({
 
   const verdict = skillCardNameVerdict(mode, proposal, draft.name, nameState)
   const blockKey = bridge ? skillCardSaveBlock(draft, verdict.blocked) : 'noBridge'
-  const blocked = blockKey ? t(blockKey) : null
+  const editorsBlocked = !blockKey && skillCardEditorsBlocked(draft)
+  const blocked = blockKey ? t(blockKey) : editorsBlocked ? skillEditorsText(lang, 'none') : null
   const nameProblem = verdict.blocked && verdict.blocked !== 'nameChecking'
 
   const save = async (template?: SkillCardTemplate): Promise<boolean> => {
-    if (!bridge || busy || blockKey) return false
+    if (!bridge || busy || blocked) return false
     setBusy(true)
     setFailure(null)
     try {
@@ -236,6 +240,13 @@ export function SkillProposalCard({
         ))}
       </fieldset>
 
+      <SkillEditorsChooser
+        lang={lang}
+        value={draft.editors}
+        disabled={busy}
+        onChange={(editors) => set({ editors })}
+      />
+
       {showTemplate && (
         <label className="ai-skill-card-check">
           <input
@@ -249,7 +260,7 @@ export function SkillProposalCard({
       )}
 
       {verdict.notice && <p className="ai-skill-card-note">{t(verdict.notice)}</p>}
-      {(failure || (blocked && blockKey !== 'nameChecking')) && (
+      {(failure || (blockKey && blockKey !== 'nameChecking')) && (
         <p className="ai-skill-card-note is-error" role="alert">
           {failure ? t(failure) : blocked}
         </p>
@@ -273,7 +284,7 @@ export function SkillProposalCard({
           <button
             type="button"
             className="ai-skill-card-btn primary"
-            disabled={busy || !!blockKey}
+            disabled={busy || !!blocked}
             title={blocked ?? undefined}
             onClick={() => void save()}
           >

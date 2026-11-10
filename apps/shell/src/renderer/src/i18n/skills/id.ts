@@ -95,7 +95,7 @@ export const id = {
   githubLabel: 'Alamat GitHub',
   githubPlaceholder: 'https://github.com/pemilik/repositori',
   githubHint:
-    'Hanya repositori publik. Tempel alamat repositori, folder, atau SKILL.md, atau "pemilik/repositori".',
+    'Hanya repositori publik. Tempel alamat repositori, folder, atau SKILL.md, "pemilik/repositori", atau halaman skill di skills.sh.',
   githubFind: 'Cari',
   githubFetching: 'Mengunduh dari GitHub…',
   importReading: 'Membaca skill…',
@@ -139,4 +139,27 @@ export const id = {
   failEmptyBody: 'Masukkan petunjuk',
   failBadName: 'Nama tidak sesuai aturan',
   failGeneric: 'Tidak berhasil. Coba lagi',
+  addPaste: 'Dari teks yang ditempel',
+  pasteTitle: 'Tambah dengan menempel teks',
+  pasteLabel: 'Teks SKILL.md',
+  pasteHint:
+    'Tempel seluruh teks SKILL.md, mulai dari baris --- serta baris name: dan description: di bawahnya.',
+  pastePreview: 'Pratinjau',
+  pasteNotSkill: 'Ini bukan teks skill. Teks harus diawali baris --- lalu diikuti baris name:.',
+  previewFromText: '{n} skill ditemukan di teks yang ditempel',
+  previewFromSkillFile: '{n} skill ditemukan di file SKILL.md',
+  previewWarnings: 'Baris yang perlu dibaca sebelum memasang: {n}',
+  previewWarningsNote:
+    'Baris-baris ini cocok dengan daftar pola yang pendek. Skill yang tidak punya baris di sini belum tentu aman.',
+  previewWarningAt: '{file}, baris {line}',
+  warnIgnoreInstructions: 'Meminta AI mengabaikan instruksi sebelumnya',
+  warnHideFromUser: 'Meminta AI menyembunyikan sesuatu dari Anda',
+  warnRemoteInstructions: 'Meminta AI mengambil instruksi dari alamat luar',
+  warnParentPath: 'Jalur ../ yang menunjuk ke luar folder skill',
+  exportSeveral: 'Ekspor beberapa',
+  bundleTitle: 'Ekspor skill sekaligus',
+  bundleIntro:
+    'Skill yang Anda centang masuk ke satu file zip, satu folder per skill. Penerimanya bisa melepas zip itu di jendela aplikasi, atau memakai Tambah ▸ Dari file zip.',
+  bundleSelectLabel: 'Sertakan {title}',
+  bundleExport: 'Ekspor ({n})',
 } satisfies Record<keyof typeof zh, string>

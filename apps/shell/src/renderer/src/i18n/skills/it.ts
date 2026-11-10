@@ -95,7 +95,7 @@ export const it = {
   githubLabel: 'Indirizzo GitHub',
   githubPlaceholder: 'https://github.com/proprietario/repository',
   githubHint:
-    "Solo repository pubblici. Incolla l'indirizzo di un repository, di una cartella o di SKILL.md, oppure «proprietario/repository».",
+    "Solo repository pubblici. Incolla l'indirizzo di un repository, di una cartella o di SKILL.md, «proprietario/repository» oppure la pagina di un'abilità su skills.sh.",
   githubFind: 'Cerca',
   githubFetching: 'Download da GitHub…',
   importReading: 'Lettura delle abilità…',
@@ -139,4 +139,28 @@ export const it = {
   failEmptyBody: 'Inserisci le istruzioni',
   failBadName: 'Il nome non rispetta le regole',
   failGeneric: 'Operazione non riuscita. Riprova',
+  addPaste: 'Da testo incollato',
+  pasteTitle: 'Aggiungi incollando testo',
+  pasteLabel: 'Testo di SKILL.md',
+  pasteHint:
+    'Incolla tutto il testo di SKILL.md, a partire dalla riga --- e dalle righe name: e description: sotto di essa.',
+  pastePreview: 'Anteprima',
+  pasteNotSkill:
+    "Questo non è il testo di un'abilità. Deve iniziare con una riga --- seguita da una riga name:.",
+  previewFromText: 'Abilità trovate nel testo incollato: {n}',
+  previewFromSkillFile: 'Abilità trovate nel file SKILL.md: {n}',
+  previewWarnings: 'Righe da leggere prima di installare: {n}',
+  previewWarningsNote:
+    "Queste righe corrispondono a un breve elenco di schemi. Un'abilità senza righe qui non è per questo sicura.",
+  previewWarningAt: '{file}, riga {line}',
+  warnIgnoreInstructions: "Chiede all'IA di ignorare le istruzioni precedenti",
+  warnHideFromUser: "Chiede all'IA di nasconderti qualcosa",
+  warnRemoteInstructions: "Chiede all'IA di prendere istruzioni da un indirizzo esterno",
+  warnParentPath: "Un percorso ../ che punta fuori dalla cartella dell'abilità",
+  exportSeveral: 'Esporta più abilità',
+  bundleTitle: 'Esporta abilità insieme',
+  bundleIntro:
+    "Le abilità che selezioni finiscono in un unico file zip, una cartella per abilità. Chi lo riceve può trascinare lo zip su una finestra dell'app oppure usare Aggiungi ▸ Da un file zip.",
+  bundleSelectLabel: 'Includi {title}',
+  bundleExport: 'Esporta ({n})',
 } satisfies Record<keyof typeof zh, string>

@@ -22,18 +22,22 @@ Dovednost je sada pracovních pokynů pro AI. Jednou si zapište, co děláte st
 - Vestavěná dovednost se neodstraňuje, ale skrývá: zvolte **Skrýt**. **Znovu zobrazit** dole v seznamu ji vrátí do původního stavu.
 - Chcete-li změnit vestavěnou dovednost nebo dovednost z jiného programu, zvolte **Kopírovat do mých dovedností**. Kopie se objeví v mých dovednostech a originál se vypne.
 - Při exportu dovednosti se šablonou se do zipu přibalí i dokument šablony. Před exportem zkontrolujte, že dokument neobsahuje osobní údaje.
+- **Exportovat více** nahoře na stránce uloží zaškrtnuté dovednosti do jednoho souboru zip, každou do vlastní složky. Kdo zip dostane, přidá ho stejně jako jakýkoli zip s dovedností a může si vybrat, které z jeho dovedností nainstaluje.
 
 ## Přidání dovednosti
 
 1. V **Nastavení ▸ Dovednosti** klikněte na **Přidat**.
-2. Zvolte **Ze složky**, **Ze souboru zip** nebo **Z odkazu na GitHub**. U GitHubu zadejte adresu veřejného repozitáře nebo `owner/repo` a klikněte na **Najít**.
-3. V náhledu zkontrolujte nalezené dovednosti. Náhled ukazuje počet a velikost souborů, zda obsahují skripty, webové adresy v textu a soubor s licencí.
+2. Zvolte **Ze složky**, **Ze souboru zip**, **Z vloženého textu** nebo **Z odkazu na GitHub**. U vloženého textu vložte celý `SKILL.md` od jeho prvního řádku `---` a klikněte na **Náhled**. U GitHubu zadejte adresu veřejného repozitáře, `owner/repo` nebo stránku dovednosti na skills.sh a klikněte na **Najít**.
+3. V náhledu zkontrolujte nalezené dovednosti. Náhled ukazuje počet a velikost souborů, zda obsahují skripty, webové adresy v textu, soubor s licencí a řádky, které stojí za přečtení před instalací.
 4. Zaškrtněte jen dovednosti, které chcete nainstalovat, a klikněte na **Nainstalovat**. Nainstalované dovednosti jsou hned zapnuté.
 
 Pod náhledem je vždy uvedeno: „Instalujte dovednosti jen ze zdrojů, kterým důvěřujete. Dovednost dává AI pokyny a v okně agenta může spouštět skripty“. Dovednost z neznámého zdroje si před instalací přečtěte.
 
 - Pokud už mezi mými dovednostmi je jedna se stejným názvem, zvolte na tom řádku **Nahradit** nebo **Přeskočit**.
+- Soubor zip s dovedností nebo soubor `SKILL.md` můžete také přetáhnout na kterékoli okno GenOffice. Otevře se **Nastavení ▸ Dovednosti** se stejným náhledem. Zip se bere jako dovednost, když `SKILL.md` leží na jeho nejvyšší úrovni nebo ho obsahuje každá složka nejvyšší úrovně; jakýkoli jiný zip zůstane bez povšimnutí. Soubor `SKILL.md` přijde sám: dovednost s dalšími soubory dejte do zipu.
+- **Řádky, které stojí za přečtení před instalací**, jsou řádky, které žádají AI, aby ignorovala dřívější pokyny, před vámi něco skrývala nebo přebírala pokyny z vnější adresy, a cesty `../`, které vedou mimo složku dovednosti. U každého je uveden soubor a řádek. Instalaci nezastaví a dovednost bez takových řádků tím ještě není bezpečná.
 - Při stahování z GitHubu se GenOffice připojuje jen k `github.com`, `api.github.com` a `codeload.github.com` a neposílá žádné přihlašovací údaje. Pokud je archiv příliš velký nebo neprojde bezpečnostními kontrolami, nic se nenainstaluje.
+- Stránka dovednosti na skills.sh (`https://skills.sh/owner/repo/skill`) se čte jako tato dovednost v repozitáři GitHub `owner/repo`. GenOffice se ke skills.sh nepřipojuje.
 - **Nová dovednost** otevře prázdný editor, do kterého sami napíšete jméno, popis a pokyny.
 
 ## Kontrola aktualizací

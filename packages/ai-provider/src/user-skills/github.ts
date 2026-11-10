@@ -84,10 +84,20 @@ function refSegmentAllowed(segment: string): boolean {
 }
 
 /**
- * Read a GitHub address in one of the five forms:
+ * The public skills directory's page of one skill. The page is the skill of
+ * that name in the GitHub repository `<owner>/<repo>` (its own install line is
+ * `npx skills add https://github.com/<owner>/<repo> --skill <skill>`), so the
+ * address is read as `<owner>/<repo>@<skill>` here and the directory itself
+ * is never contacted.
+ */
+const SKILLS_DIRECTORY_PAGE = /^https:\/\/skills\.sh\/([^/?#]+)\/([^/?#]+)\/([^/?#]+)\/?(?:#.*)?$/i
+
+/**
+ * Read a GitHub address in one of the six forms:
  * - `https://github.com/<owner>/<repo>`
  * - `https://github.com/<owner>/<repo>/tree/<branch>/<path>`
  * - `https://github.com/<owner>/<repo>/blob/<branch>/<path>/SKILL.md`
+ * - `https://skills.sh/<owner>/<repo>/<skill name>` (the skills directory)
  * - `<owner>/<repo>`
  * - `<owner>/<repo>@<skill name>`
  *
@@ -136,6 +146,16 @@ export function parseGitHubSkillAddress(input: string): GitHubSkillAddress | und
       skill: undefined,
       refPath: segments,
     }
+  }
+
+  const page = SKILLS_DIRECTORY_PAGE.exec(text)
+  if (page) {
+    const [, ownerRaw, repoRaw, skillRaw] = page
+    const owner = OWNER.test(ownerRaw!) ? ownerRaw! : undefined
+    const repo = repoName(repoRaw!)
+    const skill = decodeSegment(skillRaw!)
+    if (!owner || !repo || !skill || !USER_SKILL_NAME.test(skill)) return undefined
+    return { owner, repo, ref: undefined, path: '', skill, refPath: undefined }
   }
 
   const short = /^([^/@]+)\/([^/@]+)(?:@([^/@]+))?$/.exec(text)

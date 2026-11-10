@@ -22,6 +22,7 @@ import {
   checkGitHubSkillUpdate,
   commitSkillInstall,
   disposeSkillImport,
+  exportSkillBundleZip,
   exportSkillZip,
   initialUserSkillState,
   installImportedSkills,
@@ -32,9 +33,7 @@ import {
   parseSkillMd,
   parseUserSkillId,
   pickEnabledUserSkills,
-  prepareFolderImport,
-  prepareGitHubImport,
-  prepareZipImport,
+  prepareSkillImport,
   readIeumSourceRecord,
   renderSkillMd,
   resolveUserSkillStates,
@@ -49,6 +48,7 @@ import {
   type SkillFetch,
   type SkillImport,
   type SkillImportCandidate,
+  type SkillImportSource,
   type UserSkillInvoke,
   type UserSkillSettings,
   type UserSkillSource,
@@ -173,6 +173,8 @@ function stagedCandidate(dir: string, name: string): SkillImportCandidate {
     urls: [],
     urlCount: 0,
     license: undefined,
+    warnings: [],
+    warningCount: 0,
     collision: false,
     problem: undefined,
   }
@@ -248,6 +250,13 @@ function candidateView(candidate: SkillImportCandidate): UserSkillImportCandidat
     urls: candidate.urls,
     urlCount: candidate.urlCount,
     license: candidate.license,
+    warnings: candidate.warnings.map((warning) => ({
+      messageKey: warning.messageKey,
+      file: warning.file,
+      line: warning.line,
+      excerpt: warning.excerpt,
+    })),
+    warningCount: candidate.warningCount,
     collision: candidate.collision,
     problem: candidate.problem,
   }
@@ -711,20 +720,13 @@ export function createUserSkillsService(deps: UserSkillsServiceDeps) {
       })
     },
 
-    prepareFolder(folder: string): Promise<SkillImport> {
-      return prepareFolderImport({ folder, appSkillsDir: appSkillsDir(), homeDir: deps.homeDir() })
-    },
-
-    prepareZip(file: string): Promise<SkillImport> {
-      return prepareZipImport({ file, appSkillsDir: appSkillsDir(), tempDir: deps.tempDir() })
-    },
-
-    prepareGitHub(address: string, signal?: AbortSignal): Promise<SkillImport> {
-      return prepareGitHubImport({
-        address,
-        fetch: deps.fetch,
+    /** Find the skills of any import source for the preview (GitHub connects only for an address) */
+    prepare(source: SkillImportSource, signal?: AbortSignal): Promise<SkillImport> {
+      return prepareSkillImport(source, {
         appSkillsDir: appSkillsDir(),
+        homeDir: deps.homeDir(),
         tempDir: deps.tempDir(),
+        fetch: deps.fetch,
         signal,
       })
     },
@@ -838,6 +840,27 @@ export function createUserSkillsService(deps: UserSkillsServiceDeps) {
       if (!dir) return fail('not-owned')
       try {
         await exportSkillZip(dir, outPath)
+        return { ok: true, path: outPath }
+      } catch (error) {
+        return failureOf(error)
+      }
+    },
+
+    /** Write several own skills into one zip, a folder per skill */
+    async exportBundleTo(
+      ids: readonly string[],
+      outPath: string,
+    ): Promise<UserSkillsResult<{ path: string }>> {
+      const dirs: string[] = []
+      for (const id of ids) {
+        const skill = await find(id)
+        if (!skill) return fail('not-found')
+        const dir = await ownedDir(skill)
+        if (!dir) return fail('not-owned')
+        dirs.push(dir)
+      }
+      try {
+        await exportSkillBundleZip(dirs, outPath)
         return { ok: true, path: outPath }
       } catch (error) {
         return failureOf(error)

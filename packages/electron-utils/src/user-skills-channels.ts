@@ -25,6 +25,10 @@ export const USER_SKILLS_CHANNELS = {
   importFolder: 'skills:import-folder',
   importZip: 'skills:import-zip',
   importGitHub: 'skills:import-github',
+  /** pasted SKILL.md text */
+  importText: 'skills:import-text',
+  /** the settings screen takes the next skill file dropped on any window, previewed */
+  takeDropped: 'skills:take-dropped',
   cancelImport: 'skills:cancel-import',
   install: 'skills:install',
   checkUpdate: 'skills:check-update',
@@ -32,6 +36,8 @@ export const USER_SKILLS_CHANNELS = {
   cancelUpdate: 'skills:cancel-update',
   exportInfo: 'skills:export-info',
   exportZip: 'skills:export-zip',
+  /** several own skills as one zip, a folder per skill */
+  exportBundle: 'skills:export-bundle',
   openFolder: 'skills:open-folder',
   aiRead: 'skills:ai-read',
   aiReadFile: 'skills:ai-read-file',
@@ -54,6 +60,8 @@ export const USER_SKILLS_CHANNELS = {
   previewEnded: 'skills:preview-ended',
   /** main → every window: the list or a state changed; read the list again */
   changed: 'skills:changed',
+  /** main → every window: a dropped skill file waits for the settings screen to take it */
+  dropped: 'skills:dropped',
 } as const
 
 /** Stored source values (spec 10.1); never renamed */
@@ -213,6 +221,22 @@ export interface UserSkillCardSaveInput {
   overwrite?: boolean | undefined
 }
 
+/**
+ * The message key of a preview warning rule; the same values as the core's
+ * rule table (`SKILL_WARNING_RULES`), which the shell's service hands over
+ */
+export type UserSkillWarningKey =
+  'warnIgnoreInstructions' | 'warnHideFromUser' | 'warnRemoteInstructions' | 'warnParentPath'
+
+/** One line a preview points at */
+export interface UserSkillWarningView {
+  messageKey: UserSkillWarningKey
+  /** the file inside the skill folder, `/` between parts */
+  file: string
+  line: number
+  excerpt: string
+}
+
 /** One found skill of an import preview (spec 5.2) */
 export interface UserSkillImportCandidateView {
   key: string
@@ -227,6 +251,9 @@ export interface UserSkillImportCandidateView {
   urls: string[]
   urlCount: number
   license: string | undefined
+  /** the first few lines the preview points at */
+  warnings: UserSkillWarningView[]
+  warningCount: number
   collision: boolean
   problem: UserSkillUnreadable | 'duplicate' | undefined
 }
@@ -237,6 +264,8 @@ export interface UserSkillImportPreview {
   origin:
     | { kind: 'folder' }
     | { kind: 'zip' }
+    | { kind: 'skill-file' }
+    | { kind: 'text' }
     | { kind: 'github'; repo: string; ref: string; commit: string; path: string }
   candidates: UserSkillImportCandidateView[]
   rootLicense: string | undefined
@@ -414,6 +443,30 @@ export function cardSaveInputOf(value: unknown): UserSkillCardSaveInput | undefi
     targetId,
     overwrite: value.overwrite === true,
   }
+}
+
+/** Longest pasted SKILL.md text a window may send (the core refuses over 2 MiB) */
+export const USER_SKILL_PASTE_MAX_CHARS = 2_000_000
+
+export function importTextOf(value: unknown): string | undefined {
+  return text(value, USER_SKILL_PASTE_MAX_CHARS)
+}
+
+/** Most skills one bundle export takes */
+export const USER_SKILL_BUNDLE_MAX = 500
+
+/** Skill identifiers for a bundle export: one or more, each once */
+export function skillIdListOf(value: unknown): string[] | undefined {
+  if (!Array.isArray(value) || value.length === 0 || value.length > USER_SKILL_BUNDLE_MAX) {
+    return undefined
+  }
+  const ids: string[] = []
+  for (const item of value) {
+    const id = skillIdOf(item)
+    if (!id) return undefined
+    if (!ids.includes(id)) ids.push(id)
+  }
+  return ids
 }
 
 export function installRequestOf(value: unknown): UserSkillInstallRequest | undefined {

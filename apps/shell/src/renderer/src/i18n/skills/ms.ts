@@ -95,7 +95,7 @@ export const ms = {
   githubLabel: 'Alamat GitHub',
   githubPlaceholder: 'https://github.com/pemilik/repositori',
   githubHint:
-    'Repositori awam sahaja. Tampal alamat repositori, folder atau SKILL.md, atau "pemilik/repositori".',
+    'Repositori awam sahaja. Tampal alamat repositori, folder atau SKILL.md, "pemilik/repositori", atau halaman kemahiran di skills.sh.',
   githubFind: 'Cari',
   githubFetching: 'Memuat turun dari GitHub…',
   importReading: 'Membaca kemahiran…',
@@ -139,4 +139,27 @@ export const ms = {
   failEmptyBody: 'Masukkan arahan',
   failBadName: 'Nama tidak mematuhi peraturan',
   failGeneric: 'Tidak berjaya. Cuba lagi',
+  addPaste: 'Daripada teks yang ditampal',
+  pasteTitle: 'Tambah dengan menampal teks',
+  pasteLabel: 'Teks SKILL.md',
+  pasteHint:
+    'Tampal keseluruhan teks SKILL.md, bermula dengan baris --- serta baris name: dan description: di bawahnya.',
+  pastePreview: 'Pratonton',
+  pasteNotSkill: 'Ini bukan teks kemahiran. Ia mesti bermula dengan baris --- diikuti baris name:.',
+  previewFromText: '{n} kemahiran ditemui dalam teks yang ditampal',
+  previewFromSkillFile: '{n} kemahiran ditemui dalam fail SKILL.md',
+  previewWarnings: 'Baris yang patut dibaca sebelum memasang: {n}',
+  previewWarningsNote:
+    'Baris ini sepadan dengan senarai pendek corak. Kemahiran tanpa sebarang baris di sini tidak semestinya selamat.',
+  previewWarningAt: '{file}, baris {line}',
+  warnIgnoreInstructions: 'Meminta AI mengabaikan arahan sebelumnya',
+  warnHideFromUser: 'Meminta AI menyembunyikan sesuatu daripada anda',
+  warnRemoteInstructions: 'Meminta AI mengambil arahan dari alamat luar',
+  warnParentPath: 'Laluan ../ yang menghala ke luar folder kemahiran',
+  exportSeveral: 'Eksport beberapa',
+  bundleTitle: 'Eksport kemahiran bersama-sama',
+  bundleIntro:
+    'Kemahiran yang anda tandakan dimasukkan ke dalam satu fail zip, satu folder bagi setiap kemahiran. Penerimanya boleh melepaskan zip itu pada tetingkap aplikasi, atau menggunakan Tambah ▸ Daripada fail zip.',
+  bundleSelectLabel: 'Sertakan {title}',
+  bundleExport: 'Eksport ({n})',
 } satisfies Record<keyof typeof zh, string>

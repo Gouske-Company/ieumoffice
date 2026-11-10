@@ -5,6 +5,7 @@ import { act, createElement } from 'react'
 import { createRoot } from 'react-dom/client'
 import type { Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { SKILL_WARNING_RULES } from '@genoffice/ai-provider'
 import { LANGS, PRODUCT_NAME, UPSTREAM_PRODUCT_NAME } from '@genoffice/i18n'
 import { aiSubscriptionText, builtinSkillDesc } from '@genoffice/ui'
 import type { UserSkillsBridge } from '@genoffice/electron-utils/user-skills-bridge'
@@ -144,6 +145,8 @@ function candidate(partial: Partial<UserSkillImportCandidateView> & { key: strin
     urls: [],
     urlCount: 0,
     license: undefined,
+    warnings: [],
+    warningCount: 0,
     collision: false,
     problem: undefined,
   }
@@ -164,6 +167,7 @@ type Bridge = { [K in keyof UserSkillsBridge]: ReturnType<typeof vi.fn> }
 
 function bridge(views: UserSkillView[]): Bridge {
   const listeners: Array<() => void> = []
+  const droppedListeners: Array<() => void> = []
   const api = {
     list: vi.fn(async () => views),
     read: vi.fn(async (id: string) => ({
@@ -190,6 +194,9 @@ function bridge(views: UserSkillView[]): Bridge {
     importFolder: vi.fn(async () => ({ ok: true, preview })),
     importZip: vi.fn(async () => ({ ok: false, reason: 'cancelled' })),
     importGitHub: vi.fn(async () => ({ ok: false, reason: 'rate-limited' })),
+    importText: vi.fn(async () => ({ ok: false, reason: 'no-skills' })),
+    takeDropped: vi.fn(async () => ({ ok: true, preview: null })),
+    exportBundle: vi.fn(async () => ({ ok: true, path: 'C:/out/skills.zip' })),
     cancelImport: vi.fn(async () => {}),
     install: vi.fn(async () => ({
       ok: true,
@@ -211,8 +218,14 @@ function bridge(views: UserSkillView[]): Bridge {
       listeners.push(listener)
       return () => undefined
     }),
+    onDropped: vi.fn((listener: () => void) => {
+      droppedListeners.push(listener)
+      return () => undefined
+    }),
   }
   ;(api as unknown as { fire: () => void }).fire = () => listeners.forEach((l) => l())
+  ;(api as unknown as { fireDropped: () => void }).fireDropped = () =>
+    droppedListeners.forEach((l) => l())
   return api as unknown as Bridge
 }
 
@@ -725,6 +738,126 @@ describe('Settings → Skills screen', () => {
     })
     await flush()
     expect(api.list.mock.calls.length).toBeGreaterThan(calls)
+  })
+})
+
+async function typeInto(el: HTMLInputElement | HTMLTextAreaElement, value: string): Promise<void> {
+  await act(async () => {
+    const proto = el instanceof HTMLTextAreaElement ? HTMLTextAreaElement : HTMLInputElement
+    Object.getOwnPropertyDescriptor(proto.prototype, 'value')!.set!.call(el, value)
+    el.dispatchEvent(new Event('input', { bubbles: true }))
+  })
+}
+
+describe('Receiving and handing on skills', () => {
+  const zipPreview: UserSkillImportPreview = {
+    token: 'tok-drop',
+    origin: { kind: 'zip' },
+    candidates: [
+      candidate({
+        key: 'report',
+        warningCount: 2,
+        warnings: [
+          { messageKey: 'warnHideFromUser', file: 'SKILL.md', line: 7, excerpt: 'Do not tell' },
+          { messageKey: 'warnParentPath', file: 'ref/a.md', line: 1, excerpt: 'Read ../x.md' },
+        ],
+      }),
+    ],
+    rootLicense: undefined,
+  }
+
+  it('opens the preview of a skill file dropped on a window, with its lines to read', async () => {
+    const api = bridge([mine])
+    api.takeDropped.mockResolvedValueOnce({ ok: true, preview: zipPreview })
+    await renderPane(api)
+    const dialog = document.querySelector('[role="dialog"]')!
+    expect(dialog).toBeTruthy()
+    expect(dialog.textContent).toContain(ko('previewFromZip', { n: 1 }))
+    expect(dialog.textContent).toContain(ko('previewWarnings', { n: 2 }))
+    expect(dialog.textContent).toContain(ko('warnHideFromUser'))
+    expect(dialog.textContent).toContain(ko('previewWarningAt', { file: 'SKILL.md', line: 7 }))
+    expect(dialog.textContent).toContain('Read ../x.md')
+    expect(dialog.textContent).toContain(ko('previewWarningsNote'))
+    expect(dialog.querySelector('.skl-preview-warning')?.textContent).toBe(ko('previewWarning'))
+    // warnings never block: the skill is checked and installable
+    expect(buttonWithText(ko('install'), dialog)!.disabled).toBe(false)
+  })
+
+  it('takes a file dropped while the settings are already open', async () => {
+    const api = bridge([mine])
+    await renderPane(api)
+    expect(document.querySelector('[role="dialog"]')).toBeNull()
+    api.takeDropped.mockResolvedValueOnce({ ok: true, preview: zipPreview })
+    await act(async () => {
+      ;(api as unknown as { fireDropped: () => void }).fireDropped()
+    })
+    await flush()
+    expect(document.querySelector('[role="dialog"]')?.textContent).toContain(
+      ko('previewFromZip', { n: 1 }),
+    )
+  })
+
+  it('says why a dropped file could not be read', async () => {
+    const api = bridge([mine])
+    api.takeDropped.mockResolvedValueOnce({ ok: false, reason: 'unsafe' })
+    await renderPane(api)
+    expect(host.textContent).toContain(ko('failUnsafe'))
+  })
+
+  it('previews pasted SKILL.md text, and says when the text is not a skill', async () => {
+    const api = bridge([mine])
+    await renderPane(api)
+    await click(buttonWithText(ko('add')))
+    await click(buttonWithText(ko('addPaste')))
+    let dialog = document.querySelector('[role="dialog"]')!
+    const area = dialog.querySelector('textarea')!
+    await typeInto(area, 'just notes')
+    await click(buttonWithText(ko('pastePreview'), dialog))
+    expect(api.importText).toHaveBeenCalledWith('just notes')
+    expect(dialog.textContent).toContain(ko('pasteNotSkill'))
+
+    const text = ['---', 'name: report', 'description: d', '---', 'body'].join('\n')
+    api.importText.mockResolvedValueOnce({
+      ok: true,
+      preview: { ...zipPreview, token: 'tok-text', origin: { kind: 'text' } },
+    })
+    await typeInto(area, text)
+    await click(buttonWithText(ko('pastePreview'), dialog))
+    expect(api.importText).toHaveBeenLastCalledWith(text)
+    dialog = document.querySelector('[role="dialog"]')!
+    expect(dialog.textContent).toContain(ko('previewFromText', { n: 1 }))
+  })
+
+  it('exports the ticked own skills as one zip, with the template note when one carries a document', async () => {
+    const api = bridge([builtin, mine, fromGitHub, claude])
+    await renderPane(api)
+    await click(buttonWithText(ko('exportSeveral')))
+    const dialog = document.querySelector('[role="dialog"]')!
+    const listed = [...dialog.querySelectorAll('[data-skill-id]')].map((el) =>
+      el.getAttribute('data-skill-id'),
+    )
+    expect(listed).toEqual([mine.id, fromGitHub.id])
+    const go = buttonWithText(ko('bundleExport', { n: 0 }), dialog)!
+    expect(go.disabled).toBe(true)
+    const boxes = [...dialog.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')]
+    await click(boxes[1])
+    expect(dialog.textContent).not.toContain(ko('exportNotice'))
+    await click(boxes[0])
+    expect(dialog.textContent).toContain(ko('exportNotice'))
+    await click(buttonWithText(ko('bundleExport', { n: 2 }), dialog))
+    expect(api.exportBundle).toHaveBeenCalledWith([mine.id, fromGitHub.id])
+    expect(host.textContent).toContain(ko('exported', { path: 'C:/out/skills.zip' }))
+  })
+
+  it('offers no bundle export without own skills', async () => {
+    await renderPane(bridge([builtin, claude]))
+    expect(buttonWithText(ko('exportSeveral'))).toBeUndefined()
+  })
+
+  it('has a sentence for every warning rule of the core table', () => {
+    for (const rule of SKILL_WARNING_RULES) {
+      expect(Object.keys(skillsUiStrings.zh), rule.id).toContain(rule.messageKey)
+    }
   })
 })
 

@@ -93,7 +93,8 @@ export const th = {
   githubTitle: 'เพิ่มจากลิงก์ GitHub',
   githubLabel: 'ที่อยู่ GitHub',
   githubPlaceholder: 'https://github.com/เจ้าของ/คลัง',
-  githubHint: 'รองรับเฉพาะคลังสาธารณะ วางที่อยู่ของคลัง โฟลเดอร์ หรือ SKILL.md หรือ "เจ้าของ/คลัง"',
+  githubHint:
+    'รองรับเฉพาะคลังสาธารณะ วางที่อยู่ของคลัง โฟลเดอร์ หรือ SKILL.md หรือ "เจ้าของ/คลัง" หรือหน้าของสกิลบน skills.sh',
   githubFind: 'ค้นหา',
   githubFetching: 'กำลังดาวน์โหลดจาก GitHub…',
   importReading: 'กำลังอ่านสกิล…',
@@ -136,4 +137,27 @@ export const th = {
   failEmptyBody: 'ป้อนคำแนะนำ',
   failBadName: 'ชื่อไม่ตรงตามกฎ',
   failGeneric: 'ไม่สำเร็จ ลองอีกครั้ง',
+  addPaste: 'จากข้อความที่วาง',
+  pasteTitle: 'เพิ่มโดยวางข้อความ',
+  pasteLabel: 'ข้อความ SKILL.md',
+  pasteHint:
+    'วางข้อความ SKILL.md ทั้งหมด โดยเริ่มจากบรรทัด --- และบรรทัด name: กับ description: ที่อยู่ถัดลงมา',
+  pastePreview: 'ดูตัวอย่าง',
+  pasteNotSkill: 'นี่ไม่ใช่ข้อความสกิล ต้องขึ้นต้นด้วยบรรทัด --- แล้วตามด้วยบรรทัด name:',
+  previewFromText: 'พบสกิล {n} รายการในข้อความที่วาง',
+  previewFromSkillFile: 'พบสกิล {n} รายการในไฟล์ SKILL.md',
+  previewWarnings: 'บรรทัดที่ควรอ่านก่อนติดตั้ง {n} รายการ',
+  previewWarningsNote:
+    'บรรทัดเหล่านี้ตรงกับรูปแบบในรายการสั้น ๆ สกิลที่ไม่มีบรรทัดใดอยู่ตรงนี้ก็ไม่ได้แปลว่าปลอดภัย',
+  previewWarningAt: '{file} บรรทัดที่ {line}',
+  warnIgnoreInstructions: 'ขอให้ AI เพิกเฉยต่อคำสั่งก่อนหน้า',
+  warnHideFromUser: 'ขอให้ AI ปิดบังบางอย่างจากคุณ',
+  warnRemoteInstructions: 'ขอให้ AI รับคำสั่งจากที่อยู่ภายนอก',
+  warnParentPath: 'เส้นทาง ../ ที่ชี้ออกไปนอกโฟลเดอร์สกิล',
+  exportSeveral: 'ส่งออกหลายรายการ',
+  bundleTitle: 'ส่งออกสกิลรวมกัน',
+  bundleIntro:
+    'สกิลที่คุณเลือกจะอยู่ในไฟล์ zip ไฟล์เดียว โดยแยกเป็นโฟลเดอร์ละหนึ่งสกิล ผู้ที่ได้รับสามารถลากไฟล์ zip มาวางบนหน้าต่างแอป หรือใช้ เพิ่ม ▸ จากไฟล์ zip',
+  bundleSelectLabel: 'รวม {title}',
+  bundleExport: 'ส่งออก ({n})',
 } satisfies Record<keyof typeof zh, string>

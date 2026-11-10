@@ -118,5 +118,6 @@
 | [0117](0117-chatgpt-one-account.md)                           | ChatGPT 직접 연결과 Codex를 화면에서 ChatGPT 하나로 보이고, 길은 앱이 정한다                         | 2026-11-09 |
 | [0118](0118-template-skill-in-current-document.md)            | 내용이 있는 문서에서 양식 스킬을 부르면 지금 문서와 새 문서 중 어디서 할지 묻는다                    | 2026-11-10 |
 | [0119](0119-ods-open-and-export.md)                           | ODS는 불러오기부터 넣고, 내보내기는 전체 변환으로 따로 낸다                                          | 2026-11-09 |
+| [0120](0120-skills-receive-and-hand-on.md)                    | 스킬을 끌어 놓기·글 붙여넣기로 받고, 여러 개를 zip 하나로 건네며, 살펴볼 줄은 보이기만 한다          | 2026-11-10 |
 | [0121](0121-docx-to-hwp-export.md)                            | 워드 문서를 다른 이름으로 저장·내보내기에서 .hwp·.hwpx 사본으로 쓴다                                 | 2026-11-10 |
 | [0123](0123-reviewed-skill-collection.md)                     | 검토한 스킬 모음을 사람이 열 때만 둘러보고, 좋아요는 계정 없이 앱에서 누른다                         | 2026-11-10 |

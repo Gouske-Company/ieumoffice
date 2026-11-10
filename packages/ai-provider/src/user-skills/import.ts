@@ -21,8 +21,13 @@ import {
   writeFile,
 } from 'node:fs/promises'
 import { basename, dirname, join } from 'node:path'
-import { extractSkillArchive } from './archive'
-import { IEUM_SOURCE_FILE, MAX_USER_SKILL_BYTES, MAX_USER_SKILL_FILES } from './constants'
+import { extractSkillArchive, readSkillArchiveLayout } from './archive'
+import {
+  IEUM_SOURCE_FILE,
+  MAX_USER_SKILL_BYTES,
+  MAX_USER_SKILL_FILES,
+  USER_SKILL_NAME,
+} from './constants'
 import { SkillImportError } from './errors'
 import {
   findSkillUrls,
@@ -44,6 +49,7 @@ import { isReservedUserSkillName } from './names'
 import { isoSeconds, renderIeumSourceRecord, type IeumSourceRecord } from './source-record'
 import { isInsideCodexHome } from './sources'
 import type { UserSkillUnreadableReason } from './types'
+import { SKILL_PREVIEW_WARNING_COUNT, findSkillWarnings, type SkillWarning } from './warnings'
 
 /**
  * Folders made while installing, inside the app's skills folder (so the final
@@ -66,10 +72,27 @@ const DEFAULT_SKILL_LIMITS: SkillFolderLimits = {
   bytes: MAX_USER_SKILL_BYTES,
 }
 
+/**
+ * What the person handed over to take skills from. Every way in (the add
+ * menu, a file dropped on a window, pasted text) is one of these and goes
+ * through `prepareSkillImport` to the same preview.
+ */
+export type SkillImportSource =
+  | { kind: 'folder'; folder: string }
+  | { kind: 'zip'; file: string }
+  /** a single `SKILL.md` file: a skill of that one file */
+  | { kind: 'skill-file'; file: string }
+  /** pasted `SKILL.md` text: a skill of that one file */
+  | { kind: 'text'; text: string }
+  /** what the person typed: a GitHub address or a skills directory address */
+  | { kind: 'github'; address: string }
+
 /** Where an import came from */
 export type SkillImportOrigin =
   | { kind: 'folder'; folder: string }
   | { kind: 'zip'; file: string }
+  | { kind: 'skill-file'; file: string }
+  | { kind: 'text' }
   | {
       kind: 'github'
       /** `owner/repo` */
@@ -107,6 +130,10 @@ export interface SkillImportCandidate {
   urlCount: number
   /** a license file at the top of the skill folder */
   license: string | undefined
+  /** the first few lines the preview points at (`warnings.ts`) */
+  warnings: SkillWarning[]
+  /** how many such lines there are in all */
+  warningCount: number
   /** a skill of the same name (or a folder of that name) is already in the app's skills folder */
   collision: boolean
   problem: SkillImportProblem | undefined
@@ -227,7 +254,9 @@ export async function describeSkillCandidate(
 ): Promise<SkillImportCandidate | undefined> {
   const skill = await readUserSkillFolder(dir, { source: 'app' })
   if (!skill) return undefined
-  const urls = skill.unreadable === 'too-large' ? [] : await findSkillUrls(dir)
+  const readable = skill.unreadable !== 'too-large'
+  const urls = readable ? await findSkillUrls(dir) : []
+  const warnings = readable ? await findSkillWarnings(dir) : []
   const taken = (existing.get(skill.name.toLowerCase()) ?? []).filter(
     (other) => !ignoreDirs.some((ignored) => isInsideDir(other, ignored)),
   )
@@ -245,6 +274,8 @@ export async function describeSkillCandidate(
     urls: urls.slice(0, SKILL_PREVIEW_URL_COUNT),
     urlCount: urls.length,
     license: await licenseFileIn(dir),
+    warnings: warnings.slice(0, SKILL_PREVIEW_WARNING_COUNT),
+    warningCount: warnings.length,
     collision: taken.length > 0,
     problem: skill.unreadable,
   }
@@ -368,6 +399,108 @@ export async function prepareZipImport(options: PrepareZipImportOptions): Promis
   }
 }
 
+/** The largest `SKILL.md` text taken as a skill of its own (pasted, or a dropped file) */
+export const MAX_SKILL_TEXT_IMPORT_BYTES = 2 * 1024 * 1024
+
+/**
+ * The `name` of a text that reads as a `SKILL.md`: it starts with a `---`
+ * front matter block (after blank space; `\s` also takes a byte order mark)
+ * that has a `name`. `undefined` for any other text.
+ */
+export function skillTextName(text: string): string | undefined {
+  const start = text.replace(/^\s+/, '')
+  if (!start.startsWith('---')) return undefined
+  return parseSkillMd(start)?.name?.trim() || undefined
+}
+
+export interface PrepareTextImportOptions {
+  text: string
+  appSkillsDir: string
+  /** where this import's temporary folder is made */
+  tempDir: string
+}
+
+async function prepareSingleFileImport(
+  text: string,
+  origin: Extract<SkillImportOrigin, { kind: 'text' | 'skill-file' }>,
+  options: { appSkillsDir: string; tempDir: string },
+): Promise<SkillImport> {
+  if (Buffer.byteLength(text, 'utf8') > MAX_SKILL_TEXT_IMPORT_BYTES) {
+    throw new SkillImportError('too-large', 'The SKILL.md text is too large')
+  }
+  const name = skillTextName(text)
+  if (name === undefined) throw noSkills()
+  const work = await makeWorkDir(options.tempDir)
+  try {
+    const root = join(work, 'text')
+    // the folder gets the skill's name, so a name the rule refuses still shows as that problem
+    const folder = USER_SKILL_NAME.test(name) ? name : 'skill'
+    await mkdir(join(root, folder), { recursive: true })
+    await writeFile(join(root, folder, 'SKILL.md'), text.replace(/^\s+(?=---)/, ''))
+    const candidates = await describeCandidates(root, [folder], options.appSkillsDir, undefined)
+    if (candidates.length === 0) throw noSkills()
+    return { origin, root, candidates, rootLicense: undefined, tempDir: work }
+  } catch (error) {
+    await removeQuietly(work)
+    throw error
+  }
+}
+
+/** Take pasted `SKILL.md` text as a skill of that one file */
+export function prepareTextImport(options: PrepareTextImportOptions): Promise<SkillImport> {
+  return prepareSingleFileImport(options.text, { kind: 'text' }, options)
+}
+
+export interface PrepareSkillFileImportOptions {
+  file: string
+  appSkillsDir: string
+  /** nothing inside the Codex home (`~/.codex`) is read */
+  homeDir: string
+  /** where this import's temporary folder is made */
+  tempDir: string
+}
+
+/**
+ * Take one `SKILL.md` file as a skill of that one file. The folder around it
+ * is not taken: a file dropped from a downloads folder must not bring the
+ * rest of that folder along. A skill with more files comes as a zip.
+ */
+export async function prepareSkillFileImport(
+  options: PrepareSkillFileImportOptions,
+): Promise<SkillImport> {
+  if (await isInsideCodexHome(options.file, options.homeDir)) {
+    throw new SkillImportError('invalid-source', 'The file is inside the Codex home')
+  }
+  const info = await stat(options.file).catch(() => undefined)
+  if (!info?.isFile()) throw new SkillImportError('not-found', 'The file cannot be read')
+  if (info.size > MAX_SKILL_TEXT_IMPORT_BYTES) {
+    throw new SkillImportError('too-large', 'The SKILL.md file is too large')
+  }
+  const text = await readFile(options.file, 'utf8').catch(() => undefined)
+  if (text === undefined) throw new SkillImportError('not-found', 'The file cannot be read')
+  return prepareSingleFileImport(text, { kind: 'skill-file', file: options.file }, options)
+}
+
+/** A dropped file's name that makes it a skill file (`SKILL.md`, any case) */
+const SKILL_FILE_NAME = /(?:^|[\\/])skill\.md$/i
+
+/**
+ * What a file dropped on a window gives to take skills from: a `SKILL.md`
+ * file, or a zip whose layout is a skill's (`readSkillArchiveLayout`).
+ * `undefined` for anything else, which keeps the drop's usual handling, and
+ * for anything inside the Codex home, which is never read.
+ */
+export async function droppedSkillSourceOf(
+  path: string,
+  homeDir: string,
+): Promise<Extract<SkillImportSource, { kind: 'zip' | 'skill-file' }> | undefined> {
+  const named = SKILL_FILE_NAME.test(path)
+  if (!named && !/\.zip$/i.test(path)) return undefined
+  if (await isInsideCodexHome(path, homeDir)) return undefined
+  if (named) return { kind: 'skill-file', file: path }
+  return (await readSkillArchiveLayout(path)) ? { kind: 'zip', file: path } : undefined
+}
+
 export interface PrepareGitHubImportOptions {
   /** what the person typed */
   address: string
@@ -436,6 +569,46 @@ export async function prepareGitHubImport(
   } catch (error) {
     await removeQuietly(work)
     throw error
+  }
+}
+
+export interface PrepareSkillImportEnv {
+  appSkillsDir: string
+  homeDir: string
+  /** where an import's temporary folder is made */
+  tempDir: string
+  fetch: SkillFetch
+  signal?: AbortSignal | undefined
+}
+
+/** Find the skills of any source for the one preview (writes only its temporary folder) */
+export function prepareSkillImport(
+  source: SkillImportSource,
+  env: PrepareSkillImportEnv,
+): Promise<SkillImport> {
+  const { appSkillsDir, tempDir } = env
+  switch (source.kind) {
+    case 'folder':
+      return prepareFolderImport({ folder: source.folder, appSkillsDir, homeDir: env.homeDir })
+    case 'zip':
+      return prepareZipImport({ file: source.file, appSkillsDir, tempDir })
+    case 'skill-file':
+      return prepareSkillFileImport({
+        file: source.file,
+        appSkillsDir,
+        homeDir: env.homeDir,
+        tempDir,
+      })
+    case 'text':
+      return prepareTextImport({ text: source.text, appSkillsDir, tempDir })
+    case 'github':
+      return prepareGitHubImport({
+        address: source.address,
+        fetch: env.fetch,
+        appSkillsDir,
+        tempDir,
+        signal: env.signal,
+      })
   }
 }
 

@@ -93,7 +93,7 @@ export const he = {
   githubLabel: 'כתובת GitHub',
   githubPlaceholder: 'https://github.com/בעלים/מאגר',
   githubHint:
-    'מאגרים ציבוריים בלבד. אפשר להדביק כתובת של מאגר, תיקייה או SKILL.md, או "בעלים/מאגר".',
+    'מאגרים ציבוריים בלבד. אפשר להדביק כתובת של מאגר, תיקייה או SKILL.md, "בעלים/מאגר", או דף של מיומנות ב-skills.sh.',
   githubFind: 'חיפוש',
   githubFetching: 'בהורדה מ-GitHub…',
   importReading: 'קריאת המיומנויות…',
@@ -136,4 +136,27 @@ export const he = {
   failEmptyBody: 'נא להזין הוראות',
   failBadName: 'השם לא עומד בכללים',
   failGeneric: 'הפעולה לא הצליחה. נסו שוב',
+  addPaste: 'מטקסט מודבק',
+  pasteTitle: 'הוספה בהדבקת טקסט',
+  pasteLabel: 'טקסט SKILL.md',
+  pasteHint:
+    'יש להדביק את כל הטקסט של SKILL.md, החל בשורה --- ובשורות name: ו- description: שמתחתיה.',
+  pastePreview: 'תצוגה מקדימה',
+  pasteNotSkill: 'זה לא טקסט של מיומנות. הוא צריך להתחיל בשורה --- ואחריה שורת name:.',
+  previewFromText: 'נמצאו {n} מיומנויות בטקסט המודבק',
+  previewFromSkillFile: 'נמצאו {n} מיומנויות בקובץ SKILL.md',
+  previewWarnings: 'שורות שכדאי לקרוא לפני ההתקנה: {n}',
+  previewWarningsNote:
+    'השורות האלה תאמו רשימה קצרה של דפוסים. מיומנות שאין לה כאן אף שורה אינה בטוחה בגלל זה.',
+  previewWarningAt: '{file}, שורה {line}',
+  warnIgnoreInstructions: 'מבקשת מה-AI להתעלם מהוראות קודמות',
+  warnHideFromUser: 'מבקשת מה-AI להסתיר ממך משהו',
+  warnRemoteInstructions: 'מבקשת מה-AI לקבל הוראות מכתובת חיצונית',
+  warnParentPath: 'נתיב ../ שמצביע אל מחוץ לתיקיית המיומנות',
+  exportSeveral: 'ייצוא של כמה מיומנויות',
+  bundleTitle: 'ייצוא מיומנויות יחד',
+  bundleIntro:
+    'המיומנויות שסימנתם נכנסות לקובץ zip אחד, תיקייה לכל מיומנות. מי שמקבל אותו יכול לגרור את קובץ ה-zip לחלון של האפליקציה, או לבחור הוספה ▸ מקובץ zip.',
+  bundleSelectLabel: 'הכללת {title}',
+  bundleExport: 'ייצוא ({n})',
 } satisfies Record<keyof typeof zh, string>

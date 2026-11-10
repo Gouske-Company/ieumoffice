@@ -48,12 +48,20 @@ const service = {
   aiRead: vi.fn(async () => ({ ok: false, reason: 'disabled' })),
   aiReadFile: vi.fn(async () => ({ ok: false, reason: 'outside' })),
   copyToMine: vi.fn(async () => ({ ok: false, reason: 'exists' })),
+  prepare: vi.fn(async (source: { kind: string }) => ({
+    origin: source.kind === 'text' ? { kind: 'text' } : { kind: source.kind, file: 'f' },
+    root: 'r',
+    candidates: [],
+    rootLicense: undefined,
+    tempDir: undefined,
+  })),
+  exportBundleTo: vi.fn(async () => ({ ok: true, path: 'p' })),
 }
 
 const { registerUserSkillsIpc } = await import('../src/main/user-skills/user-skills-ipc')
 const { userSkillsManageGate } = await import('../src/main/agent/agent-skills')
 const openSettings = vi.fn()
-registerUserSkillsIpc({
+const ipc = registerUserSkillsIpc({
   service: service as unknown as UserSkillsService,
   canManage: userSkillsManageGate({
     isMainWindow: (sender) => sender === (settings as unknown),
@@ -148,5 +156,49 @@ describe('who may do what', () => {
     expect(
       await call(C.install, settings, { token: 'nope', selected: [], onCollision: {} }),
     ).toEqual({ ok: false, reason: 'not-found' })
+  })
+})
+
+describe('skills dropped on a window and pasted text', () => {
+  it('keeps a dropped file for the settings screen, which previews it once', async () => {
+    ipc.queueDropped({ kind: 'zip', file: 'C:/dl/pack.zip' })
+    expect(mocks.sent.map((entry) => entry.channel)).toEqual([C.dropped, C.dropped])
+    expect(await call(C.takeDropped, editor)).toMatchObject({ reason: 'not-allowed' })
+    expect(await call(C.takeDropped, agent)).toMatchObject({ reason: 'not-allowed' })
+    const taken = (await call(C.takeDropped, settings)) as {
+      ok: boolean
+      preview: { origin: { kind: string } } | null
+    }
+    expect(taken.ok).toBe(true)
+    expect(taken.preview?.origin).toEqual({ kind: 'zip' })
+    expect(service.prepare).toHaveBeenCalledWith({ kind: 'zip', file: 'C:/dl/pack.zip' })
+    expect(await call(C.takeDropped, settings)).toEqual({ ok: true, preview: null })
+  })
+
+  it('previews pasted text from the settings screen only, and refuses what is not text', async () => {
+    expect(await call(C.importText, editor, '---\nname: a\n---')).toMatchObject({
+      reason: 'not-allowed',
+    })
+    expect(await call(C.importText, settings, 42)).toMatchObject({ reason: 'invalid' })
+    expect(await call(C.importText, settings, 'x'.repeat(2_000_001))).toMatchObject({
+      reason: 'invalid',
+    })
+    const answer = (await call(C.importText, settings, '---\nname: a\n---')) as {
+      preview: { origin: unknown }
+    }
+    expect(answer.preview.origin).toEqual({ kind: 'text' })
+    expect(service.prepare).toHaveBeenCalledTimes(1)
+    expect(service.prepare).toHaveBeenCalledWith({ kind: 'text', text: '---\nname: a\n---' })
+  })
+
+  it('refuses a bundle export without skill identifiers before asking where to save', async () => {
+    expect(await call(C.exportBundle, settings, [])).toMatchObject({ reason: 'invalid' })
+    expect(await call(C.exportBundle, settings, ['no-colon'])).toMatchObject({ reason: 'invalid' })
+    expect(await call(C.exportBundle, editor, ['app:a'])).toMatchObject({ reason: 'not-allowed' })
+    // the save dialog of this test is cancelled
+    expect(await call(C.exportBundle, settings, ['app:a', 'app:b'])).toMatchObject({
+      reason: 'cancelled',
+    })
+    expect(service.exportBundleTo).not.toHaveBeenCalled()
   })
 })

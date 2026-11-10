@@ -93,7 +93,7 @@ export const ru = {
   githubLabel: 'Адрес на GitHub',
   githubPlaceholder: 'https://github.com/владелец/репозиторий',
   githubHint:
-    'Только публичные репозитории. Вставьте адрес репозитория, папки или SKILL.md либо «владелец/репозиторий».',
+    'Только публичные репозитории. Вставьте адрес репозитория, папки или SKILL.md, «владелец/репозиторий» либо страницу навыка на skills.sh.',
   githubFind: 'Найти',
   githubFetching: 'Загрузка с GitHub…',
   importReading: 'Чтение навыков…',
@@ -137,4 +137,28 @@ export const ru = {
   failEmptyBody: 'Введите инструкции',
   failBadName: 'Имя не соответствует правилам',
   failGeneric: 'Не получилось. Попробуйте ещё раз',
+  addPaste: 'Из вставленного текста',
+  pasteTitle: 'Добавить, вставив текст',
+  pasteLabel: 'Текст SKILL.md',
+  pasteHint:
+    'Вставьте весь текст SKILL.md, начиная со строки --- и строк name: и description: под ней.',
+  pastePreview: 'Предпросмотр',
+  pasteNotSkill:
+    'Это не текст навыка. Он должен начинаться со строки ---, за которой идёт строка name:.',
+  previewFromText: 'Найдено навыков во вставленном тексте: {n}',
+  previewFromSkillFile: 'Найдено навыков в файле SKILL.md: {n}',
+  previewWarnings: 'Строки, которые стоит прочитать перед установкой: {n}',
+  previewWarningsNote:
+    'Эти строки совпали с коротким списком шаблонов. Если здесь нет ни одной строки, это ещё не значит, что навык безопасен.',
+  previewWarningAt: '{file}, строка {line}',
+  warnIgnoreInstructions: 'Просит ИИ игнорировать прежние инструкции',
+  warnHideFromUser: 'Просит ИИ скрыть что-то от вас',
+  warnRemoteInstructions: 'Просит ИИ брать инструкции с внешнего адреса',
+  warnParentPath: 'Путь ../, ведущий за пределы папки навыка',
+  exportSeveral: 'Экспорт нескольких',
+  bundleTitle: 'Экспорт навыков вместе',
+  bundleIntro:
+    'Отмеченные навыки попадут в один zip-файл, по папке на навык. Получатель может перетащить этот zip на окно приложения или выбрать Добавить ▸ Из zip-файла.',
+  bundleSelectLabel: 'Включить {title}',
+  bundleExport: 'Экспорт ({n})',
 } satisfies Record<keyof typeof zh, string>

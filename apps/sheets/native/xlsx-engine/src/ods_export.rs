@@ -45,6 +45,10 @@ const MAX_EXPORT_CELLS: usize = 2_000_000;
 /// How long the export waits for the sheet index to finish, so the sheet-wide
 /// parts (conditional rules, validations, page setup) are the real ones.
 const INDEX_WAIT: Duration = Duration::from_secs(60);
+/// The pause between two waits. `read_range` itself blocks up to `RANGE_WAIT`
+/// for the index, so a short sleep here only makes sure a finished index is not
+/// kept re-taking the session lock the moment it releases it.
+const INDEX_WAIT_BACKOFF: Duration = Duration::from_millis(50);
 
 const MIMETYPE: &str = "application/vnd.oasis.opendocument.spreadsheet";
 
@@ -441,6 +445,7 @@ fn read_sheet_wide(
         if result.indexing_complete || Instant::now() >= deadline {
             return Ok(result);
         }
+        std::thread::sleep(INDEX_WAIT_BACKOFF);
     }
 }
 
@@ -911,7 +916,17 @@ fn push_cell(
         }
     }
     let formula = record.and_then(|record| record.formula.as_deref());
-    let translated = formula.and_then(|formula| odf_formula::to_odf(formula));
+    // A legacy CSE/array formula fills a whole range from its master cell, and
+    // ODF has no way to say that a `table:formula` is one cell of an array
+    // result. Writing the master's formula as an ordinary one would let a
+    // reader recalculate that cell alone and change the answer, so the cached
+    // value stays and the cell counts as a dropped formula.
+    let array_formula = record.is_some_and(|record| record.array_ref.is_some());
+    let translated = if array_formula {
+        None
+    } else {
+        formula.and_then(odf_formula::to_odf)
+    };
     if formula.is_some() && translated.is_none() {
         counters.formulas_dropped += 1;
     }
@@ -1650,6 +1665,50 @@ mod tests {
         assert!(content.contains(r#"table:number-rows-repeated="4998""#), "{content}");
         assert!(content.contains(r#"office:value="11""#), "{content}");
         assert!(content.contains(r#"office:value="22""#), "{content}");
+    }
+
+    /// A legacy CSE/array formula is not written as an ordinary formula: its
+    /// master cell alone cannot stand for the range it fills, so the cached
+    /// value stays and the cell is counted among the dropped formulas.
+    #[test]
+    fn drops_array_formula_masters_and_keeps_their_values() {
+        let sheet = concat!(
+            r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>"#,
+            r#"<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><dimension ref="A1:A2"/><sheetData>"#,
+            // A1 is the CSE master spanning A1:A2; A2 keeps only its cached
+            // value, as Excel writes followers.
+            r#"<row r="1"><c r="A1"><f t="array" ref="A1:A2">TRANSPOSE(B1:C1)</f><v>7</v></c></row>"#,
+            r#"<row r="2"><c r="A2"><v>8</v></c></row>"#,
+            r#"</sheetData></worksheet>"#,
+        );
+        let dir = tempdir().unwrap();
+        let source = dir.path().join("array.xlsx");
+        write_workbook(
+            &source,
+            &[
+                (
+                    "xl/workbook.xml",
+                    r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Array" sheetId="1" r:id="rId1"/></sheets></workbook>"#.to_owned(),
+                ),
+                (
+                    "xl/_rels/workbook.xml.rels",
+                    r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>"#.to_owned(),
+                ),
+                ("xl/worksheets/sheet1.xml", sheet.to_owned()),
+            ],
+        );
+        let target = dir.path().join("array.ods");
+        let result = convert_to_ods(&source, &target).unwrap();
+        assert_eq!(result.formulas_dropped, 1, "the array master is dropped");
+
+        let content = read_entry(&target, "content.xml");
+        assert!(
+            !content.contains("table:formula"),
+            "an array formula must not travel as an ordinary one: {content}"
+        );
+        assert!(!content.contains("TRANSPOSE"), "{content}");
+        assert!(content.contains(r#"office:value="7""#), "{content}");
+        assert!(content.contains(r#"office:value="8""#), "{content}");
     }
 
     #[test]

@@ -93,6 +93,8 @@ export interface SaveOutcome {
   bytes?: Uint8Array
   /** the main-process refusal, verbatim, when the save request itself failed */
   error?: string
+  /** nothing was pending, so no write was needed (not a failure) */
+  skipped?: boolean
 }
 
 /**
@@ -315,7 +317,7 @@ export async function handleSave(
     !firstSaveAs
   ) {
     if (mode !== 'recovery') ctx.setMessage(t('appNoEditsToSave'))
-    return { ok: false }
+    return { ok: false, skipped: true }
   }
   // CSV session: Save keeps the CSV identity — Excel's "keep this format?"
   // question once per file, then the active sheet rides the save request as

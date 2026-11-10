@@ -83,28 +83,25 @@ export async function exportWorkbookAsOds(input: {
     }
     const losses = odsLosses(result)
     if (losses.length > 0 && !(await input.confirmLoss(losses))) return { status: 'canceled' }
+    // Verify the private package before it replaces the target: a bad write
+    // must never destroy an ODS the person already had at that path.
+    try {
+      // The same ODS reader the import path uses opens the finished package.
+      // A blank workbook is a valid ODS package: sheets but no cell values.
+      const reopened = await input.sidecar.convertWorkbook({
+        path: tempOds,
+        targetPath: verifyXlsx,
+      })
+      if (reopened.sheets <= 0) return { status: 'unreadable' }
+    } catch {
+      return { status: 'unreadable' }
+    }
     try {
       await placeFile(tempOds, input.targetPath)
     } catch (error) {
       return { status: 'failed', message: errorMessage(error) }
     }
-    try {
-      // The same ODS reader the import path uses opens the finished package.
-      // A file that cannot be read back is not left behind as an "export".
-      const reopened = await input.sidecar.convertWorkbook({
-        path: input.targetPath,
-        targetPath: verifyXlsx,
-      })
-      // A blank workbook is a valid ODS package: sheets but no cell values.
-      // The read-back only rejects a package the reader cannot open at all.
-      if (reopened.sheets > 0) {
-        return { status: 'exported', path: input.targetPath, result }
-      }
-    } catch {
-      // fall through: the package did not survive a read-back
-    }
-    await rm(input.targetPath, { force: true }).catch(() => undefined)
-    return { status: 'unreadable' }
+    return { status: 'exported', path: input.targetPath, result }
   } finally {
     await rm(workDir, { recursive: true, force: true }).catch(() => undefined)
   }

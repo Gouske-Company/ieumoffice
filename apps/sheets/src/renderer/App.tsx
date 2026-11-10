@@ -1202,7 +1202,10 @@ export function App({
     return {
       lazyWorkbookRef,
       setMessage,
-      saveFirst: async () => (await handleSaveRef.current('save', true)).ok,
+      saveFirst: async () => {
+        const outcome = await handleSaveRef.current('save', true)
+        return outcome.ok || outcome.skipped === true
+      },
     }
   }
 

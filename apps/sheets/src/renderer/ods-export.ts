@@ -22,12 +22,14 @@ export async function handleExportOds(
   ctx: OdsExportContext,
   targetPath?: string,
 ): Promise<boolean> {
-  const state = ctx.lazyWorkbookRef.current
-  if (!state) return false
+  if (!ctx.lazyWorkbookRef.current) return false
   try {
     // The sidecar reads a real .xlsx package, so the open workbook is saved
     // first; the export must not silently omit edits made since the last save.
     if (!(await ctx.saveFirst())) return false
+    // A real save swaps the sidecar session; read the id after the save.
+    const state = ctx.lazyWorkbookRef.current
+    if (!state) return false
     const result = await window.desktopApi.exportOds({
       sessionId: state.file.sessionId,
       ...(targetPath === undefined ? {} : { targetPath }),

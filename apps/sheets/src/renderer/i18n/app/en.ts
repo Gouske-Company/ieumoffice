@@ -537,6 +537,9 @@ export const en = {
     'CSV export needs the fully loaded workbook — wait for loading to finish.',
   appCsvExportTooLarge: 'The sheet is too large to export as CSV.',
   appCsvExportCanceled: 'CSV export canceled.',
+  appOdsExported: 'Exported {path}.',
+  appOdsExportCanceled: 'ODS export canceled.',
+  appOdsExportFailed: 'ODS export failed.',
   appCsvExported: 'Exported {path}.',
   appCsvExportedActiveOnly:
     'CSV holds a single sheet — exported the active sheet "{name}" to {path}.',
@@ -1544,4 +1547,5 @@ export const en = {
   // ── ODS import ──
   appOdsImportNotice: 'Opened the ODS as an xlsx copy. Saving writes an xlsx file.',
   appOdsFormulasDropped: '{count} formulas were kept as values only.',
+  saveAsNeedsExtension: 'Add an extension to the file name, for example report.xlsx or report.ods.',
 } satisfies Record<keyof typeof zh, string>

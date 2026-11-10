@@ -591,6 +591,9 @@ export const it = {
     "L'esportazione in CSV richiede la cartella di lavoro completamente caricata — attendi la fine del caricamento.",
   appCsvExportTooLarge: 'Il foglio è troppo grande per essere esportato come CSV.',
   appCsvExportCanceled: 'Esportazione CSV annullata.',
+  appOdsExported: '{path} esportato.',
+  appOdsExportCanceled: 'Esportazione ODS annullata.',
+  appOdsExportFailed: 'Esportazione ODS non riuscita.',
   appCsvExported: '{path} esportato.',
   appCsvExportedActiveOnly:
     'I file CSV contengono un solo foglio — il foglio attivo “{name}” è stato esportato in {path}.',
@@ -1611,4 +1614,6 @@ export const it = {
   // ── ODS import ──
   appOdsImportNotice: "L'ODS è stato aperto come copia xlsx. Il salvataggio scriverà un file xlsx.",
   appOdsFormulasDropped: 'Di {count} formule sono stati mantenuti solo i valori.',
+  saveAsNeedsExtension:
+    'Aggiungi un’estensione al nome del file, ad esempio report.xlsx o report.ods.',
 } satisfies Record<keyof typeof zh, string>

@@ -490,6 +490,9 @@ export const zhTW = {
   appCsvExportNeedsFullLoad: 'CSV 匯出需要活頁簿完整載入——請等待載入完成。',
   appCsvExportTooLarge: '工作表太大,無法匯出 CSV。',
   appCsvExportCanceled: 'CSV 匯出已取消。',
+  appOdsExported: '已匯出 {path}。',
+  appOdsExportCanceled: '已取消 ODS 匯出。',
+  appOdsExportFailed: 'ODS 匯出失敗。',
   appCsvExported: '已匯出 {path}。',
   appCsvExportedActiveOnly: 'CSV 只包含一張工作表——已匯出目前工作表「{name}」到 {path}。',
   appCsvExportFailed: '無法匯出 CSV。',
@@ -1471,4 +1474,5 @@ export const zhTW = {
   // ── ODS import ──
   appOdsImportNotice: '已將 ODS 作為 xlsx 副本開啟。儲存時將儲存為 xlsx 檔案。',
   appOdsFormulasDropped: '有 {count} 個公式僅保留了值。',
+  saveAsNeedsExtension: '請在檔案名稱後加上副檔名，例如 報告.xlsx、報告.ods。',
 } satisfies Record<keyof typeof zh, string>

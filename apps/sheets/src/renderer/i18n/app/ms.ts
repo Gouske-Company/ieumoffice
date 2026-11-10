@@ -556,6 +556,9 @@ export const ms = {
     'Eksport CSV memerlukan buku kerja dimuatkan sepenuhnya — tunggu pemuatan selesai.',
   appCsvExportTooLarge: 'Helaian terlalu besar untuk dieksport sebagai CSV.',
   appCsvExportCanceled: 'Eksport CSV dibatalkan.',
+  appOdsExported: '{path} dieksport.',
+  appOdsExportCanceled: 'Eksport ODS dibatalkan.',
+  appOdsExportFailed: 'Eksport ODS gagal.',
   appCsvExported: '{path} dieksport.',
   appCsvExportedActiveOnly:
     'Fail CSV hanya mengandungi satu helaian — helaian aktif “{name}” dieksport ke {path}.',
@@ -1569,4 +1572,6 @@ export const ms = {
   // ── ODS import ──
   appOdsImportNotice: 'ODS dibuka sebagai salinan xlsx. Menyimpan akan menulis fail xlsx.',
   appOdsFormulasDropped: 'Pada {count} formula, hanya nilainya dikekalkan.',
+  saveAsNeedsExtension:
+    'Tambahkan sambungan pada nama fail, contohnya laporan.xlsx atau laporan.ods.',
 } satisfies Record<keyof typeof zh, string>

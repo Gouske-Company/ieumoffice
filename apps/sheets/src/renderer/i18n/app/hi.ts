@@ -557,6 +557,9 @@ export const hi = {
     'CSV निर्यात के लिए पूरी तरह लोड की गई कार्यपुस्तिका चाहिए — लोडिंग पूरी होने तक प्रतीक्षा करें।',
   appCsvExportTooLarge: 'शीट बहुत बड़ी है, CSV के रूप में निर्यात नहीं की जा सकती।',
   appCsvExportCanceled: 'CSV निर्यात रद्द किया गया।',
+  appOdsExported: '{path} निर्यात किया गया।',
+  appOdsExportCanceled: 'ODS निर्यात रद्द किया गया।',
+  appOdsExportFailed: 'ODS निर्यात विफल।',
   appCsvExported: '{path} निर्यात किया गया।',
   appCsvExportedActiveOnly:
     'CSV फ़ाइलों में केवल एक शीट होती है — सक्रिय शीट “{name}” को {path} पर निर्यात किया गया।',
@@ -1567,4 +1570,5 @@ export const hi = {
   // ── ODS import ──
   appOdsImportNotice: 'ODS को xlsx प्रति के रूप में खोला गया। सहेजने पर xlsx फ़ाइल लिखी जाएगी।',
   appOdsFormulasDropped: '{count} सूत्रों में केवल मान रखे गए।',
+  saveAsNeedsExtension: 'फ़ाइल नाम में एक्सटेंशन जोड़ें, जैसे report.xlsx या report.ods.',
 } satisfies Record<keyof typeof zh, string>

@@ -529,6 +529,9 @@ export const th = {
   appCsvExportNeedsFullLoad: 'การส่งออก CSV ต้องรอให้เวิร์กบุ๊กโหลดเต็มก่อน — รอให้โหลดเสร็จ',
   appCsvExportTooLarge: 'ชีตใหญ่เกินไป ส่งออกเป็น CSV ไม่ได้',
   appCsvExportCanceled: 'ยกเลิกการส่งออก CSV แล้ว',
+  appOdsExported: 'ส่งออก {path} แล้ว',
+  appOdsExportCanceled: 'ยกเลิกการส่งออก ODS แล้ว',
+  appOdsExportFailed: 'ส่งออก ODS ล้มเหลว',
   appCsvExported: 'ส่งออก {path} แล้ว',
   appCsvExportedActiveOnly:
     'ไฟล์ CSV มีได้เพียงชีตเดียว — ส่งออกชีตที่ใช้งานอยู่ “{name}” ไปยัง {path} แล้ว',
@@ -1527,4 +1530,5 @@ export const th = {
   // ── ODS import ──
   appOdsImportNotice: 'เปิด ODS เป็นสำเนา xlsx การบันทึกจะเขียนไฟล์ xlsx',
   appOdsFormulasDropped: 'เก็บไว้เฉพาะค่าใน {count} สูตร',
+  saveAsNeedsExtension: 'เพิ่มนามสกุลให้ชื่อไฟล์ เช่น report.xlsx หรือ report.ods',
 } satisfies Record<keyof typeof zh, string>

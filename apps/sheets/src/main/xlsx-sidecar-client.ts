@@ -47,6 +47,26 @@ export interface WorkbookConversionResult {
   readonly formulasDropped: number
 }
 
+/// What one ODS export could not carry. The writer reports every kind; a
+/// count of 0 means none of that kind was in the workbook.
+export interface OdsDroppedCounts {
+  readonly charts: number
+  readonly images: number
+  readonly conditionalFormats: number
+  readonly validations: number
+  readonly pivots: number
+  readonly comments: number
+}
+
+/// The `convert_to_ods` answer: the new package's size and what it left out.
+export interface OdsConversionResult {
+  readonly sheets: number
+  readonly cells: number
+  /// formulas the writer could not translate; those cells kept their value
+  readonly formulasDropped: number
+  readonly dropped: OdsDroppedCounts
+}
+
 export class XlsxSidecarClient {
   private process: ChildProcessWithoutNullStreams | null = null
   private lines: Interface | null = null
@@ -160,6 +180,36 @@ export class XlsxSidecarClient {
       cells: typeof result.cells === 'number' ? result.cells : 0,
       // an older sidecar does not report formulas it could not translate
       formulasDropped: typeof result.formulasDropped === 'number' ? result.formulasDropped : 0,
+    }
+  }
+
+  /**
+   * Writes a complete new ODS package from an .xlsx. The writer translates
+   * formulas, styles and page setup itself and reports what it could not carry;
+   * an older sidecar may omit the fields, so each falls back to 0.
+   */
+  async convertToOds(input: { path: string; targetPath: string }): Promise<OdsConversionResult> {
+    const result =
+      (await this.request<{
+        readonly sheets?: unknown
+        readonly cells?: unknown
+        readonly formulasDropped?: unknown
+        readonly dropped?: unknown
+      }>({ command: 'convert_to_ods', ...input }, ARCHIVE_TIMEOUT_MS)) ?? {}
+    const dropped = (result.dropped ?? {}) as Record<string, unknown>
+    const count = (value: unknown): number => (typeof value === 'number' ? value : 0)
+    return {
+      sheets: count(result.sheets),
+      cells: count(result.cells),
+      formulasDropped: count(result.formulasDropped),
+      dropped: {
+        charts: count(dropped.charts),
+        images: count(dropped.images),
+        conditionalFormats: count(dropped.conditionalFormats),
+        validations: count(dropped.validations),
+        pivots: count(dropped.pivots),
+        comments: count(dropped.comments),
+      },
     }
   }
 

@@ -556,6 +556,9 @@ export const id = {
     'Ekspor CSV memerlukan buku kerja termuat penuh — tunggu pemuatan selesai.',
   appCsvExportTooLarge: 'Lembar terlalu besar untuk diekspor sebagai CSV.',
   appCsvExportCanceled: 'Ekspor CSV dibatalkan.',
+  appOdsExported: '{path} diekspor.',
+  appOdsExportCanceled: 'Ekspor ODS dibatalkan.',
+  appOdsExportFailed: 'Ekspor ODS gagal.',
   appCsvExported: '{path} diekspor.',
   appCsvExportedActiveOnly:
     'File CSV hanya memuat satu lembar — lembar aktif “{name}” diekspor ke {path}.',
@@ -1572,4 +1575,6 @@ export const id = {
   // ── ODS import ──
   appOdsImportNotice: 'ODS dibuka sebagai salinan xlsx. Menyimpan akan menulis file xlsx.',
   appOdsFormulasDropped: 'Pada {count} rumus, hanya nilainya yang dipertahankan.',
+  saveAsNeedsExtension:
+    'Tambahkan ekstensi pada nama berkas, misalnya laporan.xlsx atau laporan.ods.',
 } satisfies Record<keyof typeof zh, string>

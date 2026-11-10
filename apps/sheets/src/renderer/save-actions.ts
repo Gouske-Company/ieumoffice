@@ -75,6 +75,9 @@ export interface SaveContext {
   /** Save As › PDF: export the active sheet to the path the Save As dialog
       returned (the Export PDF command's layout and writer). Optional in tests. */
   exportPdfCopy?: (saveAsPath: string) => Promise<boolean>
+  /** Save As › ODS: export the whole workbook to the path the Save As dialog
+      returned. Optional in tests. */
+  exportOdsCopy?: (saveAsPath: string) => Promise<boolean>
 }
 
 /// CSV files whose "keep this format?" question was already answered with
@@ -90,6 +93,8 @@ export interface SaveOutcome {
   bytes?: Uint8Array
   /** the main-process refusal, verbatim, when the save request itself failed */
   error?: string
+  /** nothing was pending, so no write was needed (not a failure) */
+  skipped?: boolean
 }
 
 /**
@@ -312,7 +317,7 @@ export async function handleSave(
     !firstSaveAs
   ) {
     if (mode !== 'recovery') ctx.setMessage(t('appNoEditsToSave'))
-    return { ok: false }
+    return { ok: false, skipped: true }
   }
   // CSV session: Save keeps the CSV identity — Excel's "keep this format?"
   // question once per file, then the active sheet rides the save request as
@@ -511,6 +516,12 @@ export async function handleSave(
         // the active sheet is exported to the chosen path instead. Like the
         // CSV pick, the journal stays pending and the session keeps its path.
         await ctx.exportPdfCopy?.(result.pdfSaveAsPath)
+        return { ok: false }
+      }
+      if (result.odsSaveAsPath !== undefined) {
+        // The ODS pick is the same kind of copy: the whole workbook is
+        // exported and the .xlsx session keeps its path and pending edits.
+        await ctx.exportOdsCopy?.(result.odsSaveAsPath)
         return { ok: false }
       }
       // a quiet (automatic) save deferred by the copy-pair guard stays silent:

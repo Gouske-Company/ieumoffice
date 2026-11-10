@@ -562,6 +562,9 @@ export const ko = {
     'CSV 내보내기에는 통합 문서 전체 로드가 필요합니다 — 로드가 완료될 때까지 기다리십시오.',
   appCsvExportTooLarge: '시트가 너무 커서 CSV로 내보낼 수 없습니다.',
   appCsvExportCanceled: 'CSV 내보내기를 취소했습니다.',
+  appOdsExported: '{path}을(를) 내보냈습니다.',
+  appOdsExportCanceled: 'ODS 내보내기를 취소했습니다.',
+  appOdsExportFailed: 'ODS 내보내기에 실패했습니다.',
   appCsvExported: '{path}을(를) 내보냈습니다.',
   appCsvExportedActiveOnly:
     'CSV는 시트 하나만 포함합니다 — 활성 시트 "{name}"을(를) {path}(으)로 내보냈습니다.',
@@ -1586,4 +1589,5 @@ export const ko = {
   // ── ODS import ──
   appOdsImportNotice: 'ODS를 xlsx 사본으로 열었습니다. 저장하면 xlsx로 저장됩니다.',
   appOdsFormulasDropped: '수식 {count}개는 값만 남겼습니다.',
+  saveAsNeedsExtension: '파일 이름에 확장자를 붙여 주세요. 예: 보고서.xlsx, 보고서.ods',
 } satisfies Record<keyof typeof zh, string>

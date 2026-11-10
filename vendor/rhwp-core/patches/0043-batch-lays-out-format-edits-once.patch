@@ -1,0 +1,521 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: pblsketch <239486537+pblsketch@users.noreply.github.com>
+Date: Sun, 8 Nov 2026 00:00:00 +0900
+Subject: [PATCH 31/31] perf(batch): 일괄 처리 안의 문단 모양·스타일·개체 편집은 구역을 끝에서 한 번 배치한다
+
+일괄 처리(beginBatch~endBatch) 안에서도 문단 모양·스타일 호출(applyParaFormat,
+setParaShapeId, applyStyle)과 머리말·꼬리말 서식 호출(applyParaFormatInHf,
+applyCharFormatInHeaderFooter)은 rebuild_section으로 구역 전체를 다시 조합하고 쪽을
+나눴다. 표·칸·그림 속성과 주석 넣기(setCellProperties, setTableProperties,
+setPictureProperties, insertPictureInCell, setCellPicturePropertiesByPath,
+insertFootnote, insertEndnote)는 쪽 나누기는 미뤘지만 구역 전체를 다시 조합했다.
+글자 모양은 이미 끝으로 미뤘다(rebuild_paragraph_deferred_in_batch). 그래서 문단마다
+모양을 입히며 긴 문서를 쓰면 구역 크기의 제곱으로 느려졌다(일괄 처리 안 applyParaFormat
+한 번: 200문단 구역 49ms, 1,600문단 구역 317ms. 워드 → 한글 변환 2,484문단 179초).
+
+- 배치 안에서는 고친 문단(주석을 넣으면 번호가 밀린 뒤 주석 문단까지)만 다시 조합하고,
+  구역의 측정과 쪽 나누기를 end_batch의 paginate 1회에 넘긴다(rebuild_section_at_batch_end,
+  recompose_section_at_batch_end). 구역의 문단을 모두 다시 재게 표시해, 배치 밖의
+  recompose_section이 남기던 상태와 같게 한다. 고친 문단만 다시 재면 표가 옛 측정을 써서
+  그린 행 높이가 1e-14px 단위로 달라졌다.
+- 각주 번호·모양 맞추기(refresh_footnote_numbers)도 배치 안에서는 바뀐 각주를 든
+  문단만 다시 조합한다.
+- 배치 밖은 그대로다. 배치한 결과는 같은 호출을 하나씩 한 결과와 쪽 배치, 그림, HWP·HWPX
+  저장 바이트가 같다.
+---
+ src/document_core/commands/formatting.rs           | 268 ++++++++++++++++++++-
+ src/document_core/commands/header_footer_ops.rs    |   4 +-
+ .../commands/object_ops/footnote_shape.rs          |  29 ++-
+ src/document_core/commands/object_ops/note.rs      |  27 ++-
+ src/document_core/commands/object_ops/picture.rs   |   4 +-
+ src/document_core/commands/object_ops/table.rs     |   2 +-
+ src/document_core/commands/table_ops.rs            |   4 +-
+ 7 files changed, 315 insertions(+), 23 deletions(-)
+
+diff --git a/src/document_core/commands/formatting.rs b/src/document_core/commands/formatting.rs
+index 168f5232f279d1af28b007922c9abbfebc899e4f..6b99c073dc05062465709616960b5054c45b076b 100644
+--- a/src/document_core/commands/formatting.rs
++++ b/src/document_core/commands/formatting.rs
+@@ -1347,6 +1347,44 @@ impl DocumentCore {
+         }
+     }
+ 
++    /// [ieum] 문단 모양·스타일·머리말 서식 뮤테이터의 `rebuild_section` 꼬리.
++    ///
++    /// 배치 밖에서는 종전대로 구역 전체를 다시 조합하고 쪽을 나눈다. 배치 중에는 스타일
++    /// 해석만 갱신하고, 고친 본문 문단(머리말·꼬리말 문단이면 None)의 조합과 구역의 측정·
++    /// 쪽 나누기를 `recompose_section_at_batch_end` 처럼 `end_batch_native` 로 넘긴다.
++    pub(crate) fn rebuild_section_at_batch_end(&mut self, sec_idx: usize, para_idx: Option<usize>) {
++        if !self.batch_mode {
++            self.rebuild_section(sec_idx);
++            return;
++        }
++        self.rebuild_section_deferred_in_batch(sec_idx);
++        self.recompose_section_at_batch_end(sec_idx, para_idx.as_slice());
++    }
++
++    /// [ieum] 표·칸·그림·주석 뮤테이터의 `recompose_section` 꼬리.
++    ///
++    /// 배치 밖에서는 종전대로 구역 전체를 다시 조합한다. 배치 중에는 조합이 바뀐 문단
++    /// (`paras`)만 다시 조합하고 구역의 문단을 모두 다시 재도록 표시해, 측정과 쪽 나누기를
++    /// `end_batch_native` 의 paginate 1회에 맡긴다. 손대지 않은 문단은 다시 조합해도 결과가
++    /// 같은데 비용은 구역 크기라, 문단·칸마다 서식을 입히는 배치가 구역 크기의 제곱으로
++    /// 느려졌다. 구역 전체를 다시 재게 하는 것은 배치 밖의 `recompose_section` 이 남기던
++    /// 상태와 같게 하려는 것이다. 고친 문단만 다시 재면, 뒤 문단의 저장 위치가 옮겨져도 표는
++    /// 옛 측정을 써서 그린 행 높이가 호출마다 배치한 결과와 1e-14px 단위로 달라진다.
++    pub(crate) fn recompose_section_at_batch_end(&mut self, sec_idx: usize, paras: &[usize]) {
++        if !self.batch_mode {
++            self.recompose_section(sec_idx);
++            return;
++        }
++        self.invalidate_page_tree_cache();
++        for &para_idx in paras {
++            self.recompose_paragraph(sec_idx, para_idx);
++        }
++        self.mark_section_dirty(sec_idx);
++        if sec_idx < self.dirty_paragraphs.len() {
++            self.dirty_paragraphs[sec_idx] = None;
++        }
++    }
++
+     /// 글자 서식 적용 (네이티브) — 셀 내 문단
+     pub fn apply_char_format_in_cell_native(
+         &mut self,
+@@ -1781,7 +1819,7 @@ impl DocumentCore {
+         }
+ 
+         self.document.sections[sec_idx].raw_stream = None;
+-        self.rebuild_section(sec_idx);
++        self.rebuild_section_at_batch_end(sec_idx, Some(para_idx));
+         self.event_log.push(DocumentEvent::ParaFormatChanged {
+             section: sec_idx,
+             para: para_idx,
+@@ -1865,7 +1903,7 @@ impl DocumentCore {
+         );
+ 
+         self.document.sections[sec_idx].raw_stream = None;
+-        self.rebuild_section(sec_idx);
++        self.rebuild_section_at_batch_end(sec_idx, Some(para_idx));
+         self.event_log.push(DocumentEvent::ParaFormatChanged {
+             section: sec_idx,
+             para: para_idx,
+@@ -2559,7 +2597,7 @@ impl DocumentCore {
+ 
+             self.reflow_body_paragraph(sec_idx, para_idx);
+             self.document.sections[sec_idx].raw_stream = None;
+-            self.rebuild_section(sec_idx);
++            self.rebuild_section_at_batch_end(sec_idx, Some(para_idx));
+             self.event_log.push(DocumentEvent::CharFormatChanged {
+                 section: sec_idx,
+                 para: para_idx,
+@@ -2609,7 +2647,7 @@ impl DocumentCore {
+ 
+         self.reflow_body_paragraph(sec_idx, para_idx);
+         self.document.sections[sec_idx].raw_stream = None;
+-        self.rebuild_section(sec_idx);
++        self.rebuild_section_at_batch_end(sec_idx, Some(para_idx));
+         self.event_log.push(DocumentEvent::ParaFormatChanged {
+             section: sec_idx,
+             para: para_idx,
+@@ -3774,3 +3812,225 @@ mod cell_reflow_width_tests {
+         );
+     }
+ }
++
++#[cfg(test)]
++mod batch_layout_deferral_tests {
++    //! [ieum] 배치 안의 문단 모양·스타일·머리말 서식과 표·칸·그림·주석 편집은 구역을
++    //! 호출마다 다시 배치하지 않고 `end_batch_native` 에서 한 번 배치하며, 결과는 호출마다
++    //! 배치한 것과 같다.
++
++    use crate::document_core::DocumentCore;
++    use crate::model::control::Control;
++
++    const PNG: [u8; 70] = [
++        0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44,
++        0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x08, 0x06, 0x00, 0x00, 0x00, 0x1f,
++        0x15, 0xc4, 0x89, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x44, 0x41, 0x54, 0x78, 0xda, 0x63, 0xfc,
++        0xcf, 0xc0, 0xf0, 0x1f, 0x00, 0x05, 0x05, 0x02, 0x00, 0x5f, 0xc8, 0xf1, 0xd2, 0x00, 0x00,
++        0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,
++    ];
++
++    /// Thirty short body paragraphs on one page.
++    fn document() -> DocumentCore {
++        let mut doc = DocumentCore::new_empty();
++        doc.create_blank_document_native().expect("blank document");
++        for para in 0..30 {
++            if para > 0 {
++                doc.split_paragraph_native(0, para - 1, 3, None)
++                    .expect("split");
++            }
++            doc.insert_text_native(0, para, 0, "앞ㅎ뒤").expect("type");
++        }
++        doc
++    }
++
++    /// Page geometry, a caret in every paragraph, every page drawn, and both saved forms.
++    fn result(doc: &DocumentCore) -> (Vec<String>, Vec<String>, Vec<String>, Vec<u8>, Vec<u8>) {
++        let pages = doc.page_count();
++        (
++            (0..pages)
++                .map(|page| doc.get_page_info_native(page).expect("page"))
++                .collect(),
++            (0..doc.document().sections[0].paragraphs.len())
++                .map(|para| doc.get_cursor_rect_native(0, para, 1).expect("caret"))
++                .collect(),
++            (0..pages)
++                .map(|page| doc.render_page_svg_native(page).expect("svg"))
++                .collect(),
++            doc.export_hwp_native().expect("hwp"),
++            doc.export_hwpx_native().expect("hwpx"),
++        )
++    }
++
++    fn alignment(doc: &DocumentCore, para: usize) -> String {
++        let props: serde_json::Value =
++            serde_json::from_str(&doc.get_para_properties_at_native(0, para).expect("props"))
++                .expect("json");
++        props["alignment"].as_str().expect("alignment").to_string()
++    }
++
++    fn shape_paragraphs(doc: &mut DocumentCore) {
++        for para in 0..30 {
++            doc.apply_para_format_native(
++                0,
++                para,
++                r#"{"alignment":"center","spacingBefore":4000,"lineSpacingType":"Percent","lineSpacing":200}"#,
++            )
++            .expect("paragraph format");
++            if para % 3 == 1 {
++                doc.apply_style_native(0, para, 2).expect("style");
++            }
++            if para % 5 == 4 {
++                let first = doc.document().sections[0].paragraphs[0].para_shape_id;
++                doc.set_para_shape_id_native(0, para, first)
++                    .expect("shape id");
++            }
++        }
++    }
++
++    #[test]
++    fn paragraph_formats_and_styles_lay_out_once_at_end_batch() {
++        let mut eager = document();
++        let mut batched = document();
++        let before = batched.page_count();
++        shape_paragraphs(&mut eager);
++        batched.begin_batch_native().expect("begin");
++        shape_paragraphs(&mut batched);
++        assert!(
++            eager.page_count() > before,
++            "the formats move the page breaks"
++        );
++        assert_eq!(
++            batched.page_count(),
++            before,
++            "applyParaFormat, applyStyle and setParaShapeId leave the layout to endBatch"
++        );
++        assert_eq!(
++            alignment(&batched, 29),
++            "center",
++            "the shape reads back inside the batch"
++        );
++        batched.end_batch_native().expect("end");
++        assert!(
++            result(&batched) == result(&eager),
++            "one layout at endBatch, same result"
++        );
++    }
++
++    fn with_header(mut doc: DocumentCore) -> DocumentCore {
++        doc.create_header_footer_native(0, true, 0).expect("header");
++        doc.insert_text_in_header_footer_native(0, true, 0, 0, 0, "머리말 글")
++            .expect("header text");
++        doc
++    }
++
++    fn shape_header(doc: &mut DocumentCore) {
++        for para in 0..30 {
++            // a deferred body edit that moves the page breaks, then the header formats
++            doc.apply_char_format_native(0, para, 1, 2, r#"{"fontSize":3000}"#)
++                .expect("body chars");
++            doc.apply_para_format_in_hf_native(0, true, 0, 0, r#"{"alignment":"right"}"#)
++                .expect("header paragraph");
++            doc.apply_char_format_in_header_footer_native(
++                0,
++                true,
++                0,
++                0,
++                0,
++                0,
++                2,
++                &format!(r#"{{"bold":{}}}"#, para % 2 == 0),
++            )
++            .expect("header chars");
++        }
++    }
++
++    #[test]
++    fn header_footer_formats_lay_out_once_at_end_batch() {
++        let mut eager = with_header(document());
++        let mut batched = with_header(document());
++        let before = batched.page_count();
++        shape_header(&mut eager);
++        batched.begin_batch_native().expect("begin");
++        shape_header(&mut batched);
++        assert!(
++            eager.page_count() > before,
++            "the body formats move the page breaks"
++        );
++        assert_eq!(
++            batched.page_count(),
++            before,
++            "applyParaFormatInHf and applyCharFormatInHeaderFooter leave the layout to endBatch"
++        );
++        batched.end_batch_native().expect("end");
++        assert!(
++            result(&batched) == result(&eager),
++            "one layout at endBatch, same result"
++        );
++    }
++
++    /// The document with a 2×2 table in paragraph 5, a picture in paragraph 8 and a
++    /// footnote in paragraph 20.
++    fn with_objects(mut doc: DocumentCore) -> DocumentCore {
++        doc.create_table_native(0, 5, 0, 2, 2).expect("table");
++        doc.insert_picture_native(0, 8, 0, &[], &PNG, 3000, 3000, 1, 1, "png", "", None, None)
++            .expect("picture");
++        doc.insert_footnote_native(0, 20, 1)
++            .expect("later footnote");
++        doc
++    }
++
++    fn control(doc: &DocumentCore, para: usize, is: fn(&Control) -> bool) -> usize {
++        doc.document().sections[0].paragraphs[para]
++            .controls
++            .iter()
++            .position(is)
++            .expect("control")
++    }
++
++    fn edit_objects(doc: &mut DocumentCore) {
++        let table = control(doc, 5, |c| matches!(c, Control::Table(_)));
++        for cell in 0..4 {
++            doc.set_cell_properties_native(
++                0,
++                5,
++                table,
++                cell,
++                r##"{"verticalAlign":1,"paddingLeft":700,"fillType":"solid","fillColor":"#d9e2f3","patternType":-1}"##,
++            )
++            .expect("cell");
++        }
++        doc.set_table_properties_native(0, 5, table, r#"{"repeatHeader":true}"#)
++            .expect("table");
++        let picture = control(doc, 8, |c| matches!(c, Control::Picture(_)));
++        doc.set_picture_properties_native(0, 8, picture, r#"{"treatAsChar":true}"#)
++            .expect("picture");
++        // ahead of the footnote in paragraph 20, which becomes the second one
++        doc.insert_footnote_native(0, 10, 1).expect("footnote");
++        doc.insert_endnote_native(0, 12, 1).expect("endnote");
++    }
++
++    #[test]
++    fn table_picture_and_note_edits_in_a_batch_match_eager_edits() {
++        let mut eager = with_objects(document());
++        let mut batched = with_objects(document());
++        edit_objects(&mut eager);
++        batched.begin_batch_native().expect("begin");
++        edit_objects(&mut batched);
++        batched.end_batch_native().expect("end");
++        let later = control(&batched, 20, |c| matches!(c, Control::Footnote(_)));
++        let Control::Footnote(note) =
++            &batched.document().sections[0].paragraphs[20].controls[later]
++        else {
++            panic!("footnote");
++        };
++        assert_eq!(
++            note.number, 2,
++            "the earlier insert renumbered the later footnote"
++        );
++        assert!(
++            result(&batched) == result(&eager),
++            "one layout at endBatch, same result"
++        );
++    }
++}
+diff --git a/src/document_core/commands/header_footer_ops.rs b/src/document_core/commands/header_footer_ops.rs
+index bf314e322d191c6ceac584b4269ce10fdd2835b9..788c2d716b56758bbc3c09bfaca7f7c11e1199b3 100644
+--- a/src/document_core/commands/header_footer_ops.rs
++++ b/src/document_core/commands/header_footer_ops.rs
+@@ -876,7 +876,7 @@ impl DocumentCore {
+             }
+         }
+         self.document.sections[section_idx].raw_stream = None;
+-        self.rebuild_section(section_idx);
++        self.rebuild_section_at_batch_end(section_idx, None);
+         for (hf_para_idx, range_start, range_end) in changed_paragraphs {
+             self.event_log.push(DocumentEvent::CharFormatChanged {
+                 section: section_idx,
+@@ -1234,7 +1234,7 @@ impl DocumentCore {
+         }
+ 
+         self.document.sections[section_idx].raw_stream = None;
+-        self.rebuild_section(section_idx);
++        self.rebuild_section_at_batch_end(section_idx, None);
+         self.event_log.push(DocumentEvent::ParaFormatChanged {
+             section: section_idx,
+             para: 0,
+diff --git a/src/document_core/commands/object_ops/footnote_shape.rs b/src/document_core/commands/object_ops/footnote_shape.rs
+index e8628a674080dbd6fc626e27aab65da40192bb50..153692da26a6e11b328ab63bee78062716878b2f 100644
+--- a/src/document_core/commands/object_ops/footnote_shape.rs
++++ b/src/document_core/commands/object_ops/footnote_shape.rs
+@@ -457,21 +457,30 @@ impl DocumentCore {
+                 // 쪽 배정 뒤 다시 센다. 지금은 모양만 맞춘다.
+                 FootnoteNumbering::RestartPage => 0,
+             };
+-            let mut changed = false;
+-            for_each_footnote(&mut section.paragraphs, &mut |note| {
+-                let number = (next > 0).then_some(next);
+-                changed |= sync_footnote(note, &shape, number);
+-                if next > 0 {
+-                    next = next.saturating_add(1);
++            // [ieum] 번호·모양이 바뀐 각주를 든 본문 문단. 배치 중에는 구역 전체가 아니라
++            // 이 문단들만 다시 조합한다(`recompose_section_at_batch_end`). 각주를 차례로
++            // 넣는 배치가 각주마다 구역 전체를 다시 조합하지 않게 한다.
++            let mut changed_paras = Vec::new();
++            for (para_idx, para) in section.paragraphs.iter_mut().enumerate() {
++                let mut para_changed = false;
++                for_each_footnote(std::slice::from_mut(para), &mut |note| {
++                    let number = (next > 0).then_some(next);
++                    para_changed |= sync_footnote(note, &shape, number);
++                    if next > 0 {
++                        next = next.saturating_add(1);
++                    }
++                    carry = note.number;
++                });
++                if para_changed {
++                    changed_paras.push(para_idx);
+                 }
+-                carry = note.number;
+-            });
++            }
+             if shape.numbering == FootnoteNumbering::RestartPage {
+                 per_page.push(index);
+             }
+-            if changed {
++            if !changed_paras.is_empty() {
+                 section.raw_stream = None;
+-                self.recompose_section(index);
++                self.recompose_section_at_batch_end(index, &changed_paras);
+             }
+         }
+         self.paginate_if_needed();
+diff --git a/src/document_core/commands/object_ops/note.rs b/src/document_core/commands/object_ops/note.rs
+index 4de139abfe393224d3076e5b37b54e9cfce9c690..4bd228077deac580f5496c54b81c8bf97819b255 100644
+--- a/src/document_core/commands/object_ops/note.rs
++++ b/src/document_core/commands/object_ops/note.rs
+@@ -599,7 +599,7 @@ impl DocumentCore {
+         // 프레임 수용은 같은 저장 줄의 점유를 소비하는 pagination이 계산한다.
+ 
+         // 리플로우 + 페이지네이션
+-        self.recompose_section(section_idx);
++        self.recompose_note_paragraphs_at_batch_end(section_idx, para_idx);
+         self.paginate_if_needed();
+         // 새 각주와 뒤 각주의 번호·모양을 구역의 각주 모양대로 맞춘다(한/글처럼 모양을 따른다).
+         self.refresh_footnote_numbers(section_idx);
+@@ -735,7 +735,7 @@ impl DocumentCore {
+         // 대화형 편집의 관문과 같은 한 곳을 쓴다.
+         self.reflow_paragraph(section_idx, para_idx);
+ 
+-        self.recompose_section(section_idx);
++        self.recompose_note_paragraphs_at_batch_end(section_idx, para_idx);
+         self.paginate_if_needed();
+         self.invalidate_page_tree_cache();
+ 
+@@ -748,6 +748,29 @@ impl DocumentCore {
+             para_idx, insert_idx, endnote_number
+         ))
+     }
++
++    /// [ieum] 각주·미주 넣기의 `recompose_section` 꼬리(`recompose_section_at_batch_end`).
++    ///
++    /// 넣은 주석 뒤의 주석은 번호가 하나씩 밀리고, 조합 결과(`footnote_positions`)가 그
++    /// 번호를 든다. 그래서 배치 중에는 넣은 문단과 그 뒤의 주석 든 문단을 다시 조합한다.
++    fn recompose_note_paragraphs_at_batch_end(&mut self, section_idx: usize, para_idx: usize) {
++        let mut paras = vec![para_idx];
++        if self.batch_mode {
++            let later = &self.document.sections[section_idx].paragraphs[para_idx + 1..];
++            paras.extend(
++                later
++                    .iter()
++                    .enumerate()
++                    .filter(|(_, para)| {
++                        para.controls
++                            .iter()
++                            .any(|c| matches!(c, Control::Footnote(_) | Control::Endnote(_)))
++                    })
++                    .map(|(offset, _)| para_idx + 1 + offset),
++            );
++        }
++        self.recompose_section_at_batch_end(section_idx, &paras);
++    }
+ }
+ 
+ #[cfg(test)]
+diff --git a/src/document_core/commands/object_ops/picture.rs b/src/document_core/commands/object_ops/picture.rs
+index 343dff567885615ea80271c2bdaa531150770563..332c7cbf16fc7c883300681aecaf68311b0b67e7 100644
+--- a/src/document_core/commands/object_ops/picture.rs
++++ b/src/document_core/commands/object_ops/picture.rs
+@@ -662,7 +662,7 @@ impl DocumentCore {
+         // 리플로우
+         let section = &mut self.document.sections[section_idx];
+         section.raw_stream = None;
+-        self.recompose_section(section_idx);
++        self.recompose_section_at_batch_end(section_idx, &[parent_para_idx]);
+         self.paginate_if_needed();
+         // [Task #1151 v5] page tree cache invalidate — 다른 picture/shape setter (셀 shape
+         // by_path / 셀 picture by_path / header-footer picture / shape 등) 모두 호출하나
+@@ -1866,7 +1866,7 @@ impl DocumentCore {
+                     self.mark_cell_control_dirty(section_idx, para_idx, cell_path[0].0);
+                 }
+                 self.mark_section_dirty(section_idx);
+-                self.recompose_section(section_idx);
++                self.recompose_section_at_batch_end(section_idx, &[para_idx]);
+                 self.paginate_if_needed();
+                 self.invalidate_page_tree_cache();
+ 
+diff --git a/src/document_core/commands/object_ops/table.rs b/src/document_core/commands/object_ops/table.rs
+index 2b3c5b9fad7f9b8db70ec075f19b52e4d798140f..c1c2f9c5ca57cbb5dde513295a31e02011deaeaf 100644
+--- a/src/document_core/commands/object_ops/table.rs
++++ b/src/document_core/commands/object_ops/table.rs
+@@ -1792,7 +1792,7 @@ impl DocumentCore {
+             inner_control_idx,
+         )?;
+         section.raw_stream = None;
+-        self.recompose_section(section_idx);
++        self.recompose_section_at_batch_end(section_idx, &[parent_para_idx]);
+         self.paginate_if_needed();
+         self.invalidate_page_tree_cache();
+         let outer_table_ctrl = path.first().unwrap().0;
+diff --git a/src/document_core/commands/table_ops.rs b/src/document_core/commands/table_ops.rs
+index e3bc5ffd32fa42a70e834a9ae798ccebc5819696..3f334cef884ebf6f63b62e965f86e7fc911d0ded 100644
+--- a/src/document_core/commands/table_ops.rs
++++ b/src/document_core/commands/table_ops.rs
+@@ -1668,7 +1668,7 @@ impl DocumentCore {
+         let border_paint_undo_id =
+             self.commit_border_paint_plan((section_idx, parent_para_idx, control_idx), paint_plan);
+         self.document.sections[section_idx].raw_stream = None;
+-        self.recompose_section(section_idx);
++        self.recompose_section_at_batch_end(section_idx, &[parent_para_idx]);
+         self.paginate_if_needed();
+ 
+         // [#5959] self-describing 변경 기록 — TS 커맨드가 undo 때 이대로 되돌린다
+@@ -3542,7 +3542,7 @@ impl DocumentCore {
+             );
+         }
+         self.document.sections[section_idx].raw_stream = None;
+-        self.recompose_section(section_idx);
++        self.recompose_section_at_batch_end(section_idx, &[parent_para_idx]);
+         self.paginate_if_needed();
+ 
+         if caption_created {

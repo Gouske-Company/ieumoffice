@@ -11,6 +11,9 @@ import type { LazyWorkbookState } from './univer-state'
 export interface OdsExportContext {
   lazyWorkbookRef: { readonly current: LazyWorkbookState | null }
   setMessage: (message: string) => void
+  /// Save the open workbook first so the sidecar converts the current edits,
+  /// not the last saved snapshot. False when the save was canceled or failed.
+  saveFirst: () => Promise<boolean>
 }
 
 /// True when a file was written. `targetPath` is the Save As pick the main
@@ -22,6 +25,9 @@ export async function handleExportOds(
   const state = ctx.lazyWorkbookRef.current
   if (!state) return false
   try {
+    // The sidecar reads a real .xlsx package, so the open workbook is saved
+    // first; the export must not silently omit edits made since the last save.
+    if (!(await ctx.saveFirst())) return false
     const result = await window.desktopApi.exportOds({
       sessionId: state.file.sessionId,
       ...(targetPath === undefined ? {} : { targetPath }),

@@ -1199,7 +1199,11 @@ export function App({
   }
 
   function odsExportContext(): OdsExportContext {
-    return { lazyWorkbookRef, setMessage }
+    return {
+      lazyWorkbookRef,
+      setMessage,
+      saveFirst: async () => (await handleSaveRef.current('save', true)).ok,
+    }
   }
 
   function saveContext(): SaveContext {

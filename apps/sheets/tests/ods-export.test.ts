@@ -525,7 +525,22 @@ describe('ODS export', () => {
     expect(messageBoxes.at(-1)?.message).toMatch(/could not be opened again/i)
   })
 
-  it('treats a read-back with no sheets or cells as a broken export', async () => {
+  it('treats a read-back with no sheets as a broken export', async () => {
+    const path = writeWorkbook('Budget.xlsx')
+    const tab = newTab()
+    const opened = await openWorkbook(tab, path)
+    const target = join(dir, 'Budget.ods')
+    verify.sheets = 0
+    verify.cells = 0
+    saveDialogAnswers.push(target)
+
+    const result = await call(tab, IPC_CHANNELS.exportOds, exportOdsRequest(opened.sessionId))
+
+    expect(result).toEqual({ canceled: true, reason: 'unreadable' })
+    expect(existsSync(target)).toBe(false)
+  })
+
+  it('exports a blank workbook: sheets with no cell values are valid', async () => {
     const path = writeWorkbook('Budget.xlsx')
     const tab = newTab()
     const opened = await openWorkbook(tab, path)
@@ -536,8 +551,8 @@ describe('ODS export', () => {
 
     const result = await call(tab, IPC_CHANNELS.exportOds, exportOdsRequest(opened.sessionId))
 
-    expect(result).toEqual({ canceled: true, reason: 'unreadable' })
-    expect(existsSync(target)).toBe(false)
+    expect(result).toMatchObject({ canceled: false, path: target })
+    expect(existsSync(target)).toBe(true)
   })
 
   it('round-trips the ODS save pick through the save result schema', () => {

@@ -95,7 +95,9 @@ export async function exportWorkbookAsOds(input: {
         path: input.targetPath,
         targetPath: verifyXlsx,
       })
-      if (reopened.sheets > 0 && reopened.cells > 0) {
+      // A blank workbook is a valid ODS package: sheets but no cell values.
+      // The read-back only rejects a package the reader cannot open at all.
+      if (reopened.sheets > 0) {
         return { status: 'exported', path: input.targetPath, result }
       }
     } catch {

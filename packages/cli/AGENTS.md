@@ -18,7 +18,7 @@
 
 ## 맡지 않는 것 (경계)
 
-- 문서 형식의 해석과 저장은 이 모듈의 범위가 아니다. `packages/docx-engine`, `packages/pptx-engine`·`pptx-ops`·`pptx-render`, `packages/xlsx-gateway`와 xlsx 사이드카, `packages/pdf2docx`, `packages/pdf-structure`가 한다. 여기 `src/formats/`는 얇은 어댑터다. 한글 문서는 `packages/file-parse`의 `hwpToText`로 읽고(`hwp read`, `info`), 만들고 고치는 일(`hwp apply`, `create --type hwp|hwpx`)은 `apps/hwp`의 AI 도구·편집기 플러그인·저장 바로잡기를 그대로 부른다(`src/formats/hwp-edit.ts`, 결정 0079). PDF로 바꾸기(`convert --to pdf`)는 다른 쪽 모양 변환처럼 앱의 `--headless-export`가 한글 편집기의 PDF 내보내기로 한다(`APP_ROUTES`). 한글 문서의 해석과 편집 동작은 여기서 만들지 않는다. PDF 문서 작업의 호출 순서·멈춤·이어하기·보관소도 `pdf-structure`의 작업 엔진과 보관소가 맡는다. EPUB 책의 열기·번역 단위·결과 책은 `packages/epub-engine`이 맡는다. 명령어는 EPUB을 고치지 않고 번역 결과를 새 파일로 쓸 뿐이다.
+- 문서 형식의 해석과 저장은 이 모듈의 범위가 아니다. `packages/docx-engine`, `packages/pptx-engine`·`pptx-ops`·`pptx-render`, `packages/xlsx-gateway`와 xlsx 사이드카, `packages/pdf2docx`, `packages/pdf-structure`가 한다. 여기 `src/formats/`는 얇은 어댑터다. 한글 문서는 `packages/file-parse`의 `hwpToText`로 읽고(`hwp read`, `info`), 만들고 고치는 일(`hwp apply`, `create --type hwp|hwpx`)은 `apps/hwp`의 AI 도구·편집기 플러그인·저장 바로잡기를 그대로 부른다(`src/formats/hwp-edit.ts`, 결정 0079). PDF로 바꾸기(`convert --to pdf`)는 다른 쪽 모양 변환처럼 앱의 `--headless-export`가 한글 편집기의 PDF 내보내기로 한다(`APP_ROUTES`). 워드 문서를 한글 문서로 바꾸는 일(`convert --to hwp|hwpx`)은 `packages/docx2hwp`가 명령 프로세스 안에서 한다(`src/formats/docx-hwp.ts`, 결정 0121). 한글 문서의 해석과 편집 동작은 여기서 만들지 않는다. PDF 문서 작업의 호출 순서·멈춤·이어하기·보관소도 `pdf-structure`의 작업 엔진과 보관소가 맡는다. EPUB 책의 열기·번역 단위·결과 책은 `packages/epub-engine`이 맡는다. 명령어는 EPUB을 고치지 않고 번역 결과를 새 파일로 쓸 뿐이다.
 - 어느 경로(무료·키·구독)로 갈지, 구독 요청의 차례를 어떻게 지키는지는 `packages/ai-search`의 범위다. 이 모듈은 "자동 호출 경로다"라는 사실과 `dataDir`, 연결 상태를 넘길 뿐이다. 구독 프로그램의 시작·종료는 `packages/ai-provider`의 범위다.
 - 앱 안의 MCP 서버(`apps/shell/src/main/mcp`)와 설정 화면의 통합 탭은 shell의 범위다. shell은 이 패키지를 프로세스로 실행하거나 하위 진입점(`/install`, `/agent-skills`, `/mcp-launch`, `/control-protocol`)을 import한다.
 - 렌더러가 필요한 변환(PDF 내보내기 등)은 앱 실행 파일의 `--headless-export`가 한다. 이 모듈은 그것을 찾아 실행하고 결과 봉투를 읽는다.
@@ -58,7 +58,7 @@
 - 명령줄은 Electron 없이 앱의 userData를 찾는다(`genofficeUserDataDir`). AI 설정은 그 안의 `ai-settings.json`이고, 자동 호출의 잠금·장부와 종량 허용 기록은 같은 폴더에 둔다(`aiDataDir`). PDF 결과 보관소도 같은 폴더의 `pdf-store`다. 앱과 모든 명령줄 프로세스가 같은 폴더를 써야 차례가 하나로 지켜지고 보관된 결과를 함께 쓴다.
 - 번역 PDF는 HarfBuzz의 `hb-subset.wasm`이 있어야 쓴다. 설치본에서는 `Resources/wasm/hb-subset.wasm`, 저장소에서는 `harfbuzzjs`의 것을 찾고, `GENOFFICE_HB_SUBSET_WASM`으로 바꿀 수 있다(`hbSubsetWasmPath`).
 - 패키징: `build.mjs`가 전체를 CommonJS 파일 하나로 묶고, 설치된 앱은 그것을 `ELECTRON_RUN_AS_NODE=1`로 자기 실행 파일에서 돌린다(`bin/ieumoffice.cmd`). `node_modules`는 함께 배포되지 않는다. 번들의 버전은 `GENOFFICE_APP_VERSION`으로 주입되어 앱 버전과 어긋나지 않는다.
-- 한글 엔진의 WASM은 번들에 들어가지 않는다. `rhwpWasmPath`(`src/resources.ts`)가 설치본의 `Resources/wasm`이나 체크아웃의 `node_modules`에서 찾아 `GENOFFICE_RHWP_WASM`으로 넘긴다. 번들 안에서는 `import.meta.url`이 비어서 읽는 쪽이 스스로 찾지 못한다.
+- 한글 엔진의 WASM은 번들에 들어가지 않는다. `rhwpWasmPath`(`src/resources.ts`)가 설치본의 `Resources/wasm`이나 체크아웃의 `node_modules`에서 찾아 `GENOFFICE_RHWP_WASM`으로 넘긴다. 번들 안에서는 `import.meta.url`이 비어서 읽는 쪽이 스스로 찾지 못한다. 워드 → 한글 변환도 같은 파일을 읽어 엔진에 넘긴다.
 - 문서 명령의 DOM은 jsdom이 만든다(`src/dom.ts`). jsdom 28은 자기 undici 사본의 쿠키 모듈에서 `globalThis.Headers`를 읽는데, 그 전역은 Node 내장 undici와 그 wasm 파서를 그 자리에서 깨운다. 가상 메모리 상한(`ulimit -v`)이 낮은 환경에서는 그 순간 프로세스가 죽으므로 `withInertHeaders`가 jsdom을 불러오는 동안만 빈 클래스로 바꾸고 곧바로 되돌린다. 이 감싸기를 걷어내지 않는다.
 - MCP 도구 목록 전체의 크기에는 상한이 있다(`tests/mcp.test.ts`, 119KiB, 간추린 스키마는 51KiB). 도구를 더할 때는 설명과 옵션 설명을 짧게 쓴다.
 - MCP 클라이언트는 셸 없이 프로세스를 띄운다. Windows에서 `.cmd`나 `cmd /c`를 등록하면 공백이 든 경로가 쪼개지므로, 등록하는 명령은 "앱 실행 파일을 Node로, 번들 CLI를 인자로"다(`src/mcp-launch.ts`). 이 파일은 순수 문자열 코드라 렌더러도 import한다.
@@ -70,6 +70,9 @@
   - `OdtEditGuard`는 작업마다 앞뒤를 비교한다. 잠긴 칸(`isProtectedCell`, 셀 안 표는 바깥 칸)과 `odt-keep:` 자리 표시가 바뀌면 편집기 상태와 곁 상태를 되돌리고 `op_rejected`로 거절한다. 자리 표시를 통째로 지우는 것과 잠긴 칸 둘레의 행 추가는 된다. 격자 모양이 그대로면(칸 합치기·나누기 포함) 같은 자리에서 비교한다. 행만 또는 열만 바뀌었으면 앞뒤 행(열)을 맞춰 잠긴 칸이 옮겨 간 자리에서 비교한다(`movedLockedCell`). 둘 다 바뀌었을 때만 칸 지문의 개수로 본다.
   - `convert`의 ODT 경로는 docx를 거친다. 앱의 `--headless-export`는 `.odt`를 받지 않으므로 odt→pdf/html은 출력 폴더 안의 임시 폴더(`.ieumoffice-odt-*`)에 docx를 쓰고 끝나면(실패해도) 지운다. html→odt도 같은 임시 폴더를 쓴다. 변환 보고는 항목마다 `warnings[]`(`odt_converted`/`odt_dropped`)와 `detail.odt_report`로 낸다.
   - 암호 ODT는 종료 코드 2, `unsupported`와 암호를 풀라는 `suggestion`이다(`odtOpenFailure`). 기본 이유 `file_not_found`로 두지 않는다.
+- 워드 → 한글(`src/formats/docx-hwp.ts`, 결정 0121): `@genoffice/docx2hwp`의 공개 API(`HwpEngine.start`, `docxToHwp`, `Docx2HwpError`)만 쓰고 패키지를 고치지 않는다. 엔진은 프로세스에 하나이고(시작이 실패하면 다음 명령이 다시 띄운다), WASM은 `rhwpWasmPath`로 읽어 넘긴다. 앱은 worker에서 돌리지만 명령은 제 프로세스라 그 자리에서 돌린다. `ieumoffice mcp`에서는 `hwp apply`처럼 엔진 메모리가 서버가 끝날 때까지 남는다.
+  - 앱과 달리 묻지 않고 쓴다. 잃은 것은 항목마다 `hwp_dropped`·`hwp_changed` 경고와 `detail.hwp_report`(패키지의 `Loss` 그대로)다. 경고 글의 이름 표 `FEATURE_LABEL`은 `LossFeature`마다 하나라 패키지가 기능을 더하면 형 검사가 실패한다. 식별자 목록은 `docs/contracts.md`가 밖에 약속하고, `tests/convert-docx-hwp.test.ts`가 그 목록과 이름 표를 맞춘다.
+  - 이 파일에서 `CliError`로 바꾸는 것은 `hwp-readback`(`--to hwpx` 안내)과 `not-docx` 둘이다. 엔진이 WebAssembly 메모리를 만들지 못한 실패는 잡지 않고 `runCli`에 넘긴다(`src/wasm.ts`).
 - 이 패키지는 `@genoffice/i18n`과 `@genoffice/electron-utils`를 import하지만 `package.json`의 `dependencies`에는 적혀 있지 않다(workspace 호이스팅에 기대는 기존 구조다).
 
 ## 테스트
@@ -80,6 +83,7 @@
 - 바꾸면 반드시 테스트하는 것: 설정 스위치 켬·끔·예전 판 동의에 따른 `capabilities`와 실제 명령의 답이 같은지, 한도 소진(`rate-limit`) 때 봉투의 `errorCode`·`resetsAt`, PDF 작업 명령의 예상만 답하기·요금 경로 거절·`--partial` 유무·이어하기·MCP가 바로 답하기·`pdf_status` 모양(`tests/pdf-ai-jobs.test.ts`, `tests/pdf-structure-commands.test.ts`), EPUB 번역 명령의 같은 것들과 `--chapters` 범위 오류·`unsupported` 이유·성공 `detail` 모양(`tests/epub-jobs.test.ts`), 허용 폴더 밖 경로와 symlink 우회, 앱이 열어 둔 파일 쓰기, 부분 적용 배치(`status: "partial"`).
 - 다이어그램 시험: 앱 없이 되는 것과 앱이 없을 때(`tests/diagram.test.ts`, `GENOFFICE_APP_BIN`을 없는 경로로), 앱이 할 일과 그 답의 처리(`tests/diagram-app.test.ts`, `runDiagramApp`을 `vi.mock`으로 바꾼다).
 - ODT 시험(`tests/odt.test.ts`, `tests/odt-convert.test.ts`)은 `packages/odt-engine/tests/helpers`의 합성 한컴 조각으로 파일을 만든다(`tests/odt-fixtures.ts`). 실제 파일은 넣지 않는다. 앱 경유 변환은 `exportViaApp`을 `vi.mock`으로 바꾼다.
+- 워드 → 한글 시험(`tests/convert-docx-hwp.test.ts`)은 실제 엔진으로 `packages/docx2hwp/tests/fixtures/notice.docx`와 `apps/docs/tests/pagination-corpus/docx/fixture-kitchen-sink.docx`를 두 형식으로 바꾸고 결과를 `@rhwp/core`로 다시 열어 문단 글을 본다. 엔진이 만들어 줄 수 없는 두 답(WebAssembly 메모리 실패, `hwp-readback`)은 `tests/convert-docx-hwp-errors.test.ts`가 패키지를 `vi.mock`으로 바꿔 본다.
 - 저장소 검사 도구(`tools/check-no-genspark.mjs`, `tools/check-english-comments.mjs`)의 테스트도 이 폴더의 `tests/`에 있다.
 - Windows에서는 원본에서 물려받은 테스트 여럿이 변경과 무관하게 실패한다. 이 PC에서 실패하는 파일은 `app-export`, `cli`, `cloud`, `control`, `errors`, `install`, `mcp-http`, `mcp-install`, `mcp`, `suggest`(모두 `tests/*.test.ts`)이다. 파일 권한 비트, POSIX 경로와 symlink, 준비 훅의 시간 제한 같은 전제가 Windows에서 맞지 않아서다. 이 파일들에서 새 실패를 봤다면 손대지 않은 체크아웃의 결과와 비교한다. CI는 Linux에서 돈다.
 - `cli`·`errors` 테스트의 일부는 xlsx 사이드카 실행 파일이 필요하다. `XLSX_SIDECAR_PATH`로 빌드된 사이드카를 가리킬 수 있다.

@@ -119,3 +119,46 @@ describe('panelUserSkills', () => {
     expect(used.output).toContain('MCP server gone')
   })
 })
+
+describe('panelUserSkills in an editor', () => {
+  const views = [
+    { ...VIEW, id: 'app:deck-style', source: 'app', name: 'deck-style', editors: ['slides'] },
+    VIEW,
+  ]
+  const panel = (editor?: 'slides' | 'sheets') => {
+    const b = bridge(views)
+    const [skill] = panelUserSkills({
+      editor,
+      lang: () => 'en',
+      messages: () => [],
+      onProposal: () => {},
+      bridge: b,
+    })
+    return { skill: skill!, b }
+  }
+
+  it('sends the model a list without the skills set for other editors', async () => {
+    const { skill } = panel('sheets')
+    await vi.waitFor(() => expect(skill.systemPrompt).toContain('builtin:meeting-minutes'))
+    expect(skill.systemPrompt).not.toContain('app:deck-style')
+  })
+
+  it('lists them in their own editor and where no editor is named (home ask)', async () => {
+    for (const editor of ['slides', undefined] as const) {
+      const { skill } = panel(editor)
+      await vi.waitFor(() => expect(skill.systemPrompt).toContain('app:deck-style'))
+    }
+  })
+
+  it('refuses use_skill on such a skill without reading it', async () => {
+    const { skill, b } = panel('sheets')
+    await vi.waitFor(() => expect(skill.systemPrompt).toContain('builtin:meeting-minutes'))
+    const used = await skill.executeTool({
+      id: 'c',
+      name: 'use_skill',
+      input: { id: 'app:deck-style' },
+    })
+    expect(used.isError).toBe(true)
+    expect(b.aiRead).not.toHaveBeenCalled()
+  })
+})

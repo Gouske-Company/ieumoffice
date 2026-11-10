@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import type { Lang } from '@genoffice/i18n'
+import type { SkillEditorId } from '@genoffice/agent-core'
 import {
   aiSkillsBridge,
   chipsAfterListChange,
@@ -74,6 +75,8 @@ export interface ComposerSkillsOptions {
   lang: Lang
   /** 'panel' (editors, home ask) leaves agent-only skills out */
   surface?: SkillPickerSurface | undefined
+  /** the editor this panel belongs to: skills set for other editors are not listed; none in home ask */
+  editor?: SkillEditorId | undefined
   /** sheets: `$` opens only at the start of the input */
   dollarAtStartOnly?: boolean | undefined
   onTemplateSkill?: OnTemplateSkill | undefined
@@ -124,7 +127,13 @@ function sameIds(a: readonly SkillChipView[], b: readonly SkillChipView[]): bool
  * gets for them. Never starts an AI run by itself.
  */
 export function useComposerSkills(options: ComposerSkillsOptions): ComposerSkills {
-  const { lang, surface = 'panel', dollarAtStartOnly, maxChars = SKILL_SEND_MAX_CHARS } = options
+  const {
+    lang,
+    surface = 'panel',
+    editor,
+    dollarAtStartOnly,
+    maxChars = SKILL_SEND_MAX_CHARS,
+  } = options
   const bridgeRef = useRef<AiSkillsBridge | null>(null)
   bridgeRef.current = options.bridge !== undefined ? options.bridge : aiSkillsBridge()
   const hasBridge = bridgeRef.current !== null
@@ -157,7 +166,7 @@ export function useComposerSkills(options: ComposerSkillsOptions): ComposerSkill
       .list()
       .then((raw) => {
         if (!liveRef.current || seq !== listSeqRef.current) return
-        const next = pickerSkillsOf(raw, langRef.current, surface)
+        const next = pickerSkillsOf(raw, langRef.current, surface, editor)
         setItems(next)
         setLoaded(true)
         setGone(new Set())
@@ -167,7 +176,7 @@ export function useComposerSkills(options: ComposerSkillsOptions): ComposerSkill
         })
       })
       .catch(() => {})
-  }, [surface])
+  }, [surface, editor])
 
   useEffect(() => {
     liveRef.current = true
